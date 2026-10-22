@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.venv/
+build/
+dist/
+
+# Data and heavy artefacts (live outside the repo by default, see gaehep/config.py)
+data/
+*.h5
+*.npy
+*.pt
+*.ckpt
+results/runs/*/checkpoint*
+results/runs/*/scores*.npz
+results/runs/*/latents*.npz
+
+# Notebooks
+.ipynb_checkpoints/
+
+# OS
+.DS_Store

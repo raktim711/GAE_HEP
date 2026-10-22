@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gaehep"
+version = "0.1.0"
+description = "Permutation-invariant graph autoencoders for anomaly detection on the LHC Olympics 2020 R&D dataset"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Raktim Mukherjee" }]
+license = { text = "MIT" }
+dependencies = [
+    "numpy>=1.26",
+    "scipy>=1.11",
+    "pandas>=2.1",
+    "tables>=3.9",
+    "h5py>=3.10",
+    "scikit-learn>=1.4",
+    "matplotlib>=3.8",
+    "pyyaml>=6",
+    "tqdm>=4.66",
+    "torch>=2.3",
+    "zuko>=1.1",
+    "fastjet>=3.4",
+    "awkward>=2.6",
+    "vector>=1.4",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.5", "torch_geometric>=2.5"]
+
+[project.scripts]
+gaehep = "gaehep.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "NPY", "SIM", "RUF"]
+ignore = ["E501", "RUF001", "RUF002", "RUF003", "SIM108"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+markers = [
+    "data: needs the preprocessed LHCO dataset (skipped otherwise)",
+    "slow: slow tests",
+]
