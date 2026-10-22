@@ -1,0 +1,5 @@
+# Tiny end-to-end check (minutes on CPU); used by `make smoke`.
+model: set_ae
+model_args: {hidden: [16, 16], k: 8, latent_dim: 4, n_out: 30, dec_hidden: [64]}
+data: {n_const: 30, max_train_events: 2000, latent_train_events: 1000}
+train: {epochs: 2, jets_per_epoch: 2000, batch_size: 128, val_jets: 1000, time_budget_min: 10}

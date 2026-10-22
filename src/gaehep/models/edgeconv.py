@@ -7,6 +7,11 @@ For node i with k nearest neighbours N(i):
 AGG is a masked mean or max, so the block is permutation-equivariant; the encoder's masked mean+max
 pooling is permutation-invariant.  The first block builds its k-NN graph in (deta, dphi); later blocks can
 rebuild it in feature space ("dynamic" graph, as in DGCNN).
+
+CPU efficiency: the first (widest) layer of the edge MLP is linear in [h_i, h_j - h_i], so it is computed
+per *node* and only gathered per edge:  W [h_i, h_j - h_i] + b = (W_a - W_b) h_i + W_b h_j + b.  This is an
+exact reparametrisation (``edge_mlp_equivalent`` rebuilds the plain edge MLP for cross-checks) and cuts the
+per-edge cost by ~3x for the default sizes.
 """
 
 from __future__ import annotations
@@ -33,13 +38,15 @@ class EdgeConvBlock(nn.Module):
         super().__init__()
         if aggr not in ("mean", "max"):
             raise ValueError(f"aggr must be 'mean' or 'max', got {aggr}")
+        if n_mlp < 1:
+            raise ValueError("n_mlp must be >= 1")
         self.k, self.aggr = k, aggr
-        layers: list[nn.Module] = []
-        d = 2 * in_dim
-        for _ in range(n_mlp):
-            layers += [nn.Linear(d, out_dim, bias=bias), act()]
-            d = out_dim
-        self.mlp = nn.Sequential(*layers)
+        self.theta_i = nn.Linear(in_dim, out_dim, bias=bias)  # (W_a - W_b), carries the bias
+        self.theta_j = nn.Linear(in_dim, out_dim, bias=False)  # W_b
+        rest: list[nn.Module] = [act()]
+        for _ in range(n_mlp - 1):
+            rest += [nn.Linear(out_dim, out_dim, bias=bias), act()]
+        self.edge_rest = nn.Sequential(*rest)
         self.shortcut = nn.Linear(in_dim, out_dim, bias=bias)
         self.act = act()
 
@@ -48,17 +55,29 @@ class EdgeConvBlock(nn.Module):
         if idx.shape[-1] == 0:
             agg = torch.zeros(*x.shape[:2], self.shortcut.out_features, dtype=x.dtype, device=x.device)
         else:
-            xi = x.unsqueeze(2).expand(-1, -1, idx.shape[-1], -1)
-            xj = gather_neighbors(x, idx)
-            h = self.mlp(torch.cat([xi, xj - xi], dim=-1))  # (B, N, k, out)
-            v = valid[..., None]
+            u = self.theta_i(x)  # (B, N, out)
+            v = self.theta_j(x)
+            h = self.edge_rest(u.unsqueeze(2) + gather_neighbors(v, idx))  # (B, N, k, out)
+            vm = valid[..., None]
             if self.aggr == "mean":
-                agg = (h * v).sum(2) / v.sum(2).clamp(min=1).to(h.dtype)
+                agg = (h * vm).sum(2) / vm.sum(2).clamp(min=1).to(h.dtype)
             else:
-                agg = h.masked_fill(~v, float("-inf")).amax(2)
+                agg = h.masked_fill(~vm, float("-inf")).amax(2)
                 agg = torch.where(valid.any(2, keepdim=True), agg, torch.zeros_like(agg))
         out = self.act(agg + self.shortcut(x))
         return out * mask[..., None].to(out.dtype)
+
+    def edge_mlp_equivalent(self) -> nn.Sequential:
+        """The plain edge MLP acting on [h_i, h_j - h_i] that this block computes (for cross-checks)."""
+        lin = nn.Linear(
+            2 * self.theta_i.in_features, self.theta_i.out_features, bias=self.theta_i.bias is not None
+        )
+        with torch.no_grad():
+            w_b = self.theta_j.weight
+            lin.weight.copy_(torch.cat([self.theta_i.weight + w_b, w_b], dim=1))
+            if self.theta_i.bias is not None:
+                lin.bias.copy_(self.theta_i.bias)
+        return nn.Sequential(lin, *self.edge_rest)
 
 
 class EdgeConvEncoder(nn.Module):
@@ -72,12 +91,14 @@ class EdgeConvEncoder(nn.Module):
         dynamic: bool = True,
         aggr: str = "mean",
         bias: bool = True,
+        n_mlp: int = 2,
     ):
         super().__init__()
         self.dynamic = dynamic
         dims = [in_dim, *hidden]
         self.blocks = nn.ModuleList(
-            EdgeConvBlock(dims[i], dims[i + 1], k=k, aggr=aggr, bias=bias) for i in range(len(hidden))
+            EdgeConvBlock(dims[i], dims[i + 1], k=k, n_mlp=n_mlp, aggr=aggr, bias=bias)
+            for i in range(len(hidden))
         )
         self.out_dim = dims[-1]
 

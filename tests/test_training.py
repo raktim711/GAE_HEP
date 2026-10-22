@@ -55,10 +55,11 @@ def test_deep_svdd_and_classifier_train(tmp_path, scaler):
         concat_pools([train, sig_tr]),
         concat_pools([val, sig_va]),
         scaler,
-        _cfg(epochs=3),
+        _cfg(epochs=12, jets_per_epoch=192, lr=3e-3, patience=20),
         tmp_path / "clf",
     )
-    assert s["history"][-1]["train_loss"] < s["history"][0]["train_loss"] + 1e-6
+    h = [e["train_loss"] for e in s["history"]]
+    assert np.mean(h[-3:]) < h[0]  # learns to separate 2-prong from 1-prong toy jets
 
 
 def test_evaluate_scores_structure():

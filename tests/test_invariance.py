@@ -75,8 +75,12 @@ def test_edgeconv_matches_pyg(pool, scaler):
     torch.manual_seed(0)
     blk = EdgeConvBlock(7, 8, k=5, aggr="mean").eval()
     b = make_batch(pool, np.arange(4), scaler)
-    # NB: PyG's EdgeConv re-initialises the module it wraps, so build it before evaluating our block
-    conv = pyg.EdgeConv(blk.mlp, aggr="mean")
+    # PyG's EdgeConv re-initialises the module it wraps: give it a copy built from our weights, then
+    # restore the copy's parameters (reset happens inside the constructor)
+    eq = blk.edge_mlp_equivalent()
+    state = {k: v.clone() for k, v in eq.state_dict().items()}
+    conv = pyg.EdgeConv(eq, aggr="mean")
+    eq.load_state_dict(state)
     with torch.no_grad():
         ours = blk(b.x, b.mask, b.coords)
         idx, valid = masked_knn(b.coords, b.mask, 5)

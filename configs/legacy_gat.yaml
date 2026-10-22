@@ -1,0 +1,6 @@
+# M0: faithful port of the AIMS GAE (gat, hyper-parameters as in ModelTesting_after_processing.ipynb) on complete
+# graphs of the top-30 constituents with raw (pT, eta, phi) features. Baseline / cautionary example.
+model: legacy_gae
+model_args: {conv_type: gat, hidden_channels: 128, latent_channels: 8, dropout: 0.1, gat_heads: 4}
+data: {n_const: 30, max_train_events: 200000}
+train: {epochs: 20, jets_per_epoch: 100000, batch_size: 100, lr: 1.0e-3, weight_decay: 1.0e-5, patience: 5, time_budget_min: 100, seed: 1}

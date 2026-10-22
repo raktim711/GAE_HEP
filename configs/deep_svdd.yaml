@@ -1,0 +1,5 @@
+# M4: one-class Deep SVDD with the same permutation-invariant EdgeConv encoder (bias-free).
+model: deep_svdd
+model_args: {hidden: [48, 48, 48], k: 12, latent_dim: 16}
+data: {n_const: 50}
+train: {epochs: 25, jets_per_epoch: 200000, batch_size: 256, lr: 1.0e-3, weight_decay: 1.0e-5, patience: 5, time_budget_min: 100, seed: 1}
