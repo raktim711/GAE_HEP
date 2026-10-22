@@ -63,8 +63,12 @@ class SetAE(JetModel):
         recon = self.decoder(zc).view(len(b), self.n_out, len(self.recon_idx))
         return {"z": z, "recon": recon, "mult": self.mult_head(zc).squeeze(-1)}
 
-    def losses(self, b: JetBatch) -> dict[str, torch.Tensor]:
+    def score_and_embed(self, b: JetBatch) -> tuple[torch.Tensor, torch.Tensor]:
         out = self(b)
+        return self.losses(b, out)["score"], out["z"]
+
+    def losses(self, b: JetBatch, out: dict[str, torch.Tensor] | None = None) -> dict[str, torch.Tensor]:
+        out = self(b) if out is None else out
         n_nodes = b.x.shape[1]
         if n_nodes > self.n_out:
             raise ValueError(f"batch has {n_nodes} nodes but the decoder emits n_out={self.n_out}")

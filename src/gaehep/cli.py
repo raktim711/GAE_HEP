@@ -21,6 +21,10 @@ def _set(cfg: dict[str, Any], dotted: str) -> None:
     node[parts[-1]] = yaml.safe_load(raw)
 
 
+def _log(*args: object) -> None:
+    print(*args, flush=True)
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     p = argparse.ArgumentParser(
@@ -37,6 +41,9 @@ def main(argv: list[str] | None = None) -> int:
     for name in ("evaluate", "flow", "qn"):
         s = sub.add_parser(name)
         s.add_argument("run")
+    bh = sub.add_parser("bumphunt", help="sideband-fit bump hunt using a run's event scores")
+    bh.add_argument("run")
+    bh.add_argument("--agg", default="max", choices=["max", "min", "sum"])
     e = sub.add_parser("ensemble")
     e.add_argument("runs", nargs="+")
     e.add_argument("--out", required=True)
@@ -62,7 +69,7 @@ def main(argv: list[str] | None = None) -> int:
         for s in a.set:
             _set(cfg, s)
         name = a.name or a.config.stem
-        summary = R.run(cfg, name, stages=tuple(a.stages.split(",")))
+        summary = R.run(cfg, name, stages=tuple(a.stages.split(",")), log=_log)
         print(f"[{name}] status: {summary.get('status')}")
     elif a.cmd == "evaluate":
         R.evaluate_run(a.run)
@@ -70,6 +77,8 @@ def main(argv: list[str] | None = None) -> int:
         R.latent_flow_variant(a.run)
     elif a.cmd == "qn":
         R.quantile_normalised_variant(a.run)
+    elif a.cmd == "bumphunt":
+        R.bumphunt_run(a.run, agg=a.agg)
     elif a.cmd == "ensemble":
         R.ensemble_variant(a.runs, a.out)
     elif a.cmd == "baselines":

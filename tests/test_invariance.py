@@ -103,3 +103,16 @@ def test_encoder_pool_invariant(pool, scaler):
         p0 = enc.pool(enc(b.x, b.mask, b.coords), b.mask)
         p1 = enc.pool(enc(b.x[:, perm], b.mask[:, perm], b.coords[:, perm]), b.mask[:, perm])
     assert torch.allclose(p0, p1, atol=1e-5)
+
+
+@pytest.mark.parametrize("name", list(MODELS))
+def test_score_and_embed_consistent(name, pool, scaler):
+    m = _model(name)
+    b = make_batch(pool, np.arange(8), scaler)
+    if name == "deep_svdd":
+        m.prepare([b])
+    with torch.no_grad():
+        s1, z1 = m.score_and_embed(b)
+        s2, z2 = m.score(b), m.embed(b)
+    assert torch.allclose(s1, s2, atol=1e-6)
+    assert (z1 is None and z2 is None) or torch.allclose(z1, z2, atol=1e-6)

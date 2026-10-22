@@ -88,7 +88,7 @@ def main() -> int:
         sr = (t["mjj"] >= SR_MJJ[0]) & (t["mjj"] <= SR_MJJ[1])
         nc = t["n_const"].ravel()
         summary[k] = {
-            "n_events": int(len(t["mjj"])),
+            "n_events": len(t["mjj"]),
             "frac_in_SR": float(sr.mean()),
             "mjj_median": float(np.median(t["mjj"])),
             "n_const_median": float(np.median(nc)),

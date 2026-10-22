@@ -268,3 +268,22 @@ def baselines(data: Data | None = None, n_boot: int = 30) -> dict[str, Any]:
             name, data=data, cfg={"baseline": obs}, scores=copy.deepcopy(scores), n_boot=n_boot
         )
     return results
+
+
+def bumphunt_run(name: str, agg: str = "max", data: Data | None = None) -> list[dict[str, Any]]:
+    """Bump hunt on the background test split with injected 2-prong test signal, using run ``name``'s scores."""
+    from gaehep.eval import plots
+    from gaehep.eval.bumphunt import run_bumphunt
+    from gaehep.eval.evaluate import aggregate
+
+    run_dir = _run_dir(name)
+    with np.load(run_dir / "scores.npz") as f:
+        scores = {k: f[k] for k in f.files}
+    data = data or Data(n_const=50)
+    tb, ts = data.table("bkg_test"), data.table("sig_test")
+    rows = run_bumphunt(
+        tb["mjj"], aggregate(scores["bkg_test"], agg), ts["mjj"], aggregate(scores["sig_test"], agg)
+    )
+    save_json({"name": name, "agg": agg, "rows": rows, **run_metadata()}, run_dir / f"bumphunt_{agg}.json")
+    plots.plot_bumphunt(rows, run_dir / "figures" / f"bumphunt_{agg}.png", title=f"{name} [{agg}]")
+    return rows

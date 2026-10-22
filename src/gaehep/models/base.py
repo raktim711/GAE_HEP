@@ -48,5 +48,9 @@ class JetModel(nn.Module):
         """Graph-level latent vector (B, d) if the model has one."""
         return None
 
+    def score_and_embed(self, b: JetBatch) -> tuple[torch.Tensor, torch.Tensor | None]:
+        """Score and latent in one pass (models override this to avoid running the encoder twice)."""
+        return self.score(b), self.embed(b)
+
     def prepare(self, batches: Iterable[JetBatch]) -> None:
         """Hook run once before training (e.g. Deep SVDD centre)."""

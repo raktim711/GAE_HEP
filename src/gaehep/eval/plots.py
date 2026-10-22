@@ -124,3 +124,22 @@ def plot_history(history: list[dict], path: Path, title: str = "") -> Path:
     ax.set_title(title)
     ax.legend()
     return _save(fig, path)
+
+
+def plot_bumphunt(rows: list[dict], path: Path, title: str = "") -> Path:
+    """Mean local significance (over seeds) vs number of injected signal events, one line per cut."""
+    fig, ax = plt.subplots(figsize=(6.2, 4.6))
+    effs = sorted({r["eff"] for r in rows}, reverse=True)
+    for eff in effs:
+        ns = sorted({r["n_inj"] for r in rows})
+        z = [np.mean([r["z"] for r in rows if r["eff"] == eff and r["n_inj"] == n]) for n in ns]
+        zs = [np.std([r["z"] for r in rows if r["eff"] == eff and r["n_inj"] == n]) for n in ns]
+        lab = "no cut" if eff >= 1 else rf"top {100 * eff:g}% (sideband-defined)"
+        ax.errorbar(ns, z, yerr=zs, marker="o", capsize=3, label=lab)
+    ax.axhline(0, color="grey", lw=1)
+    ax.axhline(3, color="grey", lw=1, ls=":")
+    ax.set_xlabel("injected signal events (on 300k background)")
+    ax.set_ylabel(r"local significance $Z$ in SR")
+    ax.set_title(title)
+    ax.legend()
+    return _save(fig, path)

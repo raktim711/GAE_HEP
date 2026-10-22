@@ -51,9 +51,16 @@ class NodeGAE(JetModel):
         z = self(b)["z_nodes"]
         return self.encoder.pool(z, b.mask)
 
-    def losses(self, b: JetBatch) -> dict[str, torch.Tensor]:
-        xhat = self(b)["xhat"]
+    def score_and_embed(self, b: JetBatch) -> tuple[torch.Tensor, torch.Tensor]:
+        out = self(b)
+        return self._per_jet(b, out["xhat"]), self.encoder.pool(out["z_nodes"], b.mask)
+
+    @staticmethod
+    def _per_jet(b: JetBatch, xhat: torch.Tensor) -> torch.Tensor:
         per_node = ((xhat - b.x) ** 2).mean(-1)
         m = b.mask.to(per_node.dtype)
-        per_jet = (per_node * m).sum(1) / m.sum(1).clamp(min=1)
+        return (per_node * m).sum(1) / m.sum(1).clamp(min=1)
+
+    def losses(self, b: JetBatch) -> dict[str, torch.Tensor]:
+        per_jet = self._per_jet(b, self(b)["xhat"])
         return {"total": per_jet, "score": per_jet}

@@ -34,6 +34,10 @@ class EdgeConvClassifier(JetModel):
         h = self.encoder(b.x, b.mask, b.coords)
         return self.encoder.pool(h, b.mask)
 
+    def score_and_embed(self, b: JetBatch) -> tuple[torch.Tensor, torch.Tensor]:
+        e = self.embed(b)
+        return self.head(e).squeeze(-1), e
+
     def losses(self, b: JetBatch) -> dict[str, torch.Tensor]:
         logit = self.head(self.embed(b)).squeeze(-1)
         y = b.label.to(logit.dtype)

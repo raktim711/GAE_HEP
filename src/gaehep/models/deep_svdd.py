@@ -54,6 +54,10 @@ class DeepSVDD(JetModel):
         self.center_ready.fill_(True)
         self.train(was_training)
 
+    def score_and_embed(self, b: JetBatch) -> tuple[torch.Tensor, torch.Tensor]:
+        z = self.embed(b)
+        return ((z - self.center) ** 2).sum(-1), z
+
     def losses(self, b: JetBatch) -> dict[str, torch.Tensor]:
         if not bool(self.center_ready):
             raise RuntimeError("Deep SVDD centre not initialised; call prepare() first")

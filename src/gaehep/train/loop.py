@@ -42,6 +42,7 @@ class TrainConfig:
     warmup_frac: float = 0.02
     prepare_batches: int = 20
     threads: int = 2
+    device: str = "auto"  # "auto" -> cuda if available, else cpu
 
     @classmethod
     def from_dict(cls, d: dict[str, Any] | None) -> TrainConfig:
@@ -50,6 +51,17 @@ class TrainConfig:
         if unknown:
             raise KeyError(f"unknown train options: {sorted(unknown)}")
         return cls(**(d or {}))
+
+
+def resolve_device(name: str = "auto") -> torch.device:
+    if name == "auto":
+        return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    return torch.device(name)
+
+
+def _model_device(model: torch.nn.Module) -> torch.device:
+    p = next(model.parameters(), None)
+    return p.device if p is not None else torch.device("cpu")
 
 
 def _lr_lambda(total: int, warmup: int):
@@ -67,9 +79,11 @@ def mean_loss(
     model: JetModel, pool: JetPool, scaler: Scaler, idx: np.ndarray, batch_size: int = 1024
 ) -> float:
     model.eval()
+    dev = _model_device(model)
     tot, n = 0.0, 0
     sub = pool.subset(idx)
     for b in iterate_batches(sub, scaler, batch_size):
+        b = b.to(dev)
         tot += float(model.losses(b)["total"].sum())
         n += len(b)
     return tot / max(n, 1)
@@ -88,6 +102,8 @@ def fit(
     run_dir.mkdir(parents=True, exist_ok=True)
     torch.set_num_threads(cfg.threads)
     seed_everything(cfg.seed)
+    device = resolve_device(cfg.device)
+    model.to(device)
 
     n_train = min(cfg.jets_per_epoch, len(train_pool))
     steps_per_epoch = math.ceil(n_train / cfg.batch_size)
@@ -101,7 +117,7 @@ def fit(
     ckpt_path = run_dir / "checkpoint.pt"
     state: dict[str, Any] = {"epoch": 0, "best": float("inf"), "bad": 0, "history": [], "best_state": None}
     if ckpt_path.exists():
-        ck = torch.load(ckpt_path, weights_only=False)
+        ck = torch.load(ckpt_path, weights_only=False, map_location=device)
         model.load_state_dict(ck["model"])
         opt.load_state_dict(ck["opt"])
         sched.load_state_dict(ck["sched"])
@@ -110,7 +126,8 @@ def fit(
     else:
         prep_rng = np.random.default_rng([cfg.seed, 10**6])
         model.prepare(
-            iterate_batches(
+            b.to(device)
+            for b in iterate_batches(
                 train_pool,
                 scaler,
                 cfg.batch_size,
@@ -129,6 +146,7 @@ def fit(
         ep_rng = np.random.default_rng([cfg.seed, ep])
         tot, n = 0.0, 0
         for b in iterate_batches(train_pool, scaler, cfg.batch_size, shuffle=True, rng=ep_rng, limit=n_train):
+            b = b.to(device)
             loss = model.losses(b)["total"].mean()
             if not torch.isfinite(loss):
                 raise FloatingPointError(f"non-finite training loss at epoch {ep}")
@@ -200,13 +218,17 @@ def score_pool(
 ) -> dict[str, np.ndarray]:
     """Per-jet anomaly scores (and optionally graph latents) for every jet in ``pool`` (row order kept)."""
     model.eval()
+    dev = _model_device(model)
     scores, embeds = [], []
     for b in iterate_batches(pool, scaler, batch_size):
-        scores.append(model.score(b).float().numpy())
+        b = b.to(dev)
         if with_embed:
-            z = model.embed(b)
+            s, z = model.score_and_embed(b)
             if z is not None:
-                embeds.append(z.float().numpy())
+                embeds.append(z.float().cpu().numpy())
+        else:
+            s = model.score(b)
+        scores.append(s.float().cpu().numpy())
     out = {"score": np.concatenate(scores) if scores else np.zeros(0, dtype=np.float32)}
     if with_embed and embeds:
         out["z"] = np.concatenate(embeds)
