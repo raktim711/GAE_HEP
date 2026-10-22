@@ -75,7 +75,7 @@ def _json_default(o: Any) -> Any:
 def seed_everything(seed: int) -> None:
     """Seed python, numpy and torch (if importable)."""
     random.seed(seed)
-    np.random.seed(seed)
+    np.random.seed(seed)  # noqa: NPY002 - also seed libraries that use the global RNG
     try:
         import torch
 
@@ -87,7 +87,10 @@ def seed_everything(seed: int) -> None:
 def git_revision() -> str:
     try:
         out = subprocess.run(
-            ["git", "-C", str(REPO_ROOT), "rev-parse", "--short", "HEAD"], capture_output=True, text=True, timeout=5
+            ["git", "-C", str(REPO_ROOT), "rev-parse", "--short", "HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=5,
         )
         return out.stdout.strip() or "unknown"
     except Exception:  # pragma: no cover

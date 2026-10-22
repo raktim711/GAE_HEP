@@ -104,7 +104,9 @@ class LegacyGAE(JetModel):
     def losses(self, b: JetBatch) -> dict[str, torch.Tensor]:
         x, _, xhat, batch = self.node_outputs(b)
         per_node = ((xhat - x) ** 2).mean(-1)
-        sums = torch.zeros(len(b), dtype=per_node.dtype, device=per_node.device).index_add_(0, batch, per_node)
+        sums = torch.zeros(len(b), dtype=per_node.dtype, device=per_node.device).index_add_(
+            0, batch, per_node
+        )
         counts = torch.bincount(batch, minlength=len(b)).clamp(min=1).to(per_node.dtype)
         per_graph = sums / counts
         return {"total": per_graph, "score": per_graph}

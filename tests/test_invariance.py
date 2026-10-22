@@ -1,0 +1,101 @@
+"""Permutation and padding invariance of every model's anomaly score (the core design requirement)."""
+
+import numpy as np
+import pytest
+import torch
+
+from gaehep.data.dataset import make_batch
+from gaehep.models import build_model
+from gaehep.models.edgeconv import EdgeConvBlock, EdgeConvEncoder
+from tests.conftest import permute_nodes
+
+MODELS = {
+    "set_ae": dict(hidden=(16, 16), k=4, latent_dim=4, n_out=30, dec_hidden=(32,)),
+    "set_ae_cond": dict(hidden=(16, 16), k=4, latent_dim=4, n_out=30, dec_hidden=(32,), cond_dim=2),
+    "set_ae_sinkhorn": dict(hidden=(16, 16), k=4, latent_dim=4, n_out=30, dec_hidden=(32,), loss="sinkhorn"),
+    "node_gae": dict(enc_hidden=(16, 16), node_latent=2, dec_hidden=(16,), k=4),
+    "deep_svdd": dict(hidden=(16, 16), k=4, latent_dim=4),
+    "classifier": dict(hidden=(16, 16), k=4, head_hidden=(8,)),
+    "set_ae_max": dict(hidden=(16, 16), k=4, latent_dim=4, n_out=30, dec_hidden=(32,), aggr="max"),
+}
+
+
+def _model(name):
+    torch.manual_seed(0)
+    key = "set_ae" if name.startswith("set_ae") else name
+    m = build_model(key, **MODELS[name]).eval()
+    return m
+
+
+@pytest.mark.parametrize("name", list(MODELS))
+def test_score_invariant_to_node_order_and_padding(name, pool, scaler):
+    m = _model(name)
+    idx = np.arange(12)
+    b0 = make_batch(pool, idx, scaler)
+    if name == "deep_svdd":
+        m.prepare([b0])
+    perm_pool = permute_nodes(pool, seed=3)
+    pad_pool = permute_nodes(pool, seed=4, pad_extra=0)
+    with torch.no_grad():
+        s0 = m.score(b0)
+        s1 = m.score(make_batch(perm_pool, idx, scaler))
+        s2 = m.score(make_batch(pad_pool, idx, scaler))
+    assert torch.allclose(s0, s1, rtol=1e-4, atol=1e-5), (s0 - s1).abs().max()
+    assert torch.allclose(s0, s2, rtol=1e-4, atol=1e-5)
+
+
+@pytest.mark.parametrize("name", ["node_gae", "deep_svdd", "classifier"])
+def test_score_invariant_to_extra_padding(name, pool, scaler):
+    # set_ae's decoder emits a fixed n_out = batch node count, so only models without that coupling here
+    m = _model(name)
+    idx = np.arange(10)
+    b0 = make_batch(pool, idx, scaler)
+    if name == "deep_svdd":
+        m.prepare([b0])
+    padded = permute_nodes(pool, seed=5, pad_extra=7)
+    with torch.no_grad():
+        assert torch.allclose(m.score(b0), m.score(make_batch(padded, idx, scaler)), rtol=1e-4, atol=1e-5)
+
+
+def test_edgeconv_block_is_equivariant(pool, scaler):
+    torch.manual_seed(0)
+    blk = EdgeConvBlock(7, 8, k=5).eval()
+    b = make_batch(pool, np.arange(6), scaler)
+    perm = torch.randperm(b.x.shape[1])
+    with torch.no_grad():
+        y = blk(b.x, b.mask, b.coords)
+        yp = blk(b.x[:, perm], b.mask[:, perm], b.coords[:, perm])
+    assert torch.allclose(y[:, perm], yp, atol=1e-5)
+
+
+def test_edgeconv_matches_pyg(pool, scaler):
+    pyg = pytest.importorskip("torch_geometric.nn")
+    from gaehep.graphs.ops import masked_knn
+
+    torch.manual_seed(0)
+    blk = EdgeConvBlock(7, 8, k=5, aggr="mean").eval()
+    b = make_batch(pool, np.arange(4), scaler)
+    # NB: PyG's EdgeConv re-initialises the module it wraps, so build it before evaluating our block
+    conv = pyg.EdgeConv(blk.mlp, aggr="mean")
+    with torch.no_grad():
+        ours = blk(b.x, b.mask, b.coords)
+        idx, valid = masked_knn(b.coords, b.mask, 5)
+        bsz, n = b.mask.shape
+        g, i, j = valid.nonzero(as_tuple=True)
+        src = g * n + idx[g, i, j]
+        dst = g * n + i
+        x_flat = b.x.reshape(bsz * n, -1)
+        agg = conv(x_flat, torch.stack([src, dst]))
+        ref = blk.act(agg + blk.shortcut(x_flat)).view(bsz, n, -1) * b.mask[..., None]
+    assert torch.allclose(ours, ref, atol=1e-5)
+
+
+def test_encoder_pool_invariant(pool, scaler):
+    torch.manual_seed(0)
+    enc = EdgeConvEncoder(7, (8, 8), k=4).eval()
+    b = make_batch(pool, np.arange(5), scaler)
+    perm = torch.randperm(b.x.shape[1])
+    with torch.no_grad():
+        p0 = enc.pool(enc(b.x, b.mask, b.coords), b.mask)
+        p1 = enc.pool(enc(b.x[:, perm], b.mask[:, perm], b.coords[:, perm]), b.mask[:, perm])
+    assert torch.allclose(p0, p1, atol=1e-5)
