@@ -263,7 +263,9 @@ def baselines(data: Data | None = None, n_boot: int = 30) -> dict[str, Any]:
     results = {}
     for obs in per_split["bkg_test"]:
         name = f"baseline_{obs}"
-        scores = {k: v[obs] for k, v in per_split.items()}
+        scores = {k: v[obs].astype(np.float32) for k, v in per_split.items()}
+        _run_dir(name).mkdir(parents=True, exist_ok=True)
+        np.savez(_run_dir(name) / "scores.npz", **scores)
         results[name] = evaluate_run(
             name, data=data, cfg={"baseline": obs}, scores=copy.deepcopy(scores), n_boot=n_boot
         )

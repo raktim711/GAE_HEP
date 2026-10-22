@@ -3,8 +3,8 @@
   "config": {
     "baseline": "n_const"
   },
-  "time": "2026-10-23 00:25:09 CEST",
-  "git": "56d0827",
+  "time": "2026-10-23 00:33:15 CEST",
+  "git": "1ae21f5",
   "python": "3.13.16",
   "numpy": "2.5.4",
   "host": "vm",

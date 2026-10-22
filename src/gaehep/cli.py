@@ -48,6 +48,11 @@ def main(argv: list[str] | None = None) -> int:
     e.add_argument("runs", nargs="+")
     e.add_argument("--out", required=True)
     sub.add_parser("baselines")
+    cmp_ = sub.add_parser("compare", help="overlay ROC/SIC curves of several runs")
+    cmp_.add_argument("runs", nargs="+")
+    cmp_.add_argument("--out", type=Path, required=True)
+    cmp_.add_argument("--agg", default="max")
+    cmp_.add_argument("--region", default="SR")
     sub.add_parser("report")
 
     if argv and argv[0] in ("download", "preprocess", "tables", "splits"):
@@ -83,6 +88,11 @@ def main(argv: list[str] | None = None) -> int:
         R.ensemble_variant(a.runs, a.out)
     elif a.cmd == "baselines":
         R.baselines()
+    elif a.cmd == "compare":
+        from gaehep.eval.report import compare
+
+        for p_ in compare(a.runs, a.out, agg=a.agg, region=a.region):
+            print(p_)
     elif a.cmd == "report":
         from gaehep.eval.report import main as report
 

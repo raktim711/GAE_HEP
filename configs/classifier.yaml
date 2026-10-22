@@ -1,5 +1,5 @@
 # Supervised EdgeConv classifier on 2-prong signal vs background jets: idealised upper bound (uses labels).
 model: classifier
-model_args: {hidden: [48, 48, 48], k: 12, head_hidden: [64], pos_weight: 1.0}
+model_args: {hidden: [48, 48, 48], k: 12, head_hidden: [64], pos_weight: 15.0}  # ~1.2M bkg vs 80k signal train jets
 data: {n_const: 50}
 train: {epochs: 20, jets_per_epoch: 200000, batch_size: 256, lr: 1.0e-3, weight_decay: 1.0e-4, patience: 4, time_budget_min: 100, seed: 1}

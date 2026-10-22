@@ -56,3 +56,39 @@ def main() -> str:
         + "\n"
     )
     return md
+
+
+def compare(
+    runs: list[str],
+    out_dir: Path,
+    agg: str = "max",
+    region: str = "SR",
+    labels: dict[str, str] | None = None,
+) -> list[Path]:
+    """Overlay rejection and SIC curves of several runs (from their saved ``scores.npz``)."""
+    import numpy as np
+
+    from gaehep.eval import plots
+    from gaehep.eval.evaluate import aggregate, region_mask
+    from gaehep.train.run import Data
+
+    data = Data(n_const=50)
+    tabs = {k: data.table(k) for k in ("bkg_test", "sig_test", "sig3_test")}
+    paths = []
+    for sk, tag in (("sig_test", "2prong"), ("sig3_test", "3prong")):
+        curves = {}
+        for r in runs:
+            with np.load(results_dir() / "runs" / r / "scores.npz") as f:
+                b = aggregate(f["bkg_test"], agg)[region_mask(tabs["bkg_test"]["mjj"], region)]
+                s = aggregate(f[sk], agg)[region_mask(tabs[sk]["mjj"], region)]
+            curves[(labels or {}).get(r, r)] = (s, b)
+        out_dir = Path(out_dir)
+        paths.append(
+            plots.plot_rejection(
+                curves, out_dir / f"rejection_{tag}_{region}_{agg}.png", title=f"{tag}, {region}, {agg}"
+            )
+        )
+        paths.append(
+            plots.plot_sic(curves, out_dir / f"sic_{tag}_{region}_{agg}.png", title=f"{tag}, {region}, {agg}")
+        )
+    return paths
