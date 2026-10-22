@@ -139,7 +139,7 @@ def fit(
 
     t_start = time.time()
     status = "done"
-    while state["epoch"] < cfg.epochs:
+    while state["epoch"] < cfg.epochs and state.get("stop_reason") != "early_stop":
         ep = state["epoch"]
         t_ep = time.time()
         model.train()
@@ -191,6 +191,17 @@ def fit(
         )
         if state["bad"] >= cfg.patience:
             log(f"early stopping after {state['bad']} epochs without improvement")
+            state["stop_reason"] = "early_stop"
+            torch.save(
+                {
+                    "model": model.state_dict(),
+                    "opt": opt.state_dict(),
+                    "sched": sched.state_dict(),
+                    "state": state,
+                },
+                run_dir / "checkpoint.tmp",
+            )
+            (run_dir / "checkpoint.tmp").replace(ckpt_path)
             break
         elapsed = time.time() - t_start
         if state["epoch"] < cfg.epochs and elapsed + dt > cfg.time_budget_min * 60:

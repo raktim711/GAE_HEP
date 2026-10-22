@@ -63,7 +63,7 @@ gaehep report                      # results/summary.md
 ```
 
 Data live outside the repo (`GAEHEP_DATA`, default `/home/claude/data/lhco`); results in `results/`.
-`notebooks/` will hold a Kaggle/Colab GPU notebook for full-scale runs.
+[`notebooks/kaggle_gaehep.ipynb`](notebooks/kaggle_gaehep.ipynb) runs the full pipeline at GPU scale on Kaggle (100 constituents, wider models, 3 seeds); reruns resume unfinished runs and skip finished ones.
 
 ## Layout
 

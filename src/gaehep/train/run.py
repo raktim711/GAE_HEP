@@ -112,6 +112,10 @@ def run(
     max_train = dcfg.get("max_train_events")
     summary: dict[str, Any] = {"status": "skipped"}
 
+    done_before = (run_dir / "model.pt").exists() and (run_dir / "history.json").exists()
+    if done_before and load_json(run_dir / "history.json").get("status") == "done" and "train" in stages:
+        log(f"[{name}] already trained (model.pt present); skipping training")
+        stages = tuple(s for s in stages if s != "train")
     if "train" in stages:
         train_pool = data.pool("bkg_train", max_train)
         val_pool = data.pool("bkg_val")

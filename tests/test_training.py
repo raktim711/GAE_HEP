@@ -81,3 +81,14 @@ def test_evaluate_scores_structure():
     assert 0.6 < h["auc_2p_full"] < 0.95 and h["auc_2p_full"] > h["auc_3p_full"]
     assert set(met["event"]) == {"max", "min", "sum"}
     assert "dcor_mj" in met["correlation"]["jet"]
+
+
+def test_rerun_after_finish_does_not_train_more(tmp_path, scaler):
+    train, val = synthetic_pool(96, seed=1), synthetic_pool(48, seed=2)
+    m = build_model("node_gae", enc_hidden=(8,), node_latent=2, dec_hidden=(8,), k=4)
+    s1 = fit(m, train, val, scaler, _cfg(epochs=2), tmp_path)
+    m2 = build_model("node_gae", enc_hidden=(8,), node_latent=2, dec_hidden=(8,), k=4)
+    s2 = fit(m2, train, val, scaler, _cfg(epochs=2), tmp_path)
+    assert s1["epochs_done"] == s2["epochs_done"] == 2 and len(s2["history"]) == 2
+    for a, b in zip(m.state_dict().values(), m2.state_dict().values(), strict=True):
+        assert torch.equal(a, b)
