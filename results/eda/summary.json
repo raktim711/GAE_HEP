@@ -1,0 +1,35 @@
+{
+  "summary": {
+    "bkg_test": {
+      "n_events": 300000,
+      "frac_in_SR": 0.12204,
+      "mjj_median": 2870.0986328125,
+      "n_const_median": 52.0,
+      "frac_jets_n_const_gt_50": 0.5238933333333333,
+      "frac_jets_n_const_gt_100": 0.08967
+    },
+    "sig_test": {
+      "n_events": 50000,
+      "frac_in_SR": 0.75368,
+      "mjj_median": 3494.70458984375,
+      "n_const_median": 44.0,
+      "frac_jets_n_const_gt_50": 0.39095,
+      "frac_jets_n_const_gt_100": 0.0319
+    },
+    "sig3_test": {
+      "n_events": 100000,
+      "frac_in_SR": 0.79789,
+      "mjj_median": 3511.34521484375,
+      "n_const_median": 58.0,
+      "frac_jets_n_const_gt_50": 0.61101,
+      "frac_jets_n_const_gt_100": 0.095155
+    }
+  },
+  "time": "2026-10-23 00:24:23 CEST",
+  "git": "56d0827",
+  "python": "3.13.16",
+  "numpy": "2.5.4",
+  "host": "vm",
+  "torch": "2.14.1+cu130",
+  "torch_threads": 2
+}

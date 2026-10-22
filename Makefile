@@ -1,0 +1,56 @@
+# Convenience targets.  Override the interpreter with `make PY=python ...` (e.g. on Kaggle/Colab).
+PY ?= /home/claude/.venvs/gaehep/bin/python
+CLI := $(PY) -m gaehep.cli
+SCRATCH ?= /tmp/gaehep_smoke
+
+.PHONY: setup data download preprocess tables splits test lint smoke baselines report train-% flow-% qn-%
+
+setup:
+	$(PY) -m pip install -e ".[dev]"
+
+data: download preprocess tables splits
+
+download:
+	$(CLI) download
+
+preprocess:
+	$(CLI) preprocess --sample rnd
+	$(CLI) preprocess --sample qqq
+
+tables:
+	$(CLI) tables --sample rnd
+	$(CLI) tables --sample qqq
+
+splits:
+	$(CLI) splits
+
+test:
+	$(PY) -m pytest -q -p no:warnings
+
+lint:
+	$(PY) -m ruff check src tests
+	$(PY) -m ruff format --check src tests
+
+# end-to-end run on a small synthetic dataset (no LHCO files needed)
+smoke:
+	rm -rf $(SCRATCH)
+	$(PY) -m gaehep.data.fake --out $(SCRATCH) --n-bkg 8000 --n-sig 1500
+	GAEHEP_DATA=$(SCRATCH) GAEHEP_RESULTS=$(SCRATCH)/results $(CLI) train configs/smoke.yaml --name smoke
+	GAEHEP_DATA=$(SCRATCH) GAEHEP_RESULTS=$(SCRATCH)/results $(CLI) flow smoke
+	GAEHEP_DATA=$(SCRATCH) GAEHEP_RESULTS=$(SCRATCH)/results $(CLI) baselines
+	GAEHEP_DATA=$(SCRATCH) GAEHEP_RESULTS=$(SCRATCH)/results $(CLI) report
+
+baselines:
+	$(CLI) baselines
+
+report:
+	$(CLI) report
+
+train-%:
+	$(CLI) train configs/$*.yaml
+
+flow-%:
+	$(CLI) flow $*
+
+qn-%:
+	$(CLI) qn $*
