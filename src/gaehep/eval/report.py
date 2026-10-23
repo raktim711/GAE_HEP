@@ -36,6 +36,14 @@ def collect(root: Path | None = None) -> list[tuple[str, dict]]:
     return rows
 
 
+def collect_full(root: Path | None = None) -> list[tuple[str, dict]]:
+    root = Path(root) if root else results_dir() / "runs"
+    return [
+        (load_json(p).get("name", p.parent.name), load_json(p)["metrics"])
+        for p in sorted(root.glob("*/metrics.json"))
+    ]
+
+
 def markdown_table(rows: list[tuple[str, dict]]) -> str:
     head = "| run | " + " | ".join(c[1] for c in COLUMNS) + " |"
     sep = "|---|" + "|".join("---:" for _ in COLUMNS) + "|"
@@ -45,13 +53,63 @@ def markdown_table(rows: list[tuple[str, dict]]) -> str:
     return "\n".join(lines)
 
 
+AGGS = ("max", "sum", "min", "prod")
+
+
+def aggregation_table(rows: list[tuple[str, dict]], key: str, fmt: str, region: str = "SR") -> str:
+    """One row per run: ``key`` (auc / max_sic / rej@0.3) for 2-prong and 3-prong, every aggregation."""
+    head = (
+        "| run | " + " | ".join(f"2p {a}" for a in AGGS) + " | " + " | ".join(f"3p {a}" for a in AGGS) + " |"
+    )
+    sep = "|---|" + "|".join("---:" for _ in range(2 * len(AGGS))) + "|"
+    lines = [head, sep]
+    for name, m in rows:
+        cells = []
+        for sk in ("sig_test", "sig3_test"):
+            for a in AGGS:
+                e = m["event"].get(a, {}).get(f"{sk}/{region}")
+                cells.append(_fmt(None if e is None else e[key], fmt))
+        lines.append(f"| {name} | " + " | ".join(cells) + " |")
+    return "\n".join(lines)
+
+
+def sculpting_table(rows: list[tuple[str, dict]]) -> str:
+    lines = [
+        "| run | JSD(m_jj) @εB=10% max | @1% max | @10% prod | @1% prod | dCor(jet score, m_j) | dCor(jet score, n) |",
+        "|---|---:|---:|---:|---:|---:|---:|",
+    ]
+    for name, m in rows:
+        sc = m["sculpting"]
+
+        def get(a, e, sc=sc):
+            return sc.get(a, {}).get("mjj", {}).get(f"jsd@{e}")
+
+        lines.append(
+            f"| {name} | {_fmt(get('max', 0.1), '{:.3f}')} | {_fmt(get('max', 0.01), '{:.3f}')} | "
+            f"{_fmt(get('prod', 0.1), '{:.3f}')} | {_fmt(get('prod', 0.01), '{:.3f}')} | "
+            f"{_fmt(m['correlation']['jet'].get('dcor_mj'), '{:.2f}')} | "
+            f"{_fmt(m['correlation']['jet'].get('dcor_nconst'), '{:.2f}')} |"
+        )
+    return "\n".join(lines)
+
+
 def main() -> str:
     md = markdown_table(collect())
+    full = collect_full()
     out = results_dir() / "summary.md"
     out.write_text(
-        "# Results summary (event score = max over the two leading jets)\n\n"
+        "# Results summary (test splits)\n\n"
         "2p = 2-prong W'->XY(qq) signal, 3p = 3-prong signal (never used for training or tuning), "
-        "SR = 3.3 < m_jj < 3.7 TeV. maxSIC requires >= 50 background test events after the cut.\n\n"
+        "SR = 3.3 < m_jj < 3.7 TeV. Event score from the two jets' scores: max / sum / min, or prod = "
+        "log F_B(s_1) + log F_B(s_2) with F_B the background (validation) CDF of jet scores. "
+        "maxSIC requires >= 50 background test events after the cut.\n\n"
+        "## AUC in the SR\n\n" + aggregation_table(full, "auc", "{:.3f}") + "\n\n"
+        "## max SIC in the SR\n\n" + aggregation_table(full, "max_sic", "{:.2f}") + "\n\n"
+        "## Background rejection 1/εB at εS = 0.3 in the SR\n\n"
+        + aggregation_table(full, "rej@0.3", "{:.1f}")
+        + "\n\n## Sculpting and correlations (background test events)\n\n"
+        + sculpting_table(full)
+        + "\n\n## Headline (max aggregation)\n\n"
         + md
         + "\n"
     )
