@@ -158,6 +158,9 @@ def plot_weak(res: dict, path: Path, title: str = "") -> Path:
         ax.axhline(r["supervised"]["max_sic"], color=line[0].get_color(), ls="--", lw=1)
     ax.axhline(1, color="grey", lw=1, ls=":")
     ax.set_xscale("log")
+    from matplotlib.ticker import FuncFormatter
+
+    ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:g}"))
     ax.set_xlabel("injected S/B in the signal region [%]")
     ax.set_ylabel("max SIC (test)")
     ax.set_title(title)

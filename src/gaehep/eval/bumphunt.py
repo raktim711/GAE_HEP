@@ -124,7 +124,7 @@ def run_bumphunt(
     seeds: Sequence[int] = (0, 1, 2),
 ) -> list[dict[str, float]]:
     rows = []
-    for n in n_inj:
+    for n in [n for n in n_inj if n <= len(mjj_sig)]:  # no injection larger than the signal pool
         for seed in seeds:
             rng = np.random.default_rng([seed, n])
             pick = rng.choice(len(mjj_sig), size=n, replace=False) if n else np.zeros(0, dtype=int)
