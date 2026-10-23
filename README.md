@@ -12,8 +12,9 @@ whose anomaly scores are **invariant to the ordering of jet constituents**.  Thi
 * Raw, unscaled features let pT dominate the MSE → jet-relative, standardised node features.
 * No real bottleneck → graph-level latent (set autoencoder) or a node latent narrower than the node's
   degrees of freedom.
-* Hyper-parameters tuned on test-set AUC, best weights never restored → label-free model selection on
-  background validation loss, deep-copied best state.
+* Hyper-parameters tuned on test-set AUC, best weights never restored → training and early stopping on
+  background only (validation loss, deep-copied best state), design choices on a separate signal
+  *validation* split, test splits for the reported numbers.
 * Data vs MC, prescale weights, selection-driven AUCs → a fully simulated, labelled benchmark with
   literature reference numbers and SIC / sculpting metrics.
 
@@ -23,8 +24,8 @@ See [`RESULTS.md`](RESULTS.md) for the results and their discussion, [`PLAN.md`]
 ## Results in brief
 
 Signal-region (3.3 < m_jj < 3.7 TeV) event AUC on the test splits; the event aggregation of each score was
-chosen on the 2-prong *validation* split and applied unchanged to both signals (the 3-prong signal is never
-used for any choice).  Details, uncertainties and figures in [`RESULTS.md`](RESULTS.md).
+chosen on the 2-prong *validation* split and applied unchanged to both signals (no choice was made with the
+3-prong signal).  Details, uncertainties, figures and the exact protocol in [`RESULTS.md`](RESULTS.md).
 
 | score | 2-prong AUC | 3-prong AUC | m_jj sculpting (JSD, ε_B = 1 %) |
 |---|---:|---:|---:|
@@ -32,17 +33,17 @@ used for any choice).  Details, uncertainties and figures in [`RESULTS.md`](RESU
 | −τ32 (3-prong observable) | 0.688 | **0.854** | 0.014 |
 | jet mass | 0.811 | 0.817 | 0.251 |
 | set autoencoder, Chamfer on constituents | 0.488 | 0.532 | 0.004 |
-| **energy-flow graph VAE** (latent 4, 3 seeds) | 0.829 ± 0.006 | 0.805 ± 0.002 | 0.009 |
+| **energy-flow graph VAE** (latent 4, 3 seeds) | 0.829 ± 0.006 | 0.805 ± 0.002 | 0.008 |
 
 * Constituent-level graph autoencoders are *inverted* detectors here (signal jets are simpler than QCD);
-  reconstructing the IRC-safe energy flow instead fixes this and reaches the level of an oracle density
-  estimate of the background (AUC ≈ 0.80) — the ceiling for background-only scores on this signal.
-* Shorter training and a tighter bottleneck work better: a better background model also reconstructs the
-  signal better.  Latent-space flows add nothing.
-* Unsupervised max SIC is only ≈ 1.6; in an idealised weakly supervised search in the signal region the
-  GNN's permutation-invariant jet latents plus jet masses carry at least as much signal information as the
-  standard (m_J1, Δm_J, τ21_J1, τ21_J2) features (supervised max SIC 15.3 with 8-d latents vs 11.2) and give
-  SIC 8–10 for S/B ≳ 2 %.
+  reconstructing the IRC-safe energy flow instead fixes this and reaches the level of an oracle (histogram)
+  estimate of the background density in (m_J, pT_J, τ21) (AUC ≈ 0.80).
+* On the 2-prong validation split, shorter training and a tighter bottleneck worked better (a better
+  background model also reconstructs the signal better); latent-space flows added nothing.
+* Unsupervised max SIC is only ≈ 1.6.  In the signal region, supervised classifiers on the GNN's
+  permutation-invariant jet latents plus jet masses reach AUC 0.974–0.980 vs 0.970 for the standard
+  (m_J1, Δm_J, τ21_J1, τ21_J2) features; in an idealised weakly supervised search those standard features
+  remain better at every signal fraction, and the GNN representation reaches max SIC 8–10 for S/B ≳ 2 %.
 
 ## Data
 
@@ -50,10 +51,12 @@ LHC Olympics 2020 R&D, Zenodo record [6466204](https://zenodo.org/records/646620
 100k W′(3.5 TeV) → X(500 GeV) Y(100 GeV), X, Y → qq, plus 100k events of a 3-prong variant (X, Y → qqq)
 used only as an *unseen* signal.  Events are clustered into anti-kT R = 1.0 jets (pT > 20 GeV) with
 scikit-hep `fastjet`; the two leading jets are kept with their top-100 constituents.  Our jets match the
-official feature files for 100% of events (relative deviation < 4e-5).
+official feature files for all events within 1e-3 (relative), 99.9 % of them within 1.2e-5.
 
-Splits (seeded): background 60 / 10 / 30 % (train / val / test); 2-prong signal 40 / 10 / 50 % (train/val only
-for the supervised reference); 3-prong signal test only.  Unsupervised models never see signal.
+Splits (seeded): background 60 / 10 / 30 % (train / val / test); 2-prong signal 40 / 10 / 50 %; 3-prong
+signal test only.  Unsupervised models are trained (and early-stopped) on background only; the 2-prong signal
+validation split drives design choices (`gaehep dev`), the 2-prong signal training split trains the
+supervised reference and is the injection pool of the weak-supervision study.
 
 ## Models (all scores permutation invariant; enforced by tests)
 
@@ -74,7 +77,9 @@ Event score = max (also min, sum) over the two leading jets.  Post-hoc variants:
 
 **Development protocol.** Design choices are compared with `gaehep dev <config>` (short training, metrics on
 background *validation* events vs the 2-prong *signal validation* split; `gaehep dev-report` →
-`results/dev/summary.md`).  The test splits and the 3-prong signal are only used for the final numbers.
+`results/dev/summary.md`).  No choice was made with the test splits or the 3-prong signal, although test
+results of earlier models were seen during development (see the note at the top of `RESULTS.md`).  Final
+models: `gaehep dev` → `gaehep promote <dev run> <name>` (scores the same weights on the test splits).
 
 **Weak supervision.** `gaehep weak <run>` trains idealised data-vs-background classifiers (IAD, as in CATHODE /
 "Back To The Roots") in the signal region on the run's permutation-invariant jet latents and on the standard
@@ -91,14 +96,25 @@ gaehep download                    # ~3.2 GB from Zenodo (md5-verified, resumabl
 gaehep preprocess --sample rnd     # ~5 min on 2 cores
 gaehep preprocess --sample qqq
 gaehep tables --sample rnd && gaehep tables --sample qqq && gaehep splits
-gaehep baselines
-gaehep train configs/set_ae.yaml   # train + score + evaluate -> results/runs/set_ae/
-gaehep flow set_ae                 # latent-flow variant
-gaehep report                      # results/summary.md
+gaehep baselines                   # single observables -> results/runs/baseline_*/
+
+# development protocol (validation splits only) and the final model, three seeds
+for s in 1 2 3; do
+  gaehep dev configs/ef_vae.yaml --name ef_vae_dev_s$s --set train.seed=$s   # ~20 min on one core
+  gaehep promote ef_vae_dev_s$s ef_vae_s$s                                  # test splits -> results/runs/
+done
+gaehep ensemble ef_vae_s1 ef_vae_s2 ef_vae_s3 --out ef_vae_3seeds
+gaehep qn ef_vae_3seeds                         # mass-decorrelated variant
+gaehep bumphunt ef_vae_3seeds --agg prod        # sideband-fit bump hunt with injected signal
+gaehep weak ef_vae_s1                           # weak supervision (IAD) on the jet latents vs HL4
+gaehep collapse                                 # legacy AIMS GAE collapse study
+gaehep report && gaehep dev-report              # results/summary.md, results/dev/summary.md
+
+gaehep train configs/set_ae.yaml   # any config: train + score + evaluate -> results/runs/set_ae/
 ```
 
 Data live outside the repo (`GAEHEP_DATA`, default `/home/claude/data/lhco`); results in `results/`.
-[`notebooks/kaggle_gaehep.ipynb`](notebooks/kaggle_gaehep.ipynb) runs the full pipeline at GPU scale on Kaggle (100 constituents, wider models, 3 seeds); reruns resume unfinished runs and skip finished ones.
+[`notebooks/kaggle_gaehep.ipynb`](notebooks/kaggle_gaehep.ipynb) runs the pipeline on a Kaggle GPU: the final models with the validated budget and five seeds each (dev → promote), ensembles, mass decorrelation, bump hunt, the weak-supervision study, and a scale study (wider encoders, 100 constituents, longer training) under the dev protocol; reruns reuse finished runs.
 
 ## Layout
 

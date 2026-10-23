@@ -9,16 +9,21 @@ from gaehep.models import build_model
 from gaehep.models.edgeconv import EdgeConvBlock, EdgeConvEncoder
 from tests.conftest import permute_nodes
 
+# set_ae compares its first n emitted points with the n real constituents, so n_out must cover the padded
+# node count of the test batches (30 stored + 7 extra padding slots)
 MODELS = {
-    "set_ae": dict(hidden=(16, 16), k=4, latent_dim=4, n_out=30, dec_hidden=(32,)),
-    "set_ae_cond": dict(hidden=(16, 16), k=4, latent_dim=4, n_out=30, dec_hidden=(32,), cond_dim=2),
-    "set_ae_sinkhorn": dict(hidden=(16, 16), k=4, latent_dim=4, n_out=30, dec_hidden=(32,), loss="sinkhorn"),
+    "set_ae": dict(hidden=(16, 16), k=4, latent_dim=4, n_out=40, dec_hidden=(32,)),
+    "set_ae_cond": dict(hidden=(16, 16), k=4, latent_dim=4, n_out=40, dec_hidden=(32,), cond_dim=2),
+    "set_ae_sinkhorn": dict(hidden=(16, 16), k=4, latent_dim=4, n_out=40, dec_hidden=(32,), loss="sinkhorn"),
     "node_gae": dict(enc_hidden=(16, 16), node_latent=2, dec_hidden=(16,), k=4),
     "deep_svdd": dict(hidden=(16, 16), k=4, latent_dim=4),
     "classifier": dict(hidden=(16, 16), k=4, head_hidden=(8,)),
-    "set_ae_max": dict(hidden=(16, 16), k=4, latent_dim=4, n_out=30, dec_hidden=(32,), aggr="max"),
+    "set_ae_max": dict(hidden=(16, 16), k=4, latent_dim=4, n_out=40, dec_hidden=(32,), aggr="max"),
     "ef_ae": dict(hidden=(16, 16), k=4, latent_dim=4, n_out=8, dec_hidden=(32,)),
     "ef_ae_cond": dict(hidden=(16, 16), k=4, latent_dim=4, n_out=8, dec_hidden=(32,), cond_dim=2),
+    "ef_ae_vae_recon": dict(  # the final-model configuration (score = reconstruction)
+        hidden=(16, 16), k=4, latent_dim=4, n_out=8, dec_hidden=(32,), variational=True
+    ),
     "ef_ae_vae_kl": dict(
         hidden=(16, 16), k=4, latent_dim=4, n_out=8, dec_hidden=(32,), variational=True, score="kl"
     ),
@@ -34,24 +39,41 @@ def _model(name):
 
 @pytest.mark.parametrize("name", list(MODELS))
 def test_score_invariant_to_node_order_and_padding(name, pool, scaler):
+    """Scores are unchanged when the stored constituents are permuted, and when they are permuted *and*
+    7 extra padding slots are added (padding interleaved with the real nodes)."""
     m = _model(name)
     idx = np.arange(12)
     b0 = make_batch(pool, idx, scaler)
     if name == "deep_svdd":
         m.prepare([b0])
     perm_pool = permute_nodes(pool, seed=3)
-    pad_pool = permute_nodes(pool, seed=4, pad_extra=0)
+    pad_pool = permute_nodes(pool, seed=4, pad_extra=7)
+    b2 = make_batch(pad_pool, idx, scaler)
+    assert b2.x.shape[1] == b0.x.shape[1] + 7
     with torch.no_grad():
         s0 = m.score(b0)
         s1 = m.score(make_batch(perm_pool, idx, scaler))
-        s2 = m.score(make_batch(pad_pool, idx, scaler))
+        s2 = m.score(b2)
     assert torch.allclose(s0, s1, rtol=1e-4, atol=1e-5), (s0 - s1).abs().max()
-    assert torch.allclose(s0, s2, rtol=1e-4, atol=1e-5)
+    assert torch.allclose(s0, s2, rtol=1e-4, atol=1e-5), (s0 - s2).abs().max()
 
 
-@pytest.mark.parametrize("name", ["node_gae", "deep_svdd", "classifier", "ef_ae", "ef_ae_cond"])
+@pytest.mark.parametrize("conv", ["gcn", "gin", "gat", "sage"])
+def test_legacy_gae_score_invariant(conv, pool, scaler):
+    pytest.importorskip("torch_geometric")
+    torch.manual_seed(0)
+    m = build_model(
+        "legacy_gae", in_dim=3, hidden_channels=16, latent_channels=8, dropout=0.0, conv_type=conv
+    ).eval()
+    idx = np.arange(8)
+    with torch.no_grad():
+        s0 = m.score(make_batch(pool, idx, scaler))
+        s1 = m.score(make_batch(permute_nodes(pool, seed=6, pad_extra=5), idx, scaler))
+    assert torch.allclose(s0, s1, rtol=1e-4, atol=1e-3), (s0 - s1).abs().max()
+
+
+@pytest.mark.parametrize("name", list(MODELS))
 def test_score_invariant_to_extra_padding(name, pool, scaler):
-    # set_ae's decoder emits a fixed n_out = batch node count, so only models without that coupling here
     m = _model(name)
     idx = np.arange(10)
     b0 = make_batch(pool, idx, scaler)

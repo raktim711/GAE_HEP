@@ -1,7 +1,10 @@
-# Final model: energy-flow graph *variational* autoencoder with a 4-d jet latent (chosen on the dev split:
-# latent 4 beats 2 and 8; the VAE's KL term is a second, density-like anomaly score). Scores: energy-MMD
+# Final model: energy-flow graph *variational* autoencoder with a 4-d jet latent (best of latent 2 / 4 / 8 on
+# the dev split with single seeds; latent 2 is within the seed spread). The VAE's KL term is a second,
+# density-like score (weak at latent 4, strong at latent 8). Scores: energy-MMD
 # reconstruction ("score"), KL divergence of the jet posterior ("+kl", extra_scores), and their
-# rank ensemble (gaehep ensemble ef_vae ef_vae+kl --out ef_vae+ens).
+# rank ensemble (gaehep ensemble ef_vae ef_vae+kl --out ef_vae+ens).  The reported models were trained with
+# `gaehep dev configs/ef_vae.yaml --name <dev run> --set train.seed=<s>` and scored on the test splits with
+# `gaehep promote <dev run> ef_vae_s<s>`; `gaehep train configs/ef_vae.yaml` uses the same budget.
 model: ef_ae
 model_args:
   hidden: [48, 48, 48]
@@ -15,14 +18,14 @@ model_args:
 extra_scores: [kl]
 data:
   n_const: 50
-train:
-  epochs: 15
-  jets_per_epoch: 200000
+train:                      # = the dev-protocol budget (gaehep dev); longer training lowered the dev AUC
+  epochs: 5
+  jets_per_epoch: 120000
   batch_size: 256
   lr: 1.0e-3
   weight_decay: 1.0e-4
-  patience: 4
-  val_jets: 30000
+  patience: 3
+  val_jets: 20000
   time_budget_min: 100
   threads: 1
   seed: 1

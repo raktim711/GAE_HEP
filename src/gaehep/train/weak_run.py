@@ -76,7 +76,8 @@ def weak_run(
         "latent+m": {s: weak.latent_features(tabs[s], lat[s], with_mass=True) for s in splits},
     }
     res = weak.run_iad(feats, n_inj=n_inj, reps=reps, n_models=n_models, log=log)
-    save_json({"name": name, "results": res, **run_metadata()}, src / "weak.json")
+    settings = {"n_models": n_models, "n_inj": list(n_inj), "reps": list(reps)}
+    save_json({"name": name, "settings": settings, "results": res, **run_metadata()}, src / "weak.json")
     from gaehep.eval.plots import plot_weak
 
     plot_weak(res, src / "figures" / "weak_iad.png", title=f"IAD on {name} latents (SR)")

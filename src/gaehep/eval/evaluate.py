@@ -82,7 +82,7 @@ def evaluate_scores(
                 bs = b_ev[region_mask(b_tab["mjj"], region)]
                 ss = s_ev[region_mask(tables[sk]["mjj"], region)]
                 entry = summarize(ss, bs, min_bkg)
-                if n_boot and agg == "max":
+                if n_boot and agg in ("max", "prod"):
                     entry["bootstrap"] = bootstrap(ss, bs, n_boot=n_boot, min_bkg=min_bkg)
                 res["event"][agg][f"{sk}/{region}"] = entry
         res["sculpting"][agg] = {
