@@ -125,9 +125,33 @@ the rare, symmetric multi-prong energy flows it has not been trained on.  The fi
 (0.02 helps).  The score is strongly mass-correlated; densities on the latent space do not add
 discrimination (per jet, per event, or conditioned on the jet mass), and conditioning on the jet mass does
 not remove the mass correlation of the density score (the conditional entropy of the latent grows with
-m_J), so mass decorrelation is done by quantile normalisation instead.  Sweep (latent 2, finer kernels,
-VAE/KL score, mass-conditioned decoder): *pending*.  Full-scale training and test results (2-prong and
-3-prong): *pending*.
+m_J), so mass decorrelation is done by quantile normalisation instead.
+
+**Longer training hurts.**  The latent-8 model trained 5× longer (15 epochs × 200k jets, 80 min) reaches a
+much lower background reconstruction loss but a *lower* signal efficiency: dev AUC (prod) 0.805 → 0.776,
+heavier-jet AUC 0.745 → 0.698.  The better the autoencoder reproduces the background, the better it also
+reproduces the signal's clean two-prong jets.  The training budget is therefore a hyper-parameter chosen on
+the dev split like the others, and the final models use the short budget (5 epochs × 120k jets).
+
+*test*, latent 8, long training (`results/runs/ef_ae`):
+
+| signal | SR AUC max / sum / min / prod | max SIC (best) | 1/ε_B at ε_S = 0.3 (best) |
+|---|---|---:|---:|
+| 2-prong | 0.701 / 0.731 / 0.764 / 0.780 | 1.39 (prod) | 8.5 (prod) |
+| 3-prong (never used for any choice) | 0.850 / **0.861** / 0.782 / 0.828 | 1.71 (sum) | 25.3 (max) |
+
+The same unsupervised score that is moderate on the 2-prong signal is as good as the best dedicated
+observable on the 3-prong signal (−τ32: 0.854; −τ21 only 0.682), and it barely sculpts the m_jj spectrum
+(JSD 0.010 at ε_B = 1 % for max, 0.008 for prod, versus 0.251 for a jet-mass cut).
+
+Sweep (dev, short budget): latent 2 → 0.821 (prod), finer kernels at latent 4 / mass-conditioned decoder:
+*pending*.  **VAE**: making the latent variational (β = 10⁻³, latent 8) leaves the reconstruction score
+unchanged (0.803) and adds the per-jet KL divergence of the posterior as a second, density-like score:
+0.811 / 0.832 / 0.778 / 0.817 (max / sum / min / prod; heavier jet 0.810).  An equal-weight rank
+ensemble of the two (sum of per-jet background log-CDFs) gives 0.839 (prod), max SIC 1.70.
+
+**Final model** (`configs/ef_vae.yaml`): latent-4 energy-flow VAE, short budget, three seeds, scores =
+reconstruction, KL and their rank ensemble; test results: *pending*.
 
 ## 6. Supervised reference — *pending*
 
