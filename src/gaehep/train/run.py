@@ -21,7 +21,7 @@ from gaehep.data.splits import load_splits
 from gaehep.eval.evaluate import TEST_KEYS, evaluate_scores, make_figures, write_metrics
 from gaehep.models import build_model
 from gaehep.models.latent_flow import LatentFlow
-from gaehep.train.loop import TrainConfig, fit, score_pool
+from gaehep.train.loop import TrainConfig, fit, resolve_device, score_pool
 
 SPLIT_SAMPLE = {
     "bkg_train": "rnd",
@@ -126,7 +126,8 @@ def run(
         if summary["status"] != "done":
             return summary
     else:
-        model.load_state_dict(torch.load(run_dir / "model.pt", weights_only=True))
+        model.load_state_dict(torch.load(run_dir / "model.pt", weights_only=True, map_location="cpu"))
+        model.to(resolve_device(tcfg.device))
         if (run_dir / "history.json").exists():
             summary = load_json(run_dir / "history.json")
 

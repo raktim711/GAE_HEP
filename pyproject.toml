@@ -7,7 +7,7 @@ name = "gaehep"
 version = "0.1.0"
 description = "Permutation-invariant graph autoencoders for anomaly detection on the LHC Olympics 2020 R&D dataset"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 authors = [{ name = "Raktim Mukherjee" }]
 license = { text = "MIT" }
 dependencies = [

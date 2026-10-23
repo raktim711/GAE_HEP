@@ -218,7 +218,8 @@ def fit(
     }
     if status == "done":
         model.load_state_dict(state["best_state"])
-        torch.save(state["best_state"], run_dir / "model.pt")
+        # CPU tensors, so that GPU-trained weights load anywhere
+        torch.save({k: v.detach().cpu() for k, v in state["best_state"].items()}, run_dir / "model.pt")
     save_json(summary, run_dir / "history.json")
     return summary
 

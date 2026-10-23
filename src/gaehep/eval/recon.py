@@ -94,7 +94,7 @@ def recon_figure(run_dir: Path, n_per_class: int = 4, seed: int = 0) -> Path:
     data = Data(n_const=int(cfg.get("data", {}).get("n_const", 50)))
     scaler = data.scaler()
     model = build_model(cfg["model"], **cfg.get("model_args", {}))
-    model.load_state_dict(torch.load(run_dir / "model.pt", weights_only=True))
+    model.load_state_dict(torch.load(run_dir / "model.pt", weights_only=True, map_location="cpu"))
     rng = np.random.default_rng(seed)
     st = data.store("rnd")
     picks, titles = [], []

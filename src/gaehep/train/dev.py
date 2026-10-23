@@ -25,7 +25,7 @@ from gaehep.config import load_json, results_dir, run_metadata, save_json
 from gaehep.eval.evaluate import aggregate, region_mask
 from gaehep.eval.metrics import auc, summarize
 from gaehep.models import build_model
-from gaehep.train.loop import TrainConfig, fit, score_pool
+from gaehep.train.loop import TrainConfig, fit, resolve_device, score_pool
 from gaehep.train.run import Data, extra_score_keys
 
 DEV_MIN_BKG = 20
@@ -89,12 +89,18 @@ def headline(m: dict[str, Any]) -> str:
     )
 
 
-def dev_run(cfg: dict[str, Any], name: str, bkg_events: int | None = None, log=print) -> dict[str, Any]:
+def dev_run(
+    cfg: dict[str, Any], name: str, bkg_events: int | None = None, log=print, data: Data | None = None
+) -> dict[str, Any]:
+    """Train (or reuse) a dev-protocol model and evaluate it on the validation splits.  ``data`` lets a sweep
+    reuse loaded jet pools (it must have the config's ``data.n_const``)."""
     out_dir = dev_dir(name)
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "config.yaml").write_text(yaml.safe_dump(cfg, sort_keys=False))
     dcfg = cfg.get("data", {})
-    data = Data(n_const=int(dcfg.get("n_const", 50)))
+    n_const = int(dcfg.get("n_const", 50))
+    if data is None or data.n_const != n_const:
+        data = Data(n_const=n_const)
     scaler = data.scaler()
     model = build_model(cfg["model"], **cfg.get("model_args", {}))
     if model.supervised:
@@ -103,7 +109,8 @@ def dev_run(cfg: dict[str, Any], name: str, bkg_events: int | None = None, log=p
     log(f"[dev:{name}] {cfg['model']} with {sum(p.numel() for p in model.parameters()):,} parameters")
     hist = out_dir / "history.json"
     if (out_dir / "model.pt").exists() and hist.exists() and load_json(hist).get("status") == "done":
-        model.load_state_dict(torch.load(out_dir / "model.pt", weights_only=True))
+        model.load_state_dict(torch.load(out_dir / "model.pt", weights_only=True, map_location="cpu"))
+        model.to(resolve_device(tcfg.device))
         summary = load_json(hist)
     else:
         t0 = time.time()
@@ -204,7 +211,7 @@ def dev_eval_run(run: str, log=print) -> dict[str, Any]:
     data = Data(n_const=int(cfg.get("data", {}).get("n_const", 50)))
     scaler = data.scaler()
     model = build_model(cfg["model"], **cfg.get("model_args", {}))
-    model.load_state_dict(torch.load(src / "model.pt", weights_only=True))
+    model.load_state_dict(torch.load(src / "model.pt", weights_only=True, map_location="cpu"))
     torch.set_num_threads(TrainConfig.from_dict(cfg.get("train")).threads)
     with np.load(src / "scores.npz") as f:
         s_bkg = f["bkg_val"] if "bkg_val" in f.files else None

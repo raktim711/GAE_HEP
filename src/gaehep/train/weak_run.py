@@ -11,7 +11,7 @@ import yaml
 from gaehep.config import run_metadata, save_json
 from gaehep.eval import weak
 from gaehep.models import build_model
-from gaehep.train.loop import TrainConfig, score_pool
+from gaehep.train.loop import TrainConfig, resolve_device, score_pool
 from gaehep.train.run import SPLIT_SAMPLE, Data, _run_dir
 
 KEYS = ("mjj", "m", "tau1", "tau2")
@@ -35,8 +35,10 @@ def sr_latents(name: str, data: Data, splits=("bkg_train", "sig_train", "bkg_tes
                 return {k: f[k] for k in keys}
     cfg = yaml.safe_load((src / "config.yaml").read_text())
     model = build_model(cfg["model"], **cfg.get("model_args", {}))
-    model.load_state_dict(torch.load(src / "model.pt", weights_only=True))
-    torch.set_num_threads(TrainConfig.from_dict(cfg.get("train")).threads)
+    model.load_state_dict(torch.load(src / "model.pt", weights_only=True, map_location="cpu"))
+    tcfg = TrainConfig.from_dict(cfg.get("train"))
+    torch.set_num_threads(tcfg.threads)
+    model.to(resolve_device(tcfg.device))
     scaler = data.scaler()
     out = {}
     for s in splits:

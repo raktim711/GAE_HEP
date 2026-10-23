@@ -88,7 +88,7 @@ def collapse_study(
         d = results_dir() / "dev" / run
         cfg = yaml.safe_load((d / "config.yaml").read_text())
         m = build_model(cfg["model"], **cfg["model_args"])
-        m.load_state_dict(torch.load(d / "model.pt", weights_only=True))
+        m.load_state_dict(torch.load(d / "model.pt", weights_only=True, map_location="cpu"))
         out["trained"][run] = layer_shares(m.eval(), b)
         log(f"[collapse] {run} trained: " + " / ".join(f"{v:.2g}" for v in out["trained"][run]))
     save_json({**out, **run_metadata()}, results_dir() / "legacy_collapse.json")

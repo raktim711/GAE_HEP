@@ -61,6 +61,17 @@ def main(argv: list[str] | None = None) -> int:
         s.add_argument("run")
         if name == "flow":
             s.add_argument("--conditional", action="store_true", help="p(z | log m_j, log pT_j)")
+    sw = sub.add_parser("sweep", help="dev-protocol grid sweep -> seed confirmation -> test evaluation")
+    sw.add_argument("config", type=Path)
+    sw.add_argument("--prefix", default="sw")
+    sw.add_argument("--device", default="auto")
+    sw.add_argument("--threads", type=int, default=1)
+    sw.add_argument("--budget-hours", type=float, default=8.0)
+    sw.add_argument("--grid", default=None, help='YAML dict, e.g. "{latent_dim: [4], beta: [0.001], ...}"')
+    sw.add_argument("--top-k", type=int, default=3)
+    sw.add_argument("--seeds", type=int, default=3)
+    sw.add_argument("--final-seeds", type=int, default=5)
+    sw.add_argument("--set", action="append", default=[], help="fixed override, e.g. data.n_const=100")
     co = sub.add_parser("collapse", help="node-embedding collapse of the legacy GAE on real jets")
     co.add_argument("--dev-runs", nargs="*", default=[])
     wk = sub.add_parser("weak", help="idealised weak supervision (IAD) on a run's jet latents vs HL4")
@@ -147,6 +158,24 @@ def main(argv: list[str] | None = None) -> int:
         R.latent_flow_variant(a.run, conditional=a.conditional)
     elif a.cmd == "qn":
         R.quantile_normalised_variant(a.run)
+    elif a.cmd == "sweep":
+        from gaehep.train.sweep import sweep
+
+        fixed = {"train.device": a.device, "train.threads": a.threads}
+        for item in a.set:
+            k, _, v = item.partition("=")
+            fixed[k] = yaml.safe_load(v)
+        sweep(
+            str(a.config),
+            prefix=a.prefix,
+            grid=yaml.safe_load(a.grid) if a.grid else None,
+            overrides=fixed,
+            budget_hours=a.budget_hours,
+            top_k=a.top_k,
+            n_seeds=a.seeds,
+            final_seeds=a.final_seeds,
+            log=_log,
+        )
     elif a.cmd == "collapse":
         from gaehep.eval.collapse import collapse_study
 
