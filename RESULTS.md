@@ -72,13 +72,18 @@ raw (pT, η, φ) node features, node-wise MLP decoder, MSE score) cannot represe
   GCN and GIN are identical across nodes from the first layer (machine precision); GAT and SAGE shrink the
   within-jet differences by orders of magnitude per layer (GAT's attention ranks the keys identically for
   every query, and in SAGE-sum the neighbour sum outweighs the root term by a factor ~N).  Only SAGE, with
-  its separate root weight, can learn to undo this; trained models: *pending*.
+  its separate root weight, could learn to undo this — but it does not: after training on LHCO (dev
+  budget) the latent share is 3e-7 for SAGE and 4e-16 for GCN.
 * Consequence: the decoder reconstructs all objects of an event with one vector, so the AIMS anomaly score
   measured how far the raw (pT, η, φ) of the objects scatter around their event mean — an event-level
   statistic, not a learned graph representation.
 
+Trained on LHCO jets with the AIMS hyper-parameters (top-30 constituents, dev budget), the legacy GCN and
+SAGE autoencoders behave identically and are useless as anomaly detectors: SR event AUC 0.49 / 0.52 /
+0.61 / 0.59 (max / sum / min / prod), anti-correlated with multiplicity (ρ = −0.70) and mass (ρ = −0.43).
+
 GAE_HEP therefore uses local k-NN graphs in (Δη, Δφ), EdgeConv blocks with dynamic graphs, standardised
-jet-relative features and an explicit bottleneck.  Legacy models on LHCO (dev): *pending*.
+jet-relative features and an explicit bottleneck.
 
 ## 4. Constituent-level graph autoencoders are inverted anomaly detectors
 

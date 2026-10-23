@@ -39,13 +39,13 @@
       "seed": 1
     }
   },
-  "time": "2026-10-23 09:13:38 CEST",
-  "git": "0673fcf",
+  "time": "2026-10-23 12:15:48 CEST",
+  "git": "93bff21",
   "python": "3.13.16",
   "numpy": "2.5.4",
   "host": "vm",
   "torch": "2.14.1+cu130",
-  "torch_threads": 1,
+  "torch_threads": 2,
   "headline": {
     "auc_2p_SR": 0.7008686406703166,
     "maxsic_2p_SR": 1.190982329009321,

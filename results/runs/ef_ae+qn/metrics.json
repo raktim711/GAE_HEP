@@ -1,11 +1,8 @@
 {
   "name": "ef_ae+qn",
-  "config": {
-    "posthoc": "mass_quantile_normalisation",
-    "source": "ef_ae"
-  },
-  "time": "2026-10-23 09:23:35 CEST",
-  "git": "0673fcf",
+  "config": null,
+  "time": "2026-10-23 12:16:09 CEST",
+  "git": "93bff21",
   "python": "3.13.16",
   "numpy": "2.5.4",
   "host": "vm",

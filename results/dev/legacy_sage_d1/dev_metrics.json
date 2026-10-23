@@ -1,0 +1,105 @@
+{
+  "name": "legacy_sage_d1",
+  "metrics": {
+    "full/max": {
+      "auc": 0.570347398,
+      "max_sic": 1.0453460037153977,
+      "rej@0.3": 3.592728317884602
+    },
+    "full/sum": {
+      "auc": 0.600245487,
+      "max_sic": 1.060093102734323,
+      "rej@0.3": 3.9931318132811566
+    },
+    "full/min": {
+      "auc": 0.6727784565,
+      "max_sic": 1.1216483759264415,
+      "rej@0.3": 5.7514234773106345
+    },
+    "full/prod": {
+      "auc": 0.664964972,
+      "max_sic": 1.1163723569555541,
+      "rej@0.3": 5.482756730083886
+    },
+    "full/jet": {
+      "auc": 0.601844934
+    },
+    "full/heavy_jet": {
+      "auc": 0.6443380864999999
+    },
+    "full/light_jet": {
+      "auc": 0.562803893
+    },
+    "SR/max": {
+      "auc": 0.49661496397195254,
+      "max_sic": 1.0153821325502035,
+      "rej@0.3": 2.823746823746824
+    },
+    "SR/sum": {
+      "auc": 0.5228189932642074,
+      "max_sic": 1.0222080873940655,
+      "rej@0.3": 3.0332506203473946
+    },
+    "SR/min": {
+      "auc": 0.6098507344084583,
+      "max_sic": 1.0611665487186785,
+      "rej@0.3": 4.207917383820998
+    },
+    "SR/prod": {
+      "auc": 0.5933049812668867,
+      "max_sic": 1.0515331871941394,
+      "rej@0.3": 3.9947712418300654
+    },
+    "SR/jet": {
+      "auc": 0.5437367445246722
+    },
+    "SR/heavy_jet": {
+      "auc": 0.5877983575418035
+    },
+    "SR/light_jet": {
+      "auc": 0.5018018129375847
+    },
+    "bkg_spearman": {
+      "m": -0.4266123225595505,
+      "n_const": -0.6991758870432883,
+      "tau21": 0.04314269745015539
+    }
+  },
+  "best_val_loss": 2809.72624375,
+  "epochs": 5,
+  "train_minutes": 6.556139707565308,
+  "score_minutes": 1.3200127482414246,
+  "config": {
+    "model": "legacy_gae",
+    "model_args": {
+      "conv_type": "sage",
+      "hidden_channels": 128,
+      "latent_channels": 16,
+      "dropout": 0.1,
+      "sage_aggr": "sum"
+    },
+    "data": {
+      "n_const": 30,
+      "max_train_events": 200000
+    },
+    "train": {
+      "epochs": 5,
+      "jets_per_epoch": 120000,
+      "batch_size": 100,
+      "lr": 0.001,
+      "weight_decay": 1e-05,
+      "patience": 3,
+      "time_budget_min": 100,
+      "seed": 1,
+      "val_jets": 20000,
+      "threads": 1
+    }
+  },
+  "time": "2026-10-23 12:12:39 CEST",
+  "git": "93bff21",
+  "python": "3.13.16",
+  "numpy": "2.5.4",
+  "host": "vm",
+  "torch": "2.14.1+cu130",
+  "torch_threads": 1
+}
