@@ -182,6 +182,34 @@ def _save_dev(
     return res
 
 
+def dev_ensemble(names: list[str], out_name: str, log=print) -> dict[str, Any]:
+    """Rank ensemble of dev entries (several seeds, or a VAE's reconstruction and KL scores): per jet, the
+    average of the entries' background-validation CDF values, evaluated like a dev run (as
+    :func:`gaehep.train.run.ensemble_variant` does for test runs)."""
+    from gaehep.train.run import _ecdf
+
+    per = []
+    for n in names:
+        with np.load(dev_dir(n) / "dev_scores.npz") as f:
+            per.append((f["bkg_val"].astype(np.float64), f["sig_val"].astype(np.float64)))
+    if len({b.shape for b, _ in per}) != 1:
+        raise ValueError(f"dev entries scored on different background events: {names}")
+    acc_b, acc_s = np.zeros_like(per[0][0]), np.zeros_like(per[0][1])
+    for b, s in per:
+        ref = np.sort(b.ravel())
+        acc_b += _ecdf(ref, b)
+        acc_s += _ecdf(ref, s)
+    res = _save_dev(
+        out_name,
+        acc_b / len(per),
+        acc_s / len(per),
+        Data(n_const=50),
+        {"source_runs": list(names), "posthoc": "rank_ensemble", "train_minutes": 0},
+    )
+    log(f"[dev:{out_name}] {headline(res['metrics'])}")
+    return res
+
+
 def dev_rescore(root: Path | None = None, log=print) -> None:
     """Recompute the metrics of every dev entry that has saved validation scores (after metric changes)."""
     root = Path(root) if root else results_dir() / "dev"

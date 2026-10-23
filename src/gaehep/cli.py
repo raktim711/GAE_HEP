@@ -53,6 +53,9 @@ def main(argv: list[str] | None = None) -> int:
     pr.add_argument("name")
     rc = sub.add_parser("recon", help="input vs reconstruction figure of a (dev) run directory")
     rc.add_argument("run_dir", type=Path)
+    dn = sub.add_parser("dev-ensemble", help="rank ensemble of dev entries (seeds, or rec + KL scores)")
+    dn.add_argument("runs", nargs="+")
+    dn.add_argument("--out", required=True)
     df = sub.add_parser("dev-flow", help="latent-flow variants of a dev run")
     df.add_argument("run")
     df.add_argument("--kinds", default="flow,cflow,eflow", help="comma list of flow, cflow, eflow")
@@ -128,6 +131,10 @@ def main(argv: list[str] | None = None) -> int:
         from gaehep.train.dev import dev_eval_run
 
         dev_eval_run(a.run, log=_log)
+    elif a.cmd == "dev-ensemble":
+        from gaehep.train.dev import dev_ensemble
+
+        dev_ensemble(a.runs, a.out, log=_log)
     elif a.cmd == "dev-flow":
         from gaehep.train.dev import dev_flow
 
