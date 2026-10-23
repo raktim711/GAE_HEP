@@ -230,6 +230,28 @@ mass information (ceiling 5.4).  Our data and template samples are about three t
 literature, so absolute SICs at fixed S/B are lower than published HL4 numbers (IAD / CATHODE max SIC
 ≈ 10–15 at S/B ≈ 0.6 % with ≈ 121k background events; see `docs/literature.md`).
 
-## 8. Bump hunt — *pending*
+## 8. Bump hunt
+
+`gaehep bumphunt`: n signal events (test split) are injected into the 300k background test events, a cut on
+the event score keeps a fraction ε of the *sideband* events (fixed threshold, or with `--mode qr` an
+m_jj-dependent threshold fitted to the sideband score quantiles that keeps the background efficiency flat
+in m_jj), the 4-parameter dijet function is fitted to the sidebands (2.7–5.0 TeV without the SR) and the
+local significance in the SR is Z = √(2(n ln(n/b) − (n − b))).  Mean Z over 3 signal draws (fixed cut):
+
+| injected (≈ 75 % in SR) | no cut | −τ21 (sum), ε = 10 % | ε = 2 % | EF-VAE (prod), ε = 10 % | ε = 2 % |
+|---:|---:|---:|---:|---:|---:|
+| 0 | −0.2 | −0.4 | −1.3 | −4.6 | −2.4 |
+| 300 | +0.8 | +1.6 | +0.8 | −3.2 | −2.0 |
+| 600 | +1.8 | +3.8 | +3.0 | −1.9 | −1.5 |
+| 1200 | +3.7 | **+7.8** | +6.4 | +0.6 | −0.4 |
+
+A −τ21 cut doubles the significance of the injected signal.  The unsupervised EF-VAE score does not: its SIC
+exceeds 1 only for loose cuts (ε_S ≳ 0.5, Fig. `results/figures/sic_2prong_SR.png`), so any cut tight enough to
+matter removes signal faster than √background.  At zero injection the EF-VAE cut leaves a deficit in the
+SR: the background efficiency of the cut is about 5 % lower in the two SR bins than in the neighbouring
+sidebands (0.093–0.096 vs 0.099–0.105 for a 10 % cut), which with 36k SR events and a significance that
+ignores the uncertainty of the fit and of the efficiency appears as −4σ.  The m_jj-dependent cut does not
+change this (it equalises the efficiency *between* sidebands, not inside the SR).  A bump hunt with this
+score would need the weakly supervised classifier of §7, not the raw unsupervised score.
 
 ## 9. Conclusions — *pending*
