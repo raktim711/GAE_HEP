@@ -220,18 +220,21 @@ signal), 3 injection repetitions.  Event features are symmetric in the two jets 
 | injected S/B in SR | 0.41 % | 0.83 % | 1.7 % | 3.3 % | 8.3 % | supervised, same features |
 |---|---:|---:|---:|---:|---:|---:|
 | HL4: m_J1, Δm_J, τ21_J1, τ21_J2 | 1.6 | **7.0** | **9.4** | **10.1** | **10.6** | 11.2 |
-| GNN latents of both jets (2 × 4) | 1.0 | 1.1 | 1.5 | 3.2 | 4.0 | 5.4 |
-| GNN latents + jet masses | 1.0 | 1.8 | 8.0 | 8.9 | 9.2 | 11.0 |
-| GNN anomaly scores + jet masses | 1.3 | 4.1 | 6.7 | 7.0 | 7.1 | 7.4 |
+| latent-4 VAE: latents of both jets (2 × 4) | 1.0 | 1.1 | 1.5 | 3.2 | 4.0 | 5.4 |
+| latent-4 VAE: latents + jet masses | 1.0 | 1.8 | 8.0 | 8.9 | 9.2 | 11.0 |
+| latent-4 VAE: anomaly scores + jet masses | 1.3 | 4.1 | 6.7 | 7.0 | 7.1 | 7.4 |
+| latent-8 VAE: latents of both jets (2 × 8) | 1.0 | 1.1 | 1.5 | 4.6 | 6.6 | 10.9 |
+| latent-8 VAE: latents + jet masses | 1.0 | 1.5 | 7.6 | 9.3 | 10.3 | **15.3** |
 
 (max SIC on the test events, mean of 3 repetitions; `results/runs/ef_vae_s1/weak.json`,
-`figures/weak_iad.png`.)  The permutation-invariant GNN representation, learned without labels and
-without any physics input beyond the energy flow, plus the two jet masses carries as much information about
-the signal as the expert-designed HL4 features (supervised ceilings 11.0 vs 11.2), and with ≳ 2 % signal
-the idealised weakly supervised search on it reaches max SIC ≈ 8–9 — five to six times the purity of any
-unsupervised score.  At lower signal fractions the 10-dimensional representation needs more signal than
-the 4-dimensional HL4 to be found (1.8 vs 7.0 at S/B = 0.8 %).  The 4-d latents alone miss part of the
-mass information (ceiling 5.4).  Our data and template samples are about three times smaller than in the
+`results/runs/ef_vae8_s1/weak.json`, `figures/weak_iad.png`.)  The permutation-invariant GNN representation,
+learned without labels and without any physics input beyond the energy flow, carries at least as much
+information about the signal as the expert-designed HL4 features: with the two jet masses added, the
+supervised ceiling is 11.0 (latent 4) and 15.3 (latent 8) against 11.2 for HL4, and the 8-dimensional
+latents alone already reach 10.9.  With ≳ 2 % signal the idealised weakly supervised search on them reaches
+max SIC ≈ 8–10, five to six times the purity of any unsupervised score.  At lower signal fractions the 10–18
+dimensional representation needs more signal than the 4-dimensional HL4 to be found (1.5–1.8 vs 7.0 at
+S/B = 0.8 %): the usual price of richer inputs in weak supervision.  Our data and template samples are about three times smaller than in the
 literature, so absolute SICs at fixed S/B are lower than published HL4 numbers (IAD / CATHODE max SIC
 ≈ 10–15 at S/B ≈ 0.6 % with ≈ 121k background events; see `docs/literature.md`).
 
@@ -282,10 +285,11 @@ score would need the weakly supervised classifier of §7, not the raw unsupervis
    background model also reconstructs the signal better.  Latent-space densities (flows, conditional flows,
    event-level flows) add nothing.  Unsupervised scores give max SIC ≈ 1.5–1.7, below a dedicated
    observable on its own signal (τ21: 2.3) and too little for a bump hunt.
-5. **The learned representation is nevertheless as informative as expert features.**  Fed to an idealised
-   weakly supervised classifier in the signal region, the permutation-invariant jet latents plus the two jet
-   masses reach the same supervised ceiling as (m_J1, Δm_J, τ21_J1, τ21_J2) (max SIC 11.0 vs 11.2) and max
-   SIC 8–9 once the signal fraction is ≳ 2 %; HL4 needs less signal (SIC 7.0 at 0.8 %).
+5. **The learned representation is nevertheless at least as informative as expert features.**  Fed to an
+   idealised weakly supervised classifier in the signal region, the permutation-invariant jet latents plus
+   the two jet masses reach a supervised ceiling of 11.0 (latent 4) and 15.3 (latent 8) against 11.2 for
+   (m_J1, Δm_J, τ21_J1, τ21_J2), and max SIC 8–10 once the signal fraction is ≳ 2 %; HL4 needs less signal
+   (SIC 7.0 at 0.8 %).
 
 **Limitations.**  CPU-only training (2 cores): small models (48-wide EdgeConv, top-50 constituents) and short
 budgets; the GPU notebook repeats the final models with five seeds and a scale study.  One signal model per

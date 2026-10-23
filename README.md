@@ -40,8 +40,9 @@ used for any choice).  Details, uncertainties and figures in [`RESULTS.md`](RESU
 * Shorter training and a tighter bottleneck work better: a better background model also reconstructs the
   signal better.  Latent-space flows add nothing.
 * Unsupervised max SIC is only ≈ 1.6; in an idealised weakly supervised search in the signal region the
-  GNN's permutation-invariant jet latents plus jet masses reach the same supervised ceiling as the standard
-  (m_J1, Δm_J, τ21_J1, τ21_J2) features (max SIC 11.0 vs 11.2) and SIC 8–9 for S/B ≳ 2 %.
+  GNN's permutation-invariant jet latents plus jet masses carry at least as much signal information as the
+  standard (m_J1, Δm_J, τ21_J1, τ21_J2) features (supervised max SIC 15.3 with 8-d latents vs 11.2) and give
+  SIC 8–10 for S/B ≳ 2 %.
 
 ## Data
 
