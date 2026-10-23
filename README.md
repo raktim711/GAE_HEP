@@ -6,8 +6,9 @@ whose anomaly scores are **invariant to the ordering of jet constituents**.  Thi
 (graph autoencoders on ATLAS HLT objects), fixing the problems found there:
 
 * On complete graphs `GCNConv` and `GINConv` (ε = 0) give **every node of a graph the same embedding**
-  (verified in `tests/test_legacy_collapse.py`), so the AIMS GCN/GIN autoencoders reconstructed all objects
-  of an event with one vector; this repo uses local k-NN graphs and EdgeConv instead.
+  (verified in `tests/test_legacy_collapse.py`), and GAT / SAGE(sum) collapse within a few layers on real
+  jets (`gaehep collapse`), so the AIMS autoencoders reconstructed all objects of an event with one vector;
+  this repo uses local k-NN graphs and EdgeConv instead.
 * Raw, unscaled features let pT dominate the MSE → jet-relative, standardised node features.
 * No real bottleneck → graph-level latent (set autoencoder) or a node latent narrower than the node's
   degrees of freedom.
@@ -16,7 +17,31 @@ whose anomaly scores are **invariant to the ordering of jet constituents**.  Thi
 * Data vs MC, prescale weights, selection-driven AUCs → a fully simulated, labelled benchmark with
   literature reference numbers and SIC / sculpting metrics.
 
-See [`PLAN.md`](PLAN.md) for the full plan and [`docs/literature.md`](docs/literature.md) for reference results.
+See [`RESULTS.md`](RESULTS.md) for the results and their discussion, [`PLAN.md`](PLAN.md) for the plan and
+[`docs/literature.md`](docs/literature.md) for reference results.
+
+## Results in brief
+
+Signal-region (3.3 < m_jj < 3.7 TeV) event AUC on the test splits; the event aggregation of each score was
+chosen on the 2-prong *validation* split and applied unchanged to both signals (the 3-prong signal is never
+used for any choice).  Details, uncertainties and figures in [`RESULTS.md`](RESULTS.md).
+
+| score | 2-prong AUC | 3-prong AUC | m_jj sculpting (JSD, ε_B = 1 %) |
+|---|---:|---:|---:|
+| −τ21 (2-prong observable) | **0.893** | 0.658 | 0.018 |
+| −τ32 (3-prong observable) | 0.688 | **0.854** | 0.014 |
+| jet mass | 0.811 | 0.817 | 0.251 |
+| set autoencoder, Chamfer on constituents | 0.488 | 0.532 | 0.004 |
+| **energy-flow graph VAE** (latent 4, 3 seeds) | 0.829 ± 0.006 | 0.805 ± 0.002 | 0.009 |
+
+* Constituent-level graph autoencoders are *inverted* detectors here (signal jets are simpler than QCD);
+  reconstructing the IRC-safe energy flow instead fixes this and reaches the level of an oracle density
+  estimate of the background (AUC ≈ 0.80) — the ceiling for background-only scores on this signal.
+* Shorter training and a tighter bottleneck work better: a better background model also reconstructs the
+  signal better.  Latent-space flows add nothing.
+* Unsupervised max SIC is only ≈ 1.6; in an idealised weakly supervised search in the signal region the
+  GNN's permutation-invariant jet latents plus jet masses reach the same supervised ceiling as the standard
+  (m_J1, Δm_J, τ21_J1, τ21_J2) features (max SIC 11.0 vs 11.2) and SIC 8–9 for S/B ≳ 2 %.
 
 ## Data
 
