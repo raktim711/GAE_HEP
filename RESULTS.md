@@ -333,7 +333,8 @@ would be the tool for that.
    On the 2-prong dev split a tighter bottleneck and shorter training helped (a better background model also
    reconstructs the signal better), latent-space densities (flows, conditional flows, event-level flows) did
    not.  Unsupervised GNN scores give max SIC ≈ 1.5–1.7, below a dedicated observable on its own signal
-   (τ21: 2.3) and too little to help a bump hunt.
+   (τ21: 2.3) and too little to help a bump hunt; against a supervised EdgeConv classifier (AUC 0.982,
+   max SIC 15.7) they recover two thirds of the AUC excess but only ≈ 4 % of the SIC excess.
 5. **The learned representation carries signal information comparable to expert features.**  In the signal
    region, supervised classifiers on the permutation-invariant jet latents plus the two jet masses reach AUC
    0.974–0.980 against 0.970 for (m_J1, Δm_J, τ21_J1, τ21_J2).  In the idealised weakly supervised search
