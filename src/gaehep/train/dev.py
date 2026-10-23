@@ -136,6 +136,62 @@ def dev_run(cfg: dict[str, Any], name: str, bkg_events: int | None = None, log=p
     return res
 
 
+def _save_dev(name: str, s_bkg: np.ndarray, s_sig: np.ndarray, data: Data, extra: dict[str, Any]) -> dict:
+    metrics = dev_metrics(s_bkg, s_sig, _tab(data, "bkg_val", None), _tab(data, "sig_val", None))
+    res = {"name": name, "metrics": metrics, **extra, **run_metadata()}
+    dev_dir(name).mkdir(parents=True, exist_ok=True)
+    save_json(res, dev_dir(name) / "dev_metrics.json")
+    return res
+
+
+def dev_eval_run(run: str, log=print) -> dict[str, Any]:
+    """Dev metrics of a fully trained run in ``results/runs/<run>`` (bkg_val scores reused, sig_val scored)."""
+    from gaehep.train.run import _run_dir
+
+    src = _run_dir(run)
+    cfg = yaml.safe_load((src / "config.yaml").read_text())
+    data = Data(n_const=int(cfg.get("data", {}).get("n_const", 50)))
+    scaler = data.scaler()
+    model = build_model(cfg["model"], **cfg.get("model_args", {}))
+    model.load_state_dict(torch.load(src / "model.pt", weights_only=True))
+    torch.set_num_threads(TrainConfig.from_dict(cfg.get("train")).threads)
+    with np.load(src / "scores.npz") as f:
+        s_bkg = f["bkg_val"] if "bkg_val" in f.files else None
+    if s_bkg is None:
+        s_bkg = score_pool(model, data.pool("bkg_val"), scaler)["score"].reshape(-1, 2)
+    s_sig = score_pool(model, data.pool("sig_val"), scaler)["score"].reshape(-1, 2)
+    hist = load_json(src / "history.json") if (src / "history.json").exists() else {}
+    res = _save_dev(
+        f"{run}@full",
+        s_bkg,
+        s_sig,
+        data,
+        {
+            "source_run": run,
+            "best_val_loss": hist.get("best_val_loss"),
+            "epochs": hist.get("epochs_done"),
+            "train_minutes": sum(h.get("seconds", 0) for h in hist.get("history", [])) / 60,
+            "config": cfg,
+        },
+    )
+    log(f"[dev:{run}@full] {headline(res['metrics'])}")
+    return res
+
+
+def dev_baselines(log=print) -> None:
+    """Single-observable references under the dev protocol."""
+    from gaehep.eval.evaluate import observable_scores
+
+    data = Data(n_const=50)
+    st = data.store("rnd")
+    keys = ("m", "n_const", "tau1", "tau2", "tau3")
+    ob = observable_scores({k: st[k][data.events("bkg_val")] for k in keys})
+    os_ = observable_scores({k: st[k][data.events("sig_val")] for k in keys})
+    for obs in ob:
+        res = _save_dev(f"baseline_{obs}", ob[obs], os_[obs], data, {"baseline": obs, "train_minutes": 0})
+        log(f"[dev:baseline_{obs}] {headline(res['metrics'])}")
+
+
 def dev_report(root: Path | None = None) -> str:
     root = Path(root) if root else results_dir() / "dev"
     lines = [

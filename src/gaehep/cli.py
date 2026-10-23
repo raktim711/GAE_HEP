@@ -44,6 +44,9 @@ def main(argv: list[str] | None = None) -> int:
     d.add_argument("--set", action="append", default=[], help="override, e.g. train.epochs=5")
     d.add_argument("--bkg-events", type=int, default=None, help="background-validation events to score")
     sub.add_parser("dev-report", help="table of all dev runs -> results/dev/summary.md")
+    de = sub.add_parser("dev-eval", help="dev metrics (validation splits) of a fully trained run")
+    de.add_argument("run")
+    sub.add_parser("dev-baselines", help="single-observable references under the dev protocol")
     for name in ("evaluate", "flow", "qn"):
         s = sub.add_parser(name)
         s.add_argument("run")
@@ -90,6 +93,14 @@ def main(argv: list[str] | None = None) -> int:
             _set(cfg, s)
         res = dev_run(cfg, a.name or a.config.stem, bkg_events=a.bkg_events, log=_log)
         print(f"[dev:{a.name or a.config.stem}] status: {res.get('status', 'done')}")
+    elif a.cmd == "dev-eval":
+        from gaehep.train.dev import dev_eval_run
+
+        dev_eval_run(a.run, log=_log)
+    elif a.cmd == "dev-baselines":
+        from gaehep.train.dev import dev_baselines
+
+        dev_baselines(log=_log)
     elif a.cmd == "dev-report":
         from gaehep.train.dev import dev_report
 
