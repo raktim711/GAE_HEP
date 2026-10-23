@@ -112,17 +112,22 @@ so the score depends on the hard prong structure rather than on soft multiplicit
 
 | variant | SR AUC max / sum / min / prod | max SIC (prod) | ρ(score, m_J) on QCD |
 |---|---|---:|---:|
-| kernels 0.02–0.4 | 0.740 / 0.774 / 0.786 / **0.805** | 1.50 | +0.76 |
-| kernels 0.05–0.4 | 0.698 / 0.720 / 0.762 / 0.779 | 1.45 | +0.84 |
-| + latent flow, −log p(z) | 0.714 / 0.770 / 0.748 / – | – | +0.83 |
-| + conditional latent flow, −log p(z \| m_J, pT_J) | 0.674 / 0.752 / 0.747 / – | – | +0.80 |
+| latent 8, kernels 0.02–0.4 | 0.740 / 0.774 / 0.786 / 0.805 | 1.50 | +0.76 |
+| latent 8, kernels 0.05–0.4 | 0.698 / 0.720 / 0.762 / 0.779 | 1.45 | +0.84 |
+| **latent 4**, kernels 0.02–0.4 | 0.769 / 0.805 / 0.810 / **0.829** | 1.55 | +0.71 |
+| latent 8 + latent flow, −log p(z) | 0.714 / 0.770 / 0.748 / – | – | +0.83 |
+| latent 8 + conditional latent flow, −log p(z \| m_J, pT_J) | 0.674 / 0.752 / 0.747 / – | – | +0.80 |
+| latent 8 + event-level flow, −log p(z_light, z_heavy) | 0.765 (event score) | 1.41 | +0.58 |
 
-The inversion is gone and the energy-flow AE reaches the oracle-density level of §2 (0.805 vs 0.799).  The
-fine kernel scale matters (0.02 helps).  The score is strongly mass-correlated; a latent density does not
-add discrimination, and conditioning the density on the jet mass does not remove the mass correlation of
-the score (the conditional entropy of the latent grows with m_J), so mass decorrelation is done by
-quantile normalisation instead.  Sweep (latent size, finer kernels, VAE/KL score, mass-conditioned
-decoder): *pending*.  Full-scale training and test results (2-prong and 3-prong): *pending*.
+The inversion is gone and the energy-flow AE reaches (latent 8) and passes (latent 4) the oracle-density
+level of §2 (0.799): a tighter bottleneck helps, because the autoencoder can then no longer reproduce
+the rare, symmetric multi-prong energy flows it has not been trained on.  The fine kernel scale matters
+(0.02 helps).  The score is strongly mass-correlated; densities on the latent space do not add
+discrimination (per jet, per event, or conditioned on the jet mass), and conditioning on the jet mass does
+not remove the mass correlation of the density score (the conditional entropy of the latent grows with
+m_J), so mass decorrelation is done by quantile normalisation instead.  Sweep (latent 2, finer kernels,
+VAE/KL score, mass-conditioned decoder): *pending*.  Full-scale training and test results (2-prong and
+3-prong): *pending*.
 
 ## 6. Supervised reference — *pending*
 
