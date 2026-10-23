@@ -1,6 +1,6 @@
 import torch
 
-from gaehep.losses import masked_chamfer, masked_sinkhorn
+from gaehep.losses import energy_mmd, masked_chamfer, masked_sinkhorn
 
 
 def _sets(seed=0, b=4, n=7, d=3):
@@ -53,3 +53,46 @@ def test_sinkhorn_small_on_identical_and_invariant():
     c1 = masked_sinkhorn(a[:, perm], m[:, perm], b, mb, eps=0.05)
     assert torch.allclose(c0, c1, rtol=1e-4, atol=1e-5)
     assert torch.all(torch.isfinite(c0))
+
+
+def _flows(seed=0, b=3, n=9):
+    g = torch.Generator().manual_seed(seed)
+    x = 0.3 * torch.randn(b, n, 2, generator=g)
+    w = torch.rand(b, n, generator=g) ** 3
+    w[0, 6:] = 0.0  # padding carries zero weight
+    return x, w / w.sum(1, keepdim=True)
+
+
+def test_energy_mmd_zero_on_identical_and_positive_otherwise():
+    x, w = _flows(0)
+    y, v = _flows(1)
+    assert torch.allclose(energy_mmd(x, w, x, w), torch.zeros(3), atol=1e-6)
+    d = energy_mmd(x, w, y, v)
+    assert torch.all(d > 1e-3)
+    assert torch.allclose(d, energy_mmd(y, v, x, w), atol=1e-6)
+
+
+def test_energy_mmd_permutation_and_padding_invariant():
+    x, w = _flows(0)
+    y, v = _flows(1)
+    perm = torch.randperm(x.shape[1])
+    d0 = energy_mmd(x, w, y, v)
+    assert torch.allclose(d0, energy_mmd(x[:, perm], w[:, perm], y, v), atol=1e-6)
+    x2 = x.clone()
+    x2[w == 0] = 5.0  # positions of zero-weight points are irrelevant
+    assert torch.allclose(d0, energy_mmd(x2, w, y, v), atol=1e-6)
+
+
+def test_energy_mmd_infrared_and_collinear_safe():
+    x, w = _flows(0)
+    y, v = _flows(1)
+    d0 = energy_mmd(x, w, y, v)
+    # collinear split: particle 0 -> two particles at the same position sharing its weight
+    xs = torch.cat([x, x[:, :1]], dim=1)
+    ws = torch.cat([w, 0.5 * w[:, :1]], dim=1)
+    ws[:, 0] *= 0.5
+    assert torch.allclose(d0, energy_mmd(xs, ws, y, v), atol=1e-6)
+    # soft emission: a particle with weight 1e-4 anywhere barely changes the distance
+    xe = torch.cat([x, torch.full_like(x[:, :1], 0.7)], dim=1)
+    we = torch.cat([w * (1 - 1e-4), torch.full_like(w[:, :1], 1e-4)], dim=1)
+    assert torch.allclose(d0, energy_mmd(xe, we, y, v), atol=5e-3)

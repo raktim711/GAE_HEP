@@ -7,11 +7,13 @@ from typing import Any
 from gaehep.models.base import JetModel
 from gaehep.models.classifier import EdgeConvClassifier
 from gaehep.models.deep_svdd import DeepSVDD
+from gaehep.models.ef_ae import EnergyFlowAE
 from gaehep.models.node_gae import NodeGAE
 from gaehep.models.set_ae import SetAE
 
 REGISTRY: dict[str, type[JetModel]] = {
     "set_ae": SetAE,
+    "ef_ae": EnergyFlowAE,
     "node_gae": NodeGAE,
     "deep_svdd": DeepSVDD,
     "classifier": EdgeConvClassifier,
@@ -28,4 +30,13 @@ def build_model(name: str, **kwargs: Any) -> JetModel:
     return REGISTRY[name](**kwargs)
 
 
-__all__ = ["REGISTRY", "DeepSVDD", "EdgeConvClassifier", "JetModel", "NodeGAE", "SetAE", "build_model"]
+__all__ = [
+    "REGISTRY",
+    "DeepSVDD",
+    "EdgeConvClassifier",
+    "EnergyFlowAE",
+    "JetModel",
+    "NodeGAE",
+    "SetAE",
+    "build_model",
+]

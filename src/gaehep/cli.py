@@ -38,6 +38,12 @@ def main(argv: list[str] | None = None) -> int:
     t.add_argument("--name", default=None)
     t.add_argument("--set", action="append", default=[], help="override, e.g. train.epochs=5")
     t.add_argument("--stages", default="train,score,evaluate")
+    d = sub.add_parser("dev", help="fast development run: train + metrics on validation splits only")
+    d.add_argument("config", type=Path)
+    d.add_argument("--name", default=None)
+    d.add_argument("--set", action="append", default=[], help="override, e.g. train.epochs=5")
+    d.add_argument("--bkg-events", type=int, default=None, help="background-validation events to score")
+    sub.add_parser("dev-report", help="table of all dev runs -> results/dev/summary.md")
     for name in ("evaluate", "flow", "qn"):
         s = sub.add_parser(name)
         s.add_argument("run")
@@ -76,6 +82,18 @@ def main(argv: list[str] | None = None) -> int:
         name = a.name or a.config.stem
         summary = R.run(cfg, name, stages=tuple(a.stages.split(",")), log=_log)
         print(f"[{name}] status: {summary.get('status')}")
+    elif a.cmd == "dev":
+        from gaehep.train.dev import dev_run
+
+        cfg = yaml.safe_load(a.config.read_text())
+        for s in a.set:
+            _set(cfg, s)
+        res = dev_run(cfg, a.name or a.config.stem, bkg_events=a.bkg_events, log=_log)
+        print(f"[dev:{a.name or a.config.stem}] status: {res.get('status', 'done')}")
+    elif a.cmd == "dev-report":
+        from gaehep.train.dev import dev_report
+
+        print(dev_report())
     elif a.cmd == "evaluate":
         R.evaluate_run(a.run)
     elif a.cmd == "flow":

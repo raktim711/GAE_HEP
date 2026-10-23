@@ -17,12 +17,14 @@ MODELS = {
     "deep_svdd": dict(hidden=(16, 16), k=4, latent_dim=4),
     "classifier": dict(hidden=(16, 16), k=4, head_hidden=(8,)),
     "set_ae_max": dict(hidden=(16, 16), k=4, latent_dim=4, n_out=30, dec_hidden=(32,), aggr="max"),
+    "ef_ae": dict(hidden=(16, 16), k=4, latent_dim=4, n_out=8, dec_hidden=(32,)),
+    "ef_ae_cond": dict(hidden=(16, 16), k=4, latent_dim=4, n_out=8, dec_hidden=(32,), cond_dim=2),
 }
 
 
 def _model(name):
     torch.manual_seed(0)
-    key = "set_ae" if name.startswith("set_ae") else name
+    key = next((k for k in ("set_ae", "ef_ae") if name.startswith(k)), name)
     m = build_model(key, **MODELS[name]).eval()
     return m
 
@@ -44,7 +46,7 @@ def test_score_invariant_to_node_order_and_padding(name, pool, scaler):
     assert torch.allclose(s0, s2, rtol=1e-4, atol=1e-5)
 
 
-@pytest.mark.parametrize("name", ["node_gae", "deep_svdd", "classifier"])
+@pytest.mark.parametrize("name", ["node_gae", "deep_svdd", "classifier", "ef_ae", "ef_ae_cond"])
 def test_score_invariant_to_extra_padding(name, pool, scaler):
     # set_ae's decoder emits a fixed n_out = batch node count, so only models without that coupling here
     m = _model(name)

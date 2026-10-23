@@ -23,3 +23,5 @@ results/runs/*/latents*.npz
 
 # OS
 .DS_Store
+results/dev/*/checkpoint*
+results/dev/*/*.npz
