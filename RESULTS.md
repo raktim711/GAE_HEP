@@ -145,13 +145,21 @@ observable on the 3-prong signal (−τ32: 0.854; −τ21 only 0.682), and it ba
 (JSD 0.010 at ε_B = 1 % for max, 0.008 for prod, versus 0.251 for a jet-mass cut).
 
 Sweep (dev, short budget): latent 2 → 0.821 (prod); adding a 0.01 kernel at latent 4 → 0.822 (no gain
-over 0.829); mass-conditioned decoder: *pending*.  **VAE**: making the latent variational (β = 10⁻³, latent 8) leaves the reconstruction score
+over 0.829); decoder conditioned on (log m_J, log pT_J) at latent 4 → 0.797, and the score is *still*
+mass-correlated (ρ = +0.70): heavier jets have intrinsically more complex energy flows, whatever the
+decoder is told about the mass.  **VAE**: making the latent variational (β = 10⁻³, latent 8) leaves the reconstruction score
 unchanged (0.803) and adds the per-jet KL divergence of the posterior as a second, density-like score:
 0.811 / 0.832 / 0.778 / 0.817 (max / sum / min / prod; heavier jet 0.810).  An equal-weight rank
 ensemble of the two (sum of per-jet background log-CDFs) gives 0.839 (prod), max SIC 1.70.
 
-**Final model** (`configs/ef_vae.yaml`): latent-4 energy-flow VAE, short budget, three seeds, scores =
-reconstruction, KL and their rank ensemble; test results: *pending*.
+At latent 4 the VAE's reconstruction score is as good as the plain autoencoder's (0.826 and 0.824 for two
+seeds) but its KL score is weak (0.657 prod): with only four latent dimensions the posterior of every jet
+is broad and the KL carries little information, so the equal-weight ensemble (0.798) does not help there.
+
+**Final models** (short budget, three seeds each, evaluated on the test splits with `gaehep promote`):
+(a) latent-4 energy-flow VAE, reconstruction score (`ef_vae_s*`); (b) latent-8 energy-flow VAE,
+reconstruction + KL rank ensemble (`ef_vae8_s*`), the best dev configuration (0.839, max SIC 1.70).
+Test results: *pending*.
 
 ## 6. Supervised reference — *pending*
 
