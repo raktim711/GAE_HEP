@@ -254,4 +254,36 @@ ignores the uncertainty of the fit and of the efficiency appears as −4σ.  The
 change this (it equalises the efficiency *between* sidebands, not inside the SR).  A bump hunt with this
 score would need the weakly supervised classifier of §7, not the raw unsupervised score.
 
-## 9. Conclusions — *pending*
+## 9. Conclusions
+
+1. **The AIMS GAE could not represent individual objects.**  On complete graphs GCN and GIN produce exactly
+   one embedding per event, GAT and SAGE(sum) collapse within a few layers; the AIMS anomaly scores were an
+   event-level spread statistic.  Local k-NN graphs, EdgeConv, standardised relative features and a real
+   bottleneck fix the architecture (all scores are tested to be invariant under node permutations and
+   padding).
+2. **A correctly permutation-invariant graph autoencoder is still the wrong tool if it reconstructs every
+   constituent.**  Constituent-level reconstruction (Chamfer set AE, node-level GAE) is an *inverted*
+   detector for this signal (SR AUC 0.39–0.49): colour-singlet signal jets are simpler than QCD jets of
+   the same mass.  (A recent, not peer-reviewed report of inverted event-level graph-autoencoder AUCs on
+   this dataset is listed, unverified, in `docs/literature.md`.)
+3. **Reconstructing the energy flow instead works.**  An IRC-safe, pT-weighted kernel distance (energy MMD)
+   between the jet and its reconstruction removes the dependence on soft multiplicity.  The final
+   latent-4 energy-flow VAE reaches SR AUC 0.829 ± 0.006 on the 2-prong signal and 0.805 ± 0.002 on the
+   unseen 3-prong signal with one fixed event score, sculpts the m_jj spectrum less than τ21 (JSD 0.009 at
+   ε_B = 1 %), and keeps AUC 0.73–0.79 after the jet mass is decorrelated.
+4. **Unsupervised scores are near their ceiling on this benchmark.**  An oracle density estimate of the
+   background in (m_J, pT_J, τ21) gives AUC 0.80; the energy-flow model matches it.  Model choices matter
+   in non-obvious ways: a tighter bottleneck and *shorter* training improve detection, because a better
+   background model also reconstructs the signal better.  Latent-space densities (flows, conditional flows,
+   event-level flows) add nothing.  Unsupervised scores give max SIC ≈ 1.5–1.7, below a dedicated
+   observable on its own signal (τ21: 2.3) and too little for a bump hunt.
+5. **The learned representation is nevertheless as informative as expert features.**  Fed to an idealised
+   weakly supervised classifier in the signal region, the permutation-invariant jet latents plus the two jet
+   masses reach the same supervised ceiling as (m_J1, Δm_J, τ21_J1, τ21_J2) (max SIC 11.0 vs 11.2) and max
+   SIC 8–9 once the signal fraction is ≳ 2 %; HL4 needs less signal (SIC 7.0 at 0.8 %).
+
+**Limitations.**  CPU-only training (2 cores): small models (48-wide EdgeConv, top-50 constituents) and short
+budgets; the GPU notebook repeats the final models with five seeds and a scale study.  One signal model per
+topology; the 3-prong signal shares the colour-singlet resonance structure.  Weak supervision is idealised
+(perfect background template, data samples three times smaller than in the literature).  Significances in
+the bump hunt ignore fit and efficiency uncertainties.
