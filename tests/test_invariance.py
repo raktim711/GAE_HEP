@@ -19,6 +19,9 @@ MODELS = {
     "set_ae_max": dict(hidden=(16, 16), k=4, latent_dim=4, n_out=30, dec_hidden=(32,), aggr="max"),
     "ef_ae": dict(hidden=(16, 16), k=4, latent_dim=4, n_out=8, dec_hidden=(32,)),
     "ef_ae_cond": dict(hidden=(16, 16), k=4, latent_dim=4, n_out=8, dec_hidden=(32,), cond_dim=2),
+    "ef_ae_vae_kl": dict(
+        hidden=(16, 16), k=4, latent_dim=4, n_out=8, dec_hidden=(32,), variational=True, score="kl"
+    ),
 }
 
 
@@ -118,3 +121,28 @@ def test_score_and_embed_consistent(name, pool, scaler):
         s2, z2 = m.score(b), m.embed(b)
     assert torch.allclose(s1, s2, atol=1e-6)
     assert (z1 is None and z2 is None) or torch.allclose(z1, z2, atol=1e-6)
+
+
+def test_vae_is_deterministic_in_eval_and_returns_all_terms(pool, scaler):
+    m = _model("ef_ae_vae_kl")
+    b = make_batch(pool, np.arange(8), scaler)
+    with torch.no_grad():
+        r1, r2 = m.losses(b), m.losses(b)
+    assert torch.allclose(r1["score"], r2["score"]) and torch.allclose(r1["score"], r1["kl"])
+    assert torch.all(r1["kl"] >= 0) and torch.all(r1["rec"] >= 0)
+    assert torch.allclose(r1["total"], r1["rec"] + m.beta * r1["kl"])
+    m.train()
+    torch.manual_seed(1)
+    with torch.no_grad():
+        assert not torch.allclose(m.losses(b)["rec"], r1["rec"])  # sampled latent in training mode
+
+
+def test_score_pool_extra_keys_match_single_pass(pool, scaler):
+    from gaehep.train.loop import score_pool
+
+    m = _model("ef_ae_vae_kl")
+    sub = pool.subset(np.arange(10))
+    a = score_pool(m, sub, scaler, batch_size=4, with_embed=True, keys=("rec", "kl"))
+    b = score_pool(m, sub, scaler, batch_size=4, with_embed=True)
+    assert np.allclose(a["score"], b["score"], atol=1e-6) and np.allclose(a["z"], b["z"], atol=1e-6)
+    assert np.allclose(a["kl"], a["score"], atol=1e-6) and a["rec"].shape == (10,)

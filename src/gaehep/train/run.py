@@ -177,27 +177,51 @@ def evaluate_run(
 
 
 # ------------------------------------------------------------------------------- post-hoc variants
-def latent_flow_variant(name: str, data: Data | None = None, seed: int = 0, log=print) -> dict[str, Any]:
-    """Fit a flow on background-training latents of run ``name``; score = -log p(z) per jet."""
+def _latent_context(data: Data, split: str, n_events: int) -> np.ndarray:
+    """(log m, log pT) of both jets of the first ``n_events`` events of a split (latents.npz row order)."""
+    st = data.store(SPLIT_SAMPLE[split])
+    ev = data.events(split, None if split != "bkg_train" else n_events)
+    if len(ev) != n_events:
+        raise ValueError(f"{split}: {len(ev)} events in the split but {n_events} latents")
+    m, pt = st["m"][ev], st["pt"][ev]
+    return np.stack([np.log(np.maximum(m, 1.0)), np.log(pt)], axis=-1).reshape(-1, 2).astype(np.float32)
+
+
+def latent_flow_variant(
+    name: str, data: Data | None = None, seed: int = 0, conditional: bool = False, log=print
+) -> dict[str, Any]:
+    """Fit a flow on background-training latents of run ``name``; score = -log p(z) per jet (``+flow``), or
+    with ``conditional`` -log p(z | log m_j, log pT_j) (``+cflow``: mass-decorrelated substructure score)."""
     src = _run_dir(name)
     with np.load(src / "latents.npz") as f:
         lat = {k: f[k] for k in f.files}
     d = lat["bkg_train"].shape[-1]
-    flow = LatentFlow(d, seed=seed).fit(
-        lat["bkg_train"].reshape(-1, d), lat["bkg_val"].reshape(-1, d), seed=seed
+    ctx: dict[str, np.ndarray | None] = {k: None for k in lat}
+    if conditional:
+        cfg = yaml.safe_load((src / "config.yaml").read_text()) if (src / "config.yaml").exists() else {}
+        data = data or Data(n_const=int(cfg.get("data", {}).get("n_const", 50)))
+        # bkg_train latents are a random event subset: Data.events(split, cap) reproduces it (seed 0)
+        ctx = {k: _latent_context(data, k, len(v)) for k, v in lat.items()}
+    flow = LatentFlow(d, seed=seed, context_dim=2 if conditional else 0).fit(
+        lat["bkg_train"].reshape(-1, d),
+        lat["bkg_val"].reshape(-1, d),
+        seed=seed,
+        c_train=ctx["bkg_train"],
+        c_val=ctx["bkg_val"],
     )
     scores = {
-        k: flow.nll(v.reshape(-1, d)).reshape(-1, 2).astype(np.float32)
+        k: flow.nll(v.reshape(-1, d), context=ctx[k]).reshape(-1, 2).astype(np.float32)
         for k, v in lat.items()
         if k != "bkg_train"
     }
-    out_name = f"{name}+flow"
+    out_name = f"{name}+{'cflow' if conditional else 'flow'}"
     out_dir = _run_dir(out_name)
     out_dir.mkdir(parents=True, exist_ok=True)
     np.savez(out_dir / "scores.npz", **scores)
     save_json({"source_run": name, "flow_history": flow.history}, out_dir / "history.json")
     log(f"[{out_name}] flow fitted ({len(flow.history['val_nll'])} epochs)")
-    return evaluate_run(out_name, data=data, cfg={"posthoc": "latent_flow", "source": name}, scores=scores)
+    kind = "conditional_latent_flow" if conditional else "latent_flow"
+    return evaluate_run(out_name, data=data, cfg={"posthoc": kind, "source": name}, scores=scores)
 
 
 def _ecdf_ref(ref: np.ndarray) -> np.ndarray:

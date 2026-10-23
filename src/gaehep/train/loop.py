@@ -225,22 +225,39 @@ def fit(
 
 @torch.no_grad()
 def score_pool(
-    model: JetModel, pool: JetPool, scaler: Scaler, batch_size: int = 1024, with_embed: bool = False
+    model: JetModel,
+    pool: JetPool,
+    scaler: Scaler,
+    batch_size: int = 1024,
+    with_embed: bool = False,
+    keys: tuple[str, ...] = (),
 ) -> dict[str, np.ndarray]:
-    """Per-jet anomaly scores (and optionally graph latents) for every jet in ``pool`` (row order kept)."""
+    """Per-jet anomaly scores (and optionally graph latents and the extra per-jet loss terms ``keys``) for
+    every jet in ``pool`` (row order kept)."""
     model.eval()
     dev = _model_device(model)
     scores, embeds = [], []
+    extra: dict[str, list[np.ndarray]] = {k: [] for k in keys}
     for b in iterate_batches(pool, scaler, batch_size):
         b = b.to(dev)
-        if with_embed:
+        if keys:  # one forward pass for the score, the extra terms and (optionally) the latent
+            out = model(b)
+            res = model.losses(b, out)
+            s = res["score"]
+            for k in keys:
+                extra[k].append(res[k].float().cpu().numpy())
+            if with_embed:
+                embeds.append(out["z"].float().cpu().numpy())
+        elif with_embed:
             s, z = model.score_and_embed(b)
             if z is not None:
                 embeds.append(z.float().cpu().numpy())
         else:
             s = model.score(b)
         scores.append(s.float().cpu().numpy())
-    out = {"score": np.concatenate(scores) if scores else np.zeros(0, dtype=np.float32)}
+    out_np = {"score": np.concatenate(scores) if scores else np.zeros(0, dtype=np.float32)}
     if with_embed and embeds:
-        out["z"] = np.concatenate(embeds)
-    return out
+        out_np["z"] = np.concatenate(embeds)
+    for k, v in extra.items():
+        out_np[k] = np.concatenate(v)
+    return out_np

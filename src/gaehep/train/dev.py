@@ -117,10 +117,23 @@ def dev_run(cfg: dict[str, Any], name: str, bkg_events: int | None = None, log=p
             return summary
     t0 = time.time()
     torch.set_num_threads(tcfg.threads)
-    s_bkg = score_pool(model, data.pool("bkg_val", bkg_events), scaler)["score"].reshape(-1, 2)
-    s_sig = score_pool(model, data.pool("sig_val"), scaler)["score"].reshape(-1, 2)
-    metrics = dev_metrics(s_bkg, s_sig, _tab(data, "bkg_val", bkg_events), _tab(data, "sig_val", None))
+    keys = tuple(cfg.get("dev", {}).get("extra_scores", ()))
+    o_bkg = score_pool(model, data.pool("bkg_val", bkg_events), scaler, keys=keys)
+    o_sig = score_pool(model, data.pool("sig_val"), scaler, keys=keys)
+    s_bkg, s_sig = o_bkg["score"].reshape(-1, 2), o_sig["score"].reshape(-1, 2)
+    tables = (_tab(data, "bkg_val", bkg_events), _tab(data, "sig_val", None))
+    metrics = dev_metrics(s_bkg, s_sig, *tables)
     np.savez(out_dir / "dev_scores.npz", bkg_val=s_bkg.astype(np.float32), sig_val=s_sig.astype(np.float32))
+    for k in keys:  # extra per-jet scores (e.g. the KL term of a VAE) from the same forward pass
+        r = _save_dev(
+            f"{name}:{k}",
+            o_bkg[k].reshape(-1, 2),
+            o_sig[k].reshape(-1, 2),
+            data,
+            {"source_run": name, "train_minutes": 0, "config": cfg},
+            tables=tables,
+        )
+        log(f"[dev:{name}:{k}] {headline(r['metrics'])}")
     res = {
         "name": name,
         "metrics": metrics,
@@ -136,8 +149,16 @@ def dev_run(cfg: dict[str, Any], name: str, bkg_events: int | None = None, log=p
     return res
 
 
-def _save_dev(name: str, s_bkg: np.ndarray, s_sig: np.ndarray, data: Data, extra: dict[str, Any]) -> dict:
-    metrics = dev_metrics(s_bkg, s_sig, _tab(data, "bkg_val", None), _tab(data, "sig_val", None))
+def _save_dev(
+    name: str,
+    s_bkg: np.ndarray,
+    s_sig: np.ndarray,
+    data: Data,
+    extra: dict[str, Any],
+    tables: tuple[dict[str, np.ndarray], dict[str, np.ndarray]] | None = None,
+) -> dict:
+    tables = tables or (_tab(data, "bkg_val", None), _tab(data, "sig_val", None))
+    metrics = dev_metrics(s_bkg, s_sig, *tables)
     res = {"name": name, "metrics": metrics, **extra, **run_metadata()}
     dev_dir(name).mkdir(parents=True, exist_ok=True)
     save_json(res, dev_dir(name) / "dev_metrics.json")
@@ -176,6 +197,59 @@ def dev_eval_run(run: str, log=print) -> dict[str, Any]:
     )
     log(f"[dev:{run}@full] {headline(res['metrics'])}")
     return res
+
+
+def _jet_context(pool) -> np.ndarray:
+    return np.stack([np.log(np.maximum(pool.m, 1.0)), np.log(pool.pt)], axis=-1).astype(np.float32)
+
+
+def dev_flow(
+    name: str, train_events: int = 50_000, epochs: int = 30, conditional: bool = True, log=print
+) -> list[dict[str, Any]]:
+    """Latent-density variants of dev run ``name``: a flow fitted on background-train latents, score -log p(z)
+    (``+flow``) and, if ``conditional``, a flow conditioned on the jet's (log m, log pT), score -log p(z | m, pT)
+    (``+cflow``, mass-decorrelated substructure anomaly)."""
+    from gaehep.models.latent_flow import LatentFlow
+
+    src = dev_dir(name)
+    cfg = yaml.safe_load((src / "config.yaml").read_text())
+    data = Data(n_const=int(cfg.get("data", {}).get("n_const", 50)))
+    scaler = data.scaler()
+    model = build_model(cfg["model"], **cfg.get("model_args", {}))
+    model.load_state_dict(torch.load(src / "model.pt", weights_only=True))
+    torch.set_num_threads(TrainConfig.from_dict(cfg.get("train")).threads)
+    lat, ctx = {}, {}
+    for split, cap in (("bkg_train", train_events), ("bkg_val", None), ("sig_val", None)):
+        pool = data.pool(split, cap)
+        out = score_pool(model, pool, scaler, with_embed=True)
+        if "z" not in out:
+            raise ValueError(f"model {cfg['model']} has no graph-level latent")
+        lat[split], ctx[split] = out["z"], _jet_context(pool)
+    d = lat["bkg_train"].shape[-1]
+    vsel = np.random.default_rng(0).choice(len(lat["bkg_val"]), 40_000, replace=False)
+    results = []
+    for suffix, cdim in (("+flow", 0), ("+cflow", 2)) if conditional else (("+flow", 0),):
+        c = ctx if cdim else {k: None for k in ctx}
+        flow = LatentFlow(d, seed=0, context_dim=cdim).fit(
+            lat["bkg_train"],
+            lat["bkg_val"][vsel],
+            epochs=epochs,
+            patience=5,
+            c_train=c["bkg_train"],
+            c_val=None if c["bkg_val"] is None else c["bkg_val"][vsel],
+        )
+        s_bkg = flow.nll(lat["bkg_val"], context=c["bkg_val"]).reshape(-1, 2)
+        s_sig = flow.nll(lat["sig_val"], context=c["sig_val"]).reshape(-1, 2)
+        res = _save_dev(
+            f"{name}{suffix}",
+            s_bkg,
+            s_sig,
+            data,
+            {"source_run": name, "flow_val_nll": flow.history["val_nll"], "train_minutes": 0, "config": cfg},
+        )
+        log(f"[dev:{name}{suffix}] {headline(res['metrics'])}")
+        results.append(res)
+    return results
 
 
 def dev_baselines(log=print) -> None:

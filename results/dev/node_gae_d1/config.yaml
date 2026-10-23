@@ -1,0 +1,23 @@
+model: node_gae
+model_args:
+  enc_hidden:
+  - 48
+  - 48
+  node_latent: 2
+  dec_hidden:
+  - 48
+  - 48
+  k: 12
+data:
+  n_const: 50
+train:
+  epochs: 5
+  jets_per_epoch: 120000
+  batch_size: 256
+  lr: 0.001
+  weight_decay: 0.0001
+  patience: 3
+  time_budget_min: 100
+  seed: 1
+  val_jets: 20000
+  threads: 1

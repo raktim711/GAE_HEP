@@ -47,9 +47,15 @@ def main(argv: list[str] | None = None) -> int:
     de = sub.add_parser("dev-eval", help="dev metrics (validation splits) of a fully trained run")
     de.add_argument("run")
     sub.add_parser("dev-baselines", help="single-observable references under the dev protocol")
+    rc = sub.add_parser("recon", help="input vs reconstruction figure of a (dev) run directory")
+    rc.add_argument("run_dir", type=Path)
+    df = sub.add_parser("dev-flow", help="latent-flow variant of a dev run")
+    df.add_argument("run")
     for name in ("evaluate", "flow", "qn"):
         s = sub.add_parser(name)
         s.add_argument("run")
+        if name == "flow":
+            s.add_argument("--conditional", action="store_true", help="p(z | log m_j, log pT_j)")
     bh = sub.add_parser("bumphunt", help="sideband-fit bump hunt using a run's event scores")
     bh.add_argument("run")
     bh.add_argument("--agg", default="max", choices=["max", "min", "sum"])
@@ -97,6 +103,14 @@ def main(argv: list[str] | None = None) -> int:
         from gaehep.train.dev import dev_eval_run
 
         dev_eval_run(a.run, log=_log)
+    elif a.cmd == "dev-flow":
+        from gaehep.train.dev import dev_flow
+
+        dev_flow(a.run, log=_log)
+    elif a.cmd == "recon":
+        from gaehep.eval.recon import recon_figure
+
+        print(recon_figure(a.run_dir))
     elif a.cmd == "dev-baselines":
         from gaehep.train.dev import dev_baselines
 
@@ -108,7 +122,7 @@ def main(argv: list[str] | None = None) -> int:
     elif a.cmd == "evaluate":
         R.evaluate_run(a.run)
     elif a.cmd == "flow":
-        R.latent_flow_variant(a.run)
+        R.latent_flow_variant(a.run, conditional=a.conditional)
     elif a.cmd == "qn":
         R.quantile_normalised_variant(a.run)
     elif a.cmd == "bumphunt":
