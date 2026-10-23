@@ -187,9 +187,9 @@ single seed in brackets; the "3-seed ensemble" averages the per-jet background C
 
 | signal | aggregation | SR AUC | max SIC | 1/ε_B at ε_S = 0.3 | 3-seed ensemble AUC |
 |---|---|---:|---:|---:|---:|
-| 2-prong | **prod** (chosen on dev) | **0.829 ± 0.006** (±BOOT2A) | 1.57 ± 0.04 (±BOOT2S) | 15.1 | 0.832 |
+| 2-prong | **prod** (chosen on dev) | **0.829 ± 0.006** (±0.002) | 1.57 ± 0.04 (±0.01) | 15.1 | 0.832 |
 | 2-prong | min / sum / max | 0.811 / 0.804 / 0.764 | 1.48 / 1.42 / 1.29 | | |
-| 3-prong | **prod** (same choice) | **0.805 ± 0.002** (±BOOT3A) | 1.45 ± 0.01 (±BOOT3S) | 10.7 | 0.807 |
+| 3-prong | **prod** (same choice) | **0.805 ± 0.002** (±0.002) | 1.45 ± 0.01 (±0.01) | 10.7 | 0.807 |
 | 3-prong | sum / max (not chosen beforehand) | 0.845 / 0.835 | 1.63 / 1.58 | | |
 
 The chosen configuration did not regress from dev (0.824–0.837) to test (0.825–0.836), seed by seed.
@@ -217,7 +217,19 @@ The energy-flow GNN is the only learned score that is useful on both signals; am
 the jet mass is as balanced — with far stronger m_jj sculpting and a higher max SIC (1.9 against 1.6).  It
 does not beat a dedicated observable on the signal that observable was designed for.
 
-Final model (b), latent-8 VAE with reconstruction + KL ensemble: FINALB
+*test*, final model (b), latent-8 VAE, three seeds (mean ± standard deviation; SR AUC / max SIC):
+
+| score | 2-prong, prod | 2-prong, sum | 3-prong, prod | 3-prong, max | JSD @ ε_B = 1 % (prod) |
+|---|---|---|---|---|---:|
+| reconstruction | 0.799 ± 0.006 / 1.46 | 0.773 / 1.35 | 0.795 ± 0.002 / 1.43 | 0.847 / 1.68 | – |
+| KL | 0.827 ± 0.007 / 1.62 | 0.842 / 1.69 | 0.738 ± 0.006 / 1.25 | 0.793 / 1.49 | – |
+| **rank ensemble (rec + KL)** | **0.841 ± 0.003 / 1.70** | 0.851 / 1.74 | 0.789 ± 0.002 / 1.42 | 0.854 / 1.74 | 0.029 |
+| 3-seed ensemble of the above | 0.845 / 1.73 | 0.854 / 1.76 | 0.792 / 1.43 | 0.862 / 1.78 | 0.029 |
+
+Model (b) is the best score on the (tuning) 2-prong signal (0.841 vs 0.829 for model (a)), but its KL part
+is more mass-like (dCor with m_J 0.77 vs 0.64): it is worse on the 3-prong signal with the pre-chosen
+aggregation (0.789 vs 0.805) and sculpts m_jj more (JSD 0.029 vs 0.008).  Model (a) is the more
+model-agnostic of the two.
 
 ## 6. Supervised reference
 
