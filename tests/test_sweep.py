@@ -38,8 +38,16 @@ def test_sweep_end_to_end(tmp_path, monkeypatch):
 
     grid = {"latent_dim": [2, 3], "beta": [0.0, 0.001], "width": [8], "jets_per_epoch": [400]}
     fixed = {"train.epochs": 1, "train.val_jets": 200, "train.batch_size": 64, "train.device": "cpu"}
-    out = sweep(str(cfg_path), prefix="t", grid=grid, overrides=fixed, top_k=2, n_seeds=2, final_seeds=3,
-                log=lambda *a: None)
+    out = sweep(
+        str(cfg_path),
+        prefix="t",
+        grid=grid,
+        overrides=fixed,
+        top_k=2,
+        n_seeds=2,
+        final_seeds=3,
+        log=lambda *a: None,
+    )
     assert len(out["phase1"]) == 4 and len(out["seeds"]) == 2
     assert out["promoted"] == ["t_best_s1", "t_best_s2", "t_best_s3"]
     runs = tmp_path / "results" / "runs"
