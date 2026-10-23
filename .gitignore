@@ -25,3 +25,4 @@ results/runs/*/latents*.npz
 .DS_Store
 results/dev/*/checkpoint*
 results/dev/*/*.npz
+.project_upload/
