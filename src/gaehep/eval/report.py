@@ -147,12 +147,9 @@ def compare(
                 s = aggregate(f[sk], a, ref)[region_mask(tabs[sk]["mjj"], region)]
             curves[(labels or {}).get(spec, f"{r} [{a}]")] = (s, b)
         out_dir = Path(out_dir)
-        paths.append(
-            plots.plot_rejection(
-                curves, out_dir / f"rejection_{tag}_{region}_{agg}.png", title=f"{tag}, {region}, {agg}"
-            )
-        )
-        paths.append(
-            plots.plot_sic(curves, out_dir / f"sic_{tag}_{region}_{agg}.png", title=f"{tag}, {region}, {agg}")
-        )
+        mixed = any(":" in r for r in runs)  # per-run aggregations: they are in the legend
+        title = f"{tag}, {region}" + ("" if mixed else f", {agg}")
+        stem = f"{tag}_{region}" + ("" if mixed else f"_{agg}")
+        paths.append(plots.plot_rejection(curves, out_dir / f"rejection_{stem}.png", title=title))
+        paths.append(plots.plot_sic(curves, out_dir / f"sic_{stem}.png", title=title))
     return paths
