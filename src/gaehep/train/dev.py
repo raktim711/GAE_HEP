@@ -26,7 +26,7 @@ from gaehep.eval.evaluate import aggregate, region_mask
 from gaehep.eval.metrics import auc, summarize
 from gaehep.models import build_model
 from gaehep.train.loop import TrainConfig, fit, score_pool
-from gaehep.train.run import Data
+from gaehep.train.run import Data, extra_score_keys
 
 DEV_MIN_BKG = 20
 # training budget of the dev protocol (applied over a model config's ``train`` section by ``gaehep dev``):
@@ -122,7 +122,7 @@ def dev_run(cfg: dict[str, Any], name: str, bkg_events: int | None = None, log=p
             return summary
     t0 = time.time()
     torch.set_num_threads(tcfg.threads)
-    keys = tuple(cfg.get("dev", {}).get("extra_scores", ()))
+    keys = extra_score_keys(cfg)
     o_bkg = score_pool(model, data.pool("bkg_val", bkg_events), scaler, keys=keys)
     o_sig = score_pool(model, data.pool("sig_val"), scaler, keys=keys)
     s_bkg, s_sig = o_bkg["score"].reshape(-1, 2), o_sig["score"].reshape(-1, 2)
@@ -131,14 +131,14 @@ def dev_run(cfg: dict[str, Any], name: str, bkg_events: int | None = None, log=p
     np.savez(out_dir / "dev_scores.npz", bkg_val=s_bkg.astype(np.float32), sig_val=s_sig.astype(np.float32))
     for k in keys:  # extra per-jet scores (e.g. the KL term of a VAE) from the same forward pass
         r = _save_dev(
-            f"{name}:{k}",
+            f"{name}+{k}",
             o_bkg[k].reshape(-1, 2),
             o_sig[k].reshape(-1, 2),
             data,
             {"source_run": name, "train_minutes": 0, "config": cfg},
             tables=tables,
         )
-        log(f"[dev:{name}:{k}] {headline(r['metrics'])}")
+        log(f"[dev:{name}+{k}] {headline(r['metrics'])}")
     res = {
         "name": name,
         "metrics": metrics,

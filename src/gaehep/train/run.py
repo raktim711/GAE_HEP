@@ -130,24 +130,39 @@ def run(
         if (run_dir / "history.json").exists():
             summary = load_json(run_dir / "history.json")
 
+    keys = extra_score_keys(cfg)
     if "score" in stages:
         torch.set_num_threads(tcfg.threads)
         scores, latents = {}, {}
+        extra: dict[str, dict[str, np.ndarray]] = {k: {} for k in keys}
         lat_splits = [("bkg_train", int(dcfg.get("latent_train_events", 100_000)))]
         for split, cap in [(s, None) for s in SCORE_SPLITS if data.has(s)] + lat_splits:
-            out = score_pool(model, data.pool(split, cap), scaler, with_embed=True)
+            out = score_pool(model, data.pool(split, cap), scaler, with_embed=True, keys=keys)
             if split != "bkg_train":
                 scores[split] = out["score"].reshape(-1, 2).astype(np.float32)
+                for k in keys:
+                    extra[k][split] = out[k].reshape(-1, 2).astype(np.float32)
             if "z" in out:
                 latents[split] = out["z"].reshape(-1, 2, out["z"].shape[-1]).astype(np.float32)
             log(f"[{name}] scored {split}: {len(out['score'])} jets")
         np.savez(run_dir / "scores.npz", **scores)
         if latents:
             np.savez(run_dir / "latents.npz", **latents)
+        for k in keys:  # extra per-jet scores of the same model (e.g. a VAE's KL term) as their own runs
+            (_run_dir(f"{name}+{k}")).mkdir(parents=True, exist_ok=True)
+            np.savez(_run_dir(f"{name}+{k}") / "scores.npz", **extra[k])
 
     if "evaluate" in stages:
         evaluate_run(name, data=data, cfg=cfg, history=summary.get("history"))
+        for k in keys:
+            evaluate_run(f"{name}+{k}", data=data, cfg={"extra_score": k, "source": name, "model": cfg})
     return summary
+
+
+def extra_score_keys(cfg: dict[str, Any]) -> tuple[str, ...]:
+    """Extra per-jet loss terms to evaluate as anomaly scores (config ``extra_scores``, or the older
+    ``dev: {extra_scores: ...}``)."""
+    return tuple(cfg.get("extra_scores", cfg.get("dev", {}).get("extra_scores", ())))
 
 
 def _tables(data: Data) -> dict[str, dict[str, np.ndarray]]:

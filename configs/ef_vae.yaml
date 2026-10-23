@@ -1,0 +1,28 @@
+# Final model: energy-flow graph *variational* autoencoder with a 4-d jet latent (chosen on the dev split:
+# latent 4 beats 2 and 8; the VAE's KL term is a second, density-like anomaly score). Scores: energy-MMD
+# reconstruction ("score"), KL divergence of the jet posterior ("+kl", extra_scores), and their
+# rank ensemble (gaehep ensemble ef_vae ef_vae+kl --out ef_vae+ens).
+model: ef_ae
+model_args:
+  hidden: [48, 48, 48]
+  k: 12
+  latent_dim: 4
+  n_out: 32
+  dec_hidden: [256, 256]
+  sigmas: [0.02, 0.05, 0.1, 0.2, 0.4]
+  variational: true
+  beta: 0.001
+extra_scores: [kl]
+data:
+  n_const: 50
+train:
+  epochs: 15
+  jets_per_epoch: 200000
+  batch_size: 256
+  lr: 1.0e-3
+  weight_decay: 1.0e-4
+  patience: 4
+  val_jets: 30000
+  time_budget_min: 100
+  threads: 1
+  seed: 1
