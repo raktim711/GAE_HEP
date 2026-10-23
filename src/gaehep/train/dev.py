@@ -54,10 +54,11 @@ def dev_metrics(
 ) -> dict[str, Any]:
     """s_* : (n_events, 2) per-jet scores; t_* : tables aligned with them."""
     out: dict[str, Any] = {}
+    ref = np.sort(np.asarray(s_bkg, dtype=np.float64).ravel())  # background CDF for the 'prod' aggregation
     for region in ("full", "SR"):
         mb, ms = region_mask(t_bkg["mjj"], region), region_mask(t_sig["mjj"], region)
-        for agg in ("max", "sum", "min"):
-            e = summarize(aggregate(s_sig[ms], agg), aggregate(s_bkg[mb], agg), min_bkg=DEV_MIN_BKG)
+        for agg in ("max", "sum", "min", "prod"):
+            e = summarize(aggregate(s_sig[ms], agg, ref), aggregate(s_bkg[mb], agg, ref), min_bkg=DEV_MIN_BKG)
             out[f"{region}/{agg}"] = {"auc": e["auc"], "max_sic": e["max_sic"], "rej@0.3": e["rej@0.3"]}
         out[f"{region}/jet"] = {"auc": auc(s_sig[ms].ravel(), s_bkg[mb].ravel())}
         # jets ordered by mass: the heavier jet carries X(500), the lighter one Y(100) in signal events
@@ -80,6 +81,7 @@ def headline(m: dict[str, Any]) -> str:
         f"SR: max {m['SR/max']['auc']:.3f}/{m['SR/max']['max_sic']:.2f}  "
         f"sum {m['SR/sum']['auc']:.3f}/{m['SR/sum']['max_sic']:.2f}  "
         f"min {m['SR/min']['auc']:.3f}/{m['SR/min']['max_sic']:.2f}  "
+        f"prod {m['SR/prod']['auc']:.3f}/{m['SR/prod']['max_sic']:.2f}  "
         f"jet {m['SR/jet']['auc']:.3f}  heavy {m['SR/heavy_jet']['auc']:.3f}  "
         f"light {m['SR/light_jet']['auc']:.3f} | full max {m['full/max']['auc']:.3f} | "
         f"rho(m) {m['bkg_spearman']['m']:+.2f} rho(n) {m['bkg_spearman']['n_const']:+.2f} "
@@ -165,7 +167,32 @@ def _save_dev(
     res = {"name": name, "metrics": metrics, **extra, **run_metadata()}
     dev_dir(name).mkdir(parents=True, exist_ok=True)
     save_json(res, dev_dir(name) / "dev_metrics.json")
+    np.savez(
+        dev_dir(name) / "dev_scores.npz",
+        bkg_val=np.asarray(s_bkg, dtype=np.float32),
+        sig_val=np.asarray(s_sig, dtype=np.float32),
+    )
     return res
+
+
+def dev_rescore(root: Path | None = None, log=print) -> None:
+    """Recompute the metrics of every dev entry that has saved validation scores (after metric changes)."""
+    root = Path(root) if root else results_dir() / "dev"
+    data = Data(n_const=50)
+    tables = (_tab(data, "bkg_val", None), _tab(data, "sig_val", None))
+    for p in sorted(root.glob("*/dev_scores.npz")):
+        mp = p.parent / "dev_metrics.json"
+        if not mp.exists():
+            continue
+        d = load_json(mp)
+        with np.load(p) as f:
+            sb, ss = f["bkg_val"], f["sig_val"]
+        if len(sb) != len(tables[0]["mjj"]):
+            log(f"[dev-rescore] skip {p.parent.name}: scored on a background subset")
+            continue
+        d["metrics"] = dev_metrics(sb, ss, *tables)
+        save_json(d, mp)
+        log(f"[dev-rescore] {p.parent.name}: {headline(d['metrics'])}")
 
 
 def dev_eval_run(run: str, log=print) -> dict[str, Any]:
@@ -206,43 +233,81 @@ def _jet_context(pool) -> np.ndarray:
     return np.stack([np.log(np.maximum(pool.m, 1.0)), np.log(pool.pt)], axis=-1).astype(np.float32)
 
 
-def dev_flow(
-    name: str, train_events: int = 50_000, epochs: int = 30, conditional: bool = True, log=print
-) -> list[dict[str, Any]]:
-    """Latent-density variants of dev run ``name``: a flow fitted on background-train latents, score -log p(z)
-    (``+flow``) and, if ``conditional``, a flow conditioned on the jet's (log m, log pT), score -log p(z | m, pT)
-    (``+cflow``, mass-decorrelated substructure anomaly)."""
-    from gaehep.models.latent_flow import LatentFlow
-
-    src = dev_dir(name)
-    cfg = yaml.safe_load((src / "config.yaml").read_text())
-    data = Data(n_const=int(cfg.get("data", {}).get("n_const", 50)))
-    scaler = data.scaler()
+def _dev_latents(name: str, data: Data, cfg: dict, train_events: int) -> dict[str, np.ndarray]:
+    """Jet latents and (log m, log pT) contexts of bkg_train (subset), bkg_val and sig_val; cached."""
+    cache = dev_dir(name) / "dev_latents.npz"
+    if cache.exists():
+        with np.load(cache) as f:
+            return {k: f[k] for k in f.files}
     model = build_model(cfg["model"], **cfg.get("model_args", {}))
-    model.load_state_dict(torch.load(src / "model.pt", weights_only=True))
+    model.load_state_dict(torch.load(dev_dir(name) / "model.pt", weights_only=True))
     torch.set_num_threads(TrainConfig.from_dict(cfg.get("train")).threads)
-    lat, ctx = {}, {}
+    scaler = data.scaler()
+    out = {}
     for split, cap in (("bkg_train", train_events), ("bkg_val", None), ("sig_val", None)):
         pool = data.pool(split, cap)
-        out = score_pool(model, pool, scaler, with_embed=True)
-        if "z" not in out:
+        o = score_pool(model, pool, scaler, with_embed=True)
+        if "z" not in o:
             raise ValueError(f"model {cfg['model']} has no graph-level latent")
-        lat[split], ctx[split] = out["z"], _jet_context(pool)
-    d = lat["bkg_train"].shape[-1]
-    vsel = np.random.default_rng(0).choice(len(lat["bkg_val"]), 40_000, replace=False)
+        out[f"z_{split}"], out[f"c_{split}"] = o["z"], _jet_context(pool)
+    np.savez(cache, **out)
+    return out
+
+
+def _event_latents(z: np.ndarray, c: np.ndarray) -> np.ndarray:
+    """Concatenated latents of the two jets of each event, lighter jet first (jet-order invariant)."""
+    d = z.shape[-1]
+    z, logm = z.reshape(-1, 2, d), c[:, 0].reshape(-1, 2)
+    o = np.argsort(logm, axis=1, kind="stable")
+    return np.take_along_axis(z, o[..., None], 1).reshape(len(z), 2 * d)
+
+
+def dev_flow(
+    name: str,
+    train_events: int = 50_000,
+    epochs: int = 30,
+    kinds: tuple[str, ...] = ("flow", "cflow", "eflow"),
+    log=print,
+) -> list[dict[str, Any]]:
+    """Latent-density variants of dev run ``name`` (flows fitted on background-train latents):
+
+    * ``+flow``  per-jet -log p(z);
+    * ``+cflow`` per-jet -log p(z | log m, log pT) (mass-decorrelated substructure anomaly);
+    * ``+eflow`` event-level -log p(z_light, z_heavy): joint density of both jets' latents (an event score,
+      stored as identical values for the two jets).
+    """
+    from gaehep.models.latent_flow import LatentFlow
+
+    cfg = yaml.safe_load((dev_dir(name) / "config.yaml").read_text())
+    data = Data(n_const=int(cfg.get("data", {}).get("n_const", 50)))
+    L = _dev_latents(name, data, cfg, train_events)
+    lat = {s: L[f"z_{s}"] for s in ("bkg_train", "bkg_val", "sig_val")}
+    ctx = {s: L[f"c_{s}"] for s in ("bkg_train", "bkg_val", "sig_val")}
     results = []
-    for suffix, cdim in (("+flow", 0), ("+cflow", 2)) if conditional else (("+flow", 0),):
-        c = ctx if cdim else {k: None for k in ctx}
-        flow = LatentFlow(d, seed=0, context_dim=cdim).fit(
-            lat["bkg_train"],
-            lat["bkg_val"][vsel],
+    for kind in kinds:
+        suffix = f"+{kind}"
+        if kind == "eflow":
+            x = {s: _event_latents(lat[s], ctx[s]) for s in lat}
+            c = {s: None for s in lat}
+        else:
+            x = lat
+            c = ctx if kind == "cflow" else {s: None for s in lat}
+        vsel = np.random.default_rng(0).choice(
+            len(x["bkg_val"]), min(40_000, len(x["bkg_val"])), replace=False
+        )
+        flow = LatentFlow(x["bkg_train"].shape[-1], seed=0, context_dim=2 if kind == "cflow" else 0).fit(
+            x["bkg_train"],
+            x["bkg_val"][vsel],
             epochs=epochs,
             patience=5,
             c_train=c["bkg_train"],
             c_val=None if c["bkg_val"] is None else c["bkg_val"][vsel],
         )
-        s_bkg = flow.nll(lat["bkg_val"], context=c["bkg_val"]).reshape(-1, 2)
-        s_sig = flow.nll(lat["sig_val"], context=c["sig_val"]).reshape(-1, 2)
+        s_bkg = flow.nll(x["bkg_val"], context=c["bkg_val"])
+        s_sig = flow.nll(x["sig_val"], context=c["sig_val"])
+        if kind == "eflow":
+            s_bkg, s_sig = np.repeat(s_bkg[:, None], 2, 1), np.repeat(s_sig[:, None], 2, 1)
+        s_bkg, s_sig = s_bkg.reshape(-1, 2), s_sig.reshape(-1, 2)
         res = _save_dev(
             f"{name}{suffix}",
             s_bkg,
@@ -267,29 +332,119 @@ def dev_baselines(log=print) -> None:
     for obs in ob:
         res = _save_dev(f"baseline_{obs}", ob[obs], os_[obs], data, {"baseline": obs, "train_minutes": 0})
         log(f"[dev:baseline_{obs}] {headline(res['metrics'])}")
+    dev_oracle_density(data, log=log)
+
+
+ORACLE_SETS = {
+    "m": (("logm",), 60),
+    "m,t21": (("logm", "t21"), 40),
+    "m,t21,t32": (("logm", "t21", "t32"), 20),
+    "m,pt,t21": (("logm", "logpt", "t21"), 20),
+}
+
+
+def _jet_obs(st, ev: np.ndarray) -> dict[str, np.ndarray]:
+    with np.errstate(divide="ignore", invalid="ignore"):
+        t21 = np.where(st["tau1"][ev] > 0, st["tau2"][ev] / st["tau1"][ev], 1.0)
+        t32 = np.where(st["tau2"][ev] > 0, st["tau3"][ev] / st["tau2"][ev], 1.0)
+    return {
+        "logm": np.log(np.maximum(st["m"][ev], 1.0)),
+        "logpt": np.log(st["pt"][ev]),
+        "t21": np.nan_to_num(t21, nan=1.0),
+        "t32": np.nan_to_num(t32, nan=1.0),
+    }
+
+
+def dev_oracle_density(data: Data | None = None, log=print) -> None:
+    """Reference: per-jet score -log p_QCD(observables), p from a (smoothed) histogram of background-training
+    jets.  Measures how far *pure* density-based anomaly detection gets with ideal low-dimensional jet
+    features (no "heavier / more prongs = anomalous" prior)."""
+    data = data or Data(n_const=50)
+    st = data.store("rnd")
+    tr, bv, sv = (_jet_obs(st, data.events(s)) for s in ("bkg_train", "bkg_val", "sig_val"))
+    for name, (keys, bins) in ORACLE_SETS.items():
+        x = np.stack([tr[k].ravel() for k in keys], 1)
+        lo, hi = np.quantile(x, 0.0005, 0), np.quantile(x, 0.9995, 0)
+        edges = [np.linspace(a, b, bins + 1) for a, b in zip(lo, hi, strict=True)]
+        h, _ = np.histogramdd(x, bins=edges)
+        p = (h + 0.5) / (h.sum() + 0.5 * h.size)
+
+        def score(d, keys=keys, edges=edges, p=p):
+            idx = tuple(
+                np.clip(np.searchsorted(e, d[k], side="right") - 1, 0, len(e) - 2)
+                for k, e in zip(keys, edges, strict=True)
+            )
+            return -np.log(p[idx])
+
+        res = _save_dev(
+            f"oracle_density_{name}",
+            score(bv),
+            score(sv),
+            data,
+            {"oracle_density": list(keys), "train_minutes": 0},
+        )
+        log(f"[dev:oracle_density_{name}] {headline(res['metrics'])}")
+
+
+def _plot_dev(runs: list[dict], path: Path) -> None:
+    """Signal-region event AUC (max / sum / min / prod aggregation) of every dev run, sorted by the best."""
+    from gaehep.eval import style
+
+    style.apply()
+    import matplotlib.pyplot as plt
+
+    aggs = (("max", "o"), ("sum", "s"), ("min", "^"), ("prod", "D"))
+    rows = []
+    for d in runs:
+        m = d["metrics"]
+        rows.append((d["name"], [m.get(f"SR/{a}", {}).get("auc", np.nan) for a, _ in aggs]))
+    if not rows:
+        return
+    rows.sort(key=lambda r: np.nanmax(r[1]))
+    fig, ax = plt.subplots(figsize=(7.5, 0.32 * len(rows) + 1.4))
+    y = np.arange(len(rows))
+    for j, (agg, mk) in enumerate(aggs):
+        ax.scatter([r[1][j] for r in rows], y, marker=mk, s=24, label=agg, zorder=3)
+    for i, (name, _) in enumerate(rows):
+        ref = name.startswith(("baseline_", "oracle_"))
+        ax.axhspan(i - 0.5, i + 0.5, color="0.93" if ref else "white", zorder=0)
+    ax.axvline(0.5, color="grey", lw=1, ls=":")
+    ax.set_yticks(y, [r[0] for r in rows], fontsize=9)
+    ax.set_xlabel("event AUC in the SR (2-prong signal validation split)")
+    ax.legend(title="event score", loc="lower right", fontsize=9)
+    ax.tick_params(axis="y", which="minor", left=False, right=False)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(path)
+    plt.close(fig)
 
 
 def dev_report(root: Path | None = None) -> str:
     root = Path(root) if root else results_dir() / "dev"
     lines = [
-        "| dev run | SR max AUC/maxSIC | SR sum AUC/maxSIC | SR min AUC | SR jet AUC | heavy | light | "
-        "ρ(m) | ρ(n) | ρ(τ21) | min |",
-        "|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|",
+        "| dev run | SR max AUC/maxSIC | SR sum AUC/maxSIC | SR min AUC/maxSIC | SR prod AUC/maxSIC | "
+        "SR jet AUC | heavy | light | ρ(m) | ρ(n) | ρ(τ21) | min |",
+        "|---|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|",
     ]
+
+    def cell(m, agg):
+        e = m.get(f"SR/{agg}")
+        return "–" if e is None else f"{e['auc']:.3f} / {e['max_sic']:.2f}"
+
     for p in sorted(root.glob("*/dev_metrics.json")):
         d = load_json(p)
         m = d["metrics"]
         lines.append(
-            f"| {d['name']} | {m['SR/max']['auc']:.3f} / {m['SR/max']['max_sic']:.2f} | "
-            f"{m['SR/sum']['auc']:.3f} / {m['SR/sum']['max_sic']:.2f} | {m['SR/min']['auc']:.3f} | "
+            f"| {d['name']} | {cell(m, 'max')} | {cell(m, 'sum')} | {cell(m, 'min')} | {cell(m, 'prod')} | "
             f"{m['SR/jet']['auc']:.3f} | {m['SR/heavy_jet']['auc']:.3f} | {m['SR/light_jet']['auc']:.3f} | "
             f"{m['bkg_spearman']['m']:+.2f} | {m['bkg_spearman']['n_const']:+.2f} | "
             f"{m['bkg_spearman']['tau21']:+.2f} | {d.get('train_minutes') or 0:.0f} |"
         )
     md = "\n".join(lines)
+    _plot_dev([load_json(p) for p in sorted(root.glob("*/dev_metrics.json"))], root / "summary.png")
     (root / "summary.md").write_text(
         "# Development runs (validation splits: bkg_val vs 2-prong sig_val; never the test splits)\n\n"
-        "AUC / max SIC in the signal region (3.3-3.7 TeV) for event scores max/sum/min over the two jets, "
+        "AUC / max SIC in the signal region (3.3-3.7 TeV) for event scores max/sum/min over the two jets and "
+        "prod = log F_B(s_1) + log F_B(s_2) (F_B = background CDF of jet scores), "
         "jet-level AUC, heavier/lighter jet AUC, and Spearman correlations of the per-jet score with "
         "m_j, multiplicity and τ21 on background; last column = training minutes (2 CPU cores).\n\n"
         + md

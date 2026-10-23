@@ -170,7 +170,8 @@ def evaluate_run(
         cfg = yaml.safe_load((run_dir / "config.yaml").read_text())
     data = data or Data(n_const=int((cfg or {}).get("data", {}).get("n_const", 50)))
     tables = _tables(data)
-    metrics = evaluate_scores({k: scores[k] for k in TEST_KEYS if k in scores}, tables, n_boot=n_boot)
+    keep = (*TEST_KEYS, "bkg_val")  # bkg_val: background reference of the 'prod' aggregation
+    metrics = evaluate_scores({k: scores[k] for k in keep if k in scores}, tables, n_boot=n_boot)
     write_metrics(metrics, run_dir / "metrics.json", meta={"name": name, "config": cfg, **run_metadata()})
     make_figures(scores, tables, run_dir / "figures", name, history=history)
     return metrics
@@ -286,7 +287,7 @@ def baselines(data: Data | None = None, n_boot: int = 30) -> dict[str, Any]:
     from gaehep.eval.evaluate import observable_scores
 
     data = data or Data(n_const=50)
-    tables = _tables(data)
+    tables = {**_tables(data), "bkg_val": data.table("bkg_val")}
     per_split = {k: observable_scores(v) for k, v in tables.items()}
     results = {}
     for obs in per_split["bkg_test"]:
@@ -304,15 +305,16 @@ def bumphunt_run(name: str, agg: str = "max", data: Data | None = None) -> list[
     """Bump hunt on the background test split with injected 2-prong test signal, using run ``name``'s scores."""
     from gaehep.eval import plots
     from gaehep.eval.bumphunt import run_bumphunt
-    from gaehep.eval.evaluate import aggregate
+    from gaehep.eval.evaluate import aggregate, jet_reference
 
     run_dir = _run_dir(name)
     with np.load(run_dir / "scores.npz") as f:
         scores = {k: f[k] for k in f.files}
     data = data or Data(n_const=50)
     tb, ts = data.table("bkg_test"), data.table("sig_test")
+    ref = jet_reference(scores)
     rows = run_bumphunt(
-        tb["mjj"], aggregate(scores["bkg_test"], agg), ts["mjj"], aggregate(scores["sig_test"], agg)
+        tb["mjj"], aggregate(scores["bkg_test"], agg, ref), ts["mjj"], aggregate(scores["sig_test"], agg, ref)
     )
     save_json({"name": name, "agg": agg, "rows": rows, **run_metadata()}, run_dir / f"bumphunt_{agg}.json")
     plots.plot_bumphunt(rows, run_dir / "figures" / f"bumphunt_{agg}.png", title=f"{name} [{agg}]")

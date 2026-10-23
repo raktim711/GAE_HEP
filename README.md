@@ -37,13 +37,22 @@ for the supervised reference); 3-prong signal test only.  Unsupervised models ne
 | M1 | `node_gae` — EdgeConv node-level GAE, 2-d node bottleneck | mean node MSE |
 | M2 | `set_ae` — EdgeConv encoder → jet latent → set decoder, masked Chamfer loss (+ multiplicity) | Chamfer distance |
 | M2c | `set_ae` with `cond_dim: 2` — decoder conditioned on (log m, log pT): mass-decorrelated | Chamfer distance |
-| M3 | normalising flow (zuko NSF) on M2 latents | −log p(z) |
+| M2e | `ef_ae` — energy-flow graph AE: same encoder, decoder emits points **with pT fractions**, IRC-safe multi-scale energy MMD loss (optionally a VAE latent / mass-conditioned decoder) | energy MMD (or KL) |
+| M3 | normalising flow (zuko NSF) on a model's jet latents, optionally conditioned on (log m, log pT) | −log p(z), −log p(z \| m) |
 | M4 | `deep_svdd` — one-class Deep SVDD, same encoder | distance to centre |
 | ref | `classifier` — supervised EdgeConv (idealised upper bound) | logit |
 | ref | single observables m_j, τ21, τ32, multiplicity | value |
 
-Event score = max (also min, sum) over the two leading jets.  Post-hoc variants: mass-quantile
-normalisation (`gaehep qn`), rank ensembles (`gaehep ensemble`).
+Event score = max (also min, sum) over the two leading jets.  Post-hoc variants: latent flows (`gaehep flow
+[--conditional]`), mass-quantile normalisation (`gaehep qn`), rank ensembles (`gaehep ensemble`).
+
+**Development protocol.** Design choices are compared with `gaehep dev <config>` (short training, metrics on
+background *validation* events vs the 2-prong *signal validation* split; `gaehep dev-report` →
+`results/dev/summary.md`).  The test splits and the 3-prong signal are only used for the final numbers.
+
+**Weak supervision.** `gaehep weak <run>` trains idealised data-vs-background classifiers (IAD, as in CATHODE /
+"Back To The Roots") in the signal region on the run's permutation-invariant jet latents and on the standard
+(m_J1, Δm_J, τ21_J1, τ21_J2) features, for several injected signal fractions.
 
 ## Usage
 
@@ -70,10 +79,10 @@ Data live outside the repo (`GAEHEP_DATA`, default `/home/claude/data/lhco`); re
 ```
 src/gaehep/data      download, preprocess (fastjet), tables (validation), splits, dataset (graph batches)
 src/gaehep/graphs    dense masked k-NN / gather / pooling
-src/gaehep/models    edgeconv, set_ae, node_gae, deep_svdd, classifier, legacy_gae, latent_flow
-src/gaehep/losses    masked Chamfer, Sinkhorn
-src/gaehep/train     training loop (checkpoint / resume / time budget), run orchestration
-src/gaehep/eval      metrics (AUC, SIC, rejection, bootstrap), sculpting (JSD, dCor), plots, report
+src/gaehep/models    edgeconv, set_ae, ef_ae, node_gae, deep_svdd, classifier, legacy_gae, latent_flow
+src/gaehep/losses    masked Chamfer, Sinkhorn, energy MMD
+src/gaehep/train     training loop (checkpoint / resume / time budget), run orchestration, dev protocol, weak supervision
+src/gaehep/eval      metrics (AUC, SIC, rejection, bootstrap), sculpting (JSD, dCor), bump hunt, IAD, plots, report
 configs/             one YAML per experiment
 tests/               invariance, losses, data, metrics, legacy-collapse, training smoke tests
 ```

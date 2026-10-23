@@ -69,7 +69,7 @@ def compare(
     import numpy as np
 
     from gaehep.eval import plots
-    from gaehep.eval.evaluate import aggregate, region_mask
+    from gaehep.eval.evaluate import aggregate, jet_reference, region_mask
     from gaehep.train.run import Data
 
     data = Data(n_const=50)
@@ -79,8 +79,9 @@ def compare(
         curves = {}
         for r in runs:
             with np.load(results_dir() / "runs" / r / "scores.npz") as f:
-                b = aggregate(f["bkg_test"], agg)[region_mask(tabs["bkg_test"]["mjj"], region)]
-                s = aggregate(f[sk], agg)[region_mask(tabs[sk]["mjj"], region)]
+                ref = jet_reference({k: f[k] for k in f.files})
+                b = aggregate(f["bkg_test"], agg, ref)[region_mask(tabs["bkg_test"]["mjj"], region)]
+                s = aggregate(f[sk], agg, ref)[region_mask(tabs[sk]["mjj"], region)]
             curves[(labels or {}).get(r, r)] = (s, b)
         out_dir = Path(out_dir)
         paths.append(

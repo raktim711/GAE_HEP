@@ -44,23 +44,27 @@ def main(argv: list[str] | None = None) -> int:
     d.add_argument("--set", action="append", default=[], help="override, e.g. train.epochs=5")
     d.add_argument("--bkg-events", type=int, default=None, help="background-validation events to score")
     sub.add_parser("dev-report", help="table of all dev runs -> results/dev/summary.md")
+    sub.add_parser("dev-rescore", help="recompute dev metrics from saved validation scores")
     de = sub.add_parser("dev-eval", help="dev metrics (validation splits) of a fully trained run")
     de.add_argument("run")
     sub.add_parser("dev-baselines", help="single-observable references under the dev protocol")
     rc = sub.add_parser("recon", help="input vs reconstruction figure of a (dev) run directory")
     rc.add_argument("run_dir", type=Path)
-    df = sub.add_parser("dev-flow", help="latent-flow variant of a dev run")
+    df = sub.add_parser("dev-flow", help="latent-flow variants of a dev run")
     df.add_argument("run")
+    df.add_argument("--kinds", default="flow,cflow,eflow", help="comma list of flow, cflow, eflow")
     for name in ("evaluate", "flow", "qn"):
         s = sub.add_parser(name)
         s.add_argument("run")
         if name == "flow":
             s.add_argument("--conditional", action="store_true", help="p(z | log m_j, log pT_j)")
+    co = sub.add_parser("collapse", help="node-embedding collapse of the legacy GAE on real jets")
+    co.add_argument("--dev-runs", nargs="*", default=[])
     wk = sub.add_parser("weak", help="idealised weak supervision (IAD) on a run's jet latents vs HL4")
     wk.add_argument("run")
     bh = sub.add_parser("bumphunt", help="sideband-fit bump hunt using a run's event scores")
     bh.add_argument("run")
-    bh.add_argument("--agg", default="max", choices=["max", "min", "sum"])
+    bh.add_argument("--agg", default="max", choices=["max", "min", "sum", "prod"])
     e = sub.add_parser("ensemble")
     e.add_argument("runs", nargs="+")
     e.add_argument("--out", required=True)
@@ -109,7 +113,7 @@ def main(argv: list[str] | None = None) -> int:
     elif a.cmd == "dev-flow":
         from gaehep.train.dev import dev_flow
 
-        dev_flow(a.run, log=_log)
+        dev_flow(a.run, kinds=tuple(a.kinds.split(",")), log=_log)
     elif a.cmd == "recon":
         from gaehep.eval.recon import recon_figure
 
@@ -118,6 +122,10 @@ def main(argv: list[str] | None = None) -> int:
         from gaehep.train.dev import dev_baselines
 
         dev_baselines(log=_log)
+    elif a.cmd == "dev-rescore":
+        from gaehep.train.dev import dev_rescore
+
+        dev_rescore(log=_log)
     elif a.cmd == "dev-report":
         from gaehep.train.dev import dev_report
 
@@ -128,6 +136,10 @@ def main(argv: list[str] | None = None) -> int:
         R.latent_flow_variant(a.run, conditional=a.conditional)
     elif a.cmd == "qn":
         R.quantile_normalised_variant(a.run)
+    elif a.cmd == "collapse":
+        from gaehep.eval.collapse import collapse_study
+
+        collapse_study(dev_runs=tuple(a.dev_runs), log=_log)
     elif a.cmd == "weak":
         from gaehep.train.weak_run import weak_run
 

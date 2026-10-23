@@ -19,18 +19,36 @@ from gaehep.eval import plots
 from gaehep.eval.metrics import DEFAULT_MIN_BKG, bootstrap, summarize
 from gaehep.eval.sculpting import distance_correlation, sculpting_jsd
 
-AGGREGATIONS = ("max", "min", "sum")
+AGGREGATIONS = ("max", "min", "sum", "prod")
 SIGNALS = {"sig_test": "2-prong", "sig3_test": "3-prong"}
 TEST_KEYS = ("bkg_test", "sig_test", "sig3_test")
 
 
-def aggregate(jet_scores: np.ndarray, how: str) -> np.ndarray:
+def jet_reference(scores: Mapping[str, np.ndarray]) -> np.ndarray:
+    """Sorted background jet scores defining the background CDF used by the ``prod`` aggregation
+    (background validation split when available, else the background test split; labels are not used)."""
+    key = "bkg_val" if "bkg_val" in scores else "bkg_test"
+    return np.sort(np.asarray(scores[key], dtype=np.float64).ravel())
+
+
+def aggregate(jet_scores: np.ndarray, how: str, ref: np.ndarray | None = None) -> np.ndarray:
+    """Symmetric event score from the two jets' scores.
+
+    ``max`` / ``min`` / ``sum`` of the raw scores, or ``prod``: log F_B(s_1) + log F_B(s_2), the log of the
+    product of the two jets' background CDF values (``ref`` = sorted background jet scores) - large only if
+    *both* jets are in the upper tail, and insensitive to the scale of the raw score.
+    """
     if how == "max":
         return jet_scores.max(1)
     if how == "min":
         return jet_scores.min(1)
     if how == "sum":
         return jet_scores.sum(1)
+    if how == "prod":
+        if ref is None:
+            raise ValueError("the 'prod' aggregation needs the background reference scores")
+        cdf = (np.searchsorted(ref, jet_scores, side="right") + 0.5) / (len(ref) + 1.0)
+        return np.log(cdf).sum(1)
     raise ValueError(how)
 
 
@@ -52,13 +70,14 @@ def evaluate_scores(
     """scores[split] -> (n, 2) per-jet scores; tables[split] -> {'mjj': (n,), 'm': (n, 2), ...}."""
     res: dict[str, Any] = {"event": {}, "jet": {}, "sculpting": {}, "correlation": {}}
     b_tab = tables["bkg_test"]
+    ref = jet_reference(scores)
     for agg in aggregations:
-        b_ev = aggregate(scores["bkg_test"], agg)
+        b_ev = aggregate(scores["bkg_test"], agg, ref)
         res["event"][agg] = {}
         for sk in SIGNALS:
             if sk not in scores:
                 continue
-            s_ev = aggregate(scores[sk], agg)
+            s_ev = aggregate(scores[sk], agg, ref)
             for region in ("full", "SR"):
                 bs = b_ev[region_mask(b_tab["mjj"], region)]
                 ss = s_ev[region_mask(tables[sk]["mjj"], region)]
@@ -115,19 +134,20 @@ def make_figures(
 ) -> list[Path]:
     out_dir = Path(out_dir)
     paths = []
-    b = aggregate(scores["bkg_test"], agg)
+    ref = jet_reference(scores)
+    b = aggregate(scores["bkg_test"], agg, ref)
     bsr = b[region_mask(tables["bkg_test"]["mjj"], "SR")]
     curves = {}
     for sk, lab in SIGNALS.items():
         if sk in scores:
-            s = aggregate(scores[sk], agg)
+            s = aggregate(scores[sk], agg, ref)
             curves[f"{lab} (SR)"] = (s[region_mask(tables[sk]["mjj"], "SR")], bsr)
     paths.append(plots.plot_rejection(curves, out_dir / "rejection_SR.png", title=f"{name} [{agg}]"))
     paths.append(plots.plot_sic(curves, out_dir / "sic_SR.png", title=f"{name} [{agg}]"))
     series = {"background": b}
     for sk, lab in SIGNALS.items():
         if sk in scores:
-            series[lab] = aggregate(scores[sk], agg)
+            series[lab] = aggregate(scores[sk], agg, ref)
     paths.append(plots.plot_score_hist(series, out_dir / "score_hist.png", title=f"{name} [{agg}]"))
     paths.append(
         plots.plot_sculpting(tables["bkg_test"]["mjj"], b, out_dir / "sculpting_mjj.png", title=name)

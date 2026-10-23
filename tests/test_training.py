@@ -79,8 +79,12 @@ def test_evaluate_scores_structure():
     met = evaluate_scores(scores, tables, n_boot=3)
     h = headline(met)
     assert 0.6 < h["auc_2p_full"] < 0.95 and h["auc_2p_full"] > h["auc_3p_full"]
-    assert set(met["event"]) == {"max", "min", "sum"}
+    assert set(met["event"]) == {"max", "min", "sum", "prod"}
     assert "dcor_mj" in met["correlation"]["jet"]
+    # 'prod' (log background CDFs, both jets) is invariant to monotone rescaling of the jet score
+    met2 = evaluate_scores({k: np.exp(3 * v) for k, v in scores.items()}, tables, n_boot=0)
+    a1, a2 = met["event"]["prod"]["sig_test/SR"]["auc"], met2["event"]["prod"]["sig_test/SR"]["auc"]
+    assert abs(a1 - a2) < 1e-9 and a1 > 0.7
 
 
 def test_rerun_after_finish_does_not_train_more(tmp_path, scaler):
