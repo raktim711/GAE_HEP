@@ -11,6 +11,8 @@ template (more background from the same simulation) is an upper bound for data-d
 Event representations are symmetric in the two jets (jets ordered by mass, lighter first):
 
 * ``hl4``    (m_J1, m_J2 - m_J1, τ21_J1, τ21_J2): the standard benchmark features;
+* ``score+m`` the GNN's per-jet anomaly scores and the jet masses (s_J1, s_J2, m_J1, m_J2): HL4 with the
+  learned score in place of τ21;
 * ``latent`` the permutation-invariant GNN's per-jet latent vectors (z_J1, z_J2);
 * ``latent+m`` latents plus the two jet masses.
 
@@ -109,7 +111,7 @@ def run_iad(
         x_test = np.r_[f["sig_test"], f["bkg_test"]]
         n_s = len(f["sig_test"])
         rows = []
-        for n in n_inj:
+        for n in [n for n in n_inj if n <= len(f["sig_train"])]:  # no injection larger than the signal pool
             for r in reps:
                 pick = np.random.default_rng([r, n]).choice(len(f["sig_train"]), n, replace=False)
                 s = classifier_scores(np.r_[data_b, f["sig_train"][pick]], templ, x_test, n_models, seed=r)

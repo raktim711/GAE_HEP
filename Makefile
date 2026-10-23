@@ -37,6 +37,9 @@ smoke:
 	$(PY) -m gaehep.data.fake --out $(SCRATCH) --n-bkg 8000 --n-sig 1500
 	GAEHEP_DATA=$(SCRATCH) GAEHEP_RESULTS=$(SCRATCH)/results $(CLI) train configs/smoke.yaml --name smoke
 	GAEHEP_DATA=$(SCRATCH) GAEHEP_RESULTS=$(SCRATCH)/results $(CLI) flow smoke
+	GAEHEP_DATA=$(SCRATCH) GAEHEP_RESULTS=$(SCRATCH)/results $(CLI) qn smoke
+	GAEHEP_DATA=$(SCRATCH) GAEHEP_RESULTS=$(SCRATCH)/results $(CLI) bumphunt smoke --agg prod
+	GAEHEP_DATA=$(SCRATCH) GAEHEP_RESULTS=$(SCRATCH)/results $(CLI) weak smoke --n-models 2 --n-inj 100,200 --reps 1
 	GAEHEP_DATA=$(SCRATCH) GAEHEP_RESULTS=$(SCRATCH)/results $(CLI) baselines
 	GAEHEP_DATA=$(SCRATCH) GAEHEP_RESULTS=$(SCRATCH)/results $(CLI) report
 

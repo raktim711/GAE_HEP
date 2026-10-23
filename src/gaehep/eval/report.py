@@ -123,7 +123,10 @@ def compare(
     region: str = "SR",
     labels: dict[str, str] | None = None,
 ) -> list[Path]:
-    """Overlay rejection and SIC curves of several runs (from their saved ``scores.npz``)."""
+    """Overlay rejection and SIC curves of several runs (from their saved ``scores.npz``).
+
+    A run can be given as ``name:agg`` to use its own event aggregation instead of ``agg``.
+    """
     import numpy as np
 
     from gaehep.eval import plots
@@ -135,12 +138,14 @@ def compare(
     paths = []
     for sk, tag in (("sig_test", "2prong"), ("sig3_test", "3prong")):
         curves = {}
-        for r in runs:
+        for spec in runs:
+            r, _, a = spec.partition(":")
+            a = a or agg
             with np.load(results_dir() / "runs" / r / "scores.npz") as f:
                 ref = jet_reference({k: f[k] for k in f.files})
-                b = aggregate(f["bkg_test"], agg, ref)[region_mask(tabs["bkg_test"]["mjj"], region)]
-                s = aggregate(f[sk], agg, ref)[region_mask(tabs[sk]["mjj"], region)]
-            curves[(labels or {}).get(r, r)] = (s, b)
+                b = aggregate(f["bkg_test"], a, ref)[region_mask(tabs["bkg_test"]["mjj"], region)]
+                s = aggregate(f[sk], a, ref)[region_mask(tabs[sk]["mjj"], region)]
+            curves[(labels or {}).get(spec, f"{r} [{a}]")] = (s, b)
         out_dir = Path(out_dir)
         paths.append(
             plots.plot_rejection(

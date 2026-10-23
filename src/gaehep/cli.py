@@ -62,6 +62,9 @@ def main(argv: list[str] | None = None) -> int:
     co.add_argument("--dev-runs", nargs="*", default=[])
     wk = sub.add_parser("weak", help="idealised weak supervision (IAD) on a run's jet latents vs HL4")
     wk.add_argument("run")
+    wk.add_argument("--n-models", type=int, default=5)
+    wk.add_argument("--n-inj", default="150,300,600,1200,3000", help="injected signal events in the SR")
+    wk.add_argument("--reps", type=int, default=3)
     bh = sub.add_parser("bumphunt", help="sideband-fit bump hunt using a run's event scores")
     bh.add_argument("run")
     bh.add_argument("--agg", default="max", choices=["max", "min", "sum", "prod"])
@@ -143,7 +146,13 @@ def main(argv: list[str] | None = None) -> int:
     elif a.cmd == "weak":
         from gaehep.train.weak_run import weak_run
 
-        weak_run(a.run, log=_log)
+        weak_run(
+            a.run,
+            n_models=a.n_models,
+            n_inj=tuple(int(x) for x in a.n_inj.split(",")),
+            reps=tuple(range(a.reps)),
+            log=_log,
+        )
     elif a.cmd == "bumphunt":
         R.bumphunt_run(a.run, agg=a.agg)
     elif a.cmd == "ensemble":

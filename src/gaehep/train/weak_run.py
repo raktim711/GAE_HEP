@@ -24,13 +24,15 @@ def _sr_events(data: Data, split: str) -> np.ndarray:
 
 
 def sr_latents(name: str, data: Data, splits=("bkg_train", "sig_train", "bkg_test", "sig_test"), log=print):
-    """Per-jet latents (n_SR_events, 2, d) of the SR events of ``splits`` (cached in latents_sr.npz)."""
+    """Per-jet latents (n_SR_events, 2, d) and anomaly scores (n_SR_events, 2) of the SR events of ``splits``
+    (cached in latents_sr.npz as ``<split>`` and ``<split>:score``)."""
     src = _run_dir(name)
     cache = src / "latents_sr.npz"
+    keys = [*splits, *(f"{s}:score" for s in splits)]
     if cache.exists():
         with np.load(cache) as f:
-            if all(s in f.files for s in splits):
-                return {s: f[s] for s in splits}
+            if all(k in f.files for k in keys):
+                return {k: f[k] for k in keys}
     cfg = yaml.safe_load((src / "config.yaml").read_text())
     model = build_model(cfg["model"], **cfg.get("model_args", {}))
     model.load_state_dict(torch.load(src / "model.pt", weights_only=True))
@@ -40,14 +42,21 @@ def sr_latents(name: str, data: Data, splits=("bkg_train", "sig_train", "bkg_tes
     for s in splits:
         ev = _sr_events(data, s)
         pool = data.store(SPLIT_SAMPLE[s]).pool(ev, data.n_const)
-        z = score_pool(model, pool, scaler, with_embed=True)["z"]
-        out[s] = z.reshape(len(ev), 2, -1).astype(np.float32)
+        o = score_pool(model, pool, scaler, with_embed=True)
+        out[s] = o["z"].reshape(len(ev), 2, -1).astype(np.float32)
+        out[f"{s}:score"] = o["score"].reshape(len(ev), 2).astype(np.float32)
         log(f"[{name}] SR latents {s}: {len(ev)} events")
     np.savez(cache, **out)
     return out
 
 
-def weak_run(name: str, n_models: int = 5, log=print) -> dict[str, Any]:
+def weak_run(
+    name: str,
+    n_models: int = 5,
+    n_inj: tuple[int, ...] = (150, 300, 600, 1200, 3000),
+    reps: tuple[int, ...] = (0, 1, 2),
+    log=print,
+) -> dict[str, Any]:
     src = _run_dir(name)
     cfg = yaml.safe_load((src / "config.yaml").read_text())
     data = Data(n_const=int(cfg.get("data", {}).get("n_const", 50)))
@@ -60,10 +69,13 @@ def weak_run(name: str, n_models: int = 5, log=print) -> dict[str, Any]:
     lat = sr_latents(name, data, splits, log=log)
     feats = {
         "hl4": {s: weak.hl4(tabs[s]) for s in splits},
+        "score+m": {
+            s: weak.latent_features(tabs[s], lat[f"{s}:score"][..., None], with_mass=True) for s in splits
+        },
         "latent": {s: weak.latent_features(tabs[s], lat[s]) for s in splits},
         "latent+m": {s: weak.latent_features(tabs[s], lat[s], with_mass=True) for s in splits},
     }
-    res = weak.run_iad(feats, n_models=n_models, log=log)
+    res = weak.run_iad(feats, n_inj=n_inj, reps=reps, n_models=n_models, log=log)
     save_json({"name": name, "results": res, **run_metadata()}, src / "weak.json")
     from gaehep.eval.plots import plot_weak
 
