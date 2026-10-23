@@ -1,0 +1,20 @@
+model: legacy_gae
+model_args:
+  conv_type: gcn
+  hidden_channels: 64
+  latent_channels: 16
+  dropout: 0.1
+data:
+  n_const: 30
+  max_train_events: 200000
+train:
+  epochs: 5
+  jets_per_epoch: 120000
+  batch_size: 100
+  lr: 0.0005
+  weight_decay: 1.0e-05
+  patience: 3
+  time_budget_min: 100
+  seed: 1
+  val_jets: 20000
+  threads: 1

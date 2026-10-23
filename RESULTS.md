@@ -163,11 +163,72 @@ stronger and stable score, while at latent 4 it varies between seeds (0.66 / 0.7
 **Final models** (short budget, three seeds each, evaluated on the test splits with `gaehep promote`):
 (a) latent-4 energy-flow VAE, reconstruction score (`ef_vae_s*`); (b) latent-8 energy-flow VAE,
 reconstruction + KL rank ensemble (`ef_vae8_s*`), the best dev configuration (0.839, max SIC 1.70).
-Test results: *pending*.
+
+*test*, final model (a), mean ± standard deviation over three seeds (the "3-seed ensemble" averages the
+per-jet background CDFs of the three seeds):
+
+| signal | aggregation | SR AUC | max SIC | 1/ε_B at ε_S = 0.3 | 3-seed ensemble AUC |
+|---|---|---:|---:|---:|---:|
+| 2-prong | **prod** (chosen on dev) | **0.829 ± 0.006** | 1.57 ± 0.04 | 15.1 | 0.832 |
+| 2-prong | min / sum / max | 0.811 / 0.804 / 0.764 | 1.48 / 1.42 / 1.29 | | |
+| 3-prong | **prod** (same choice) | **0.805 ± 0.002** | 1.45 ± 0.01 | 10.7 | 0.807 |
+| 3-prong | sum / max (not chosen beforehand) | 0.845 / 0.835 | 1.63 / 1.58 | | |
+
+Dev (0.824–0.837) and test (0.825–0.836) agree seed by seed, so the dev protocol did not overfit the
+validation signal.  Jet-level AUC 0.74 (2-prong) and 0.73 (3-prong); m_jj sculpting JSD = 0.009 (prod) at
+ε_B = 1 %; distance correlation of the jet score with m_J 0.64.  After mass-quantile normalisation (score
+decorrelated from m_J, dCor 0.02) the AUCs are 0.725 (2-prong, prod) and 0.794 (3-prong): roughly half of
+the 2-prong separation is the jet mass, the rest — and most of the 3-prong separation — is substructure.
+
+Comparison with the observables under the same protocol (aggregation chosen on the 2-prong dev split, then
+applied unchanged to both test signals):
+
+| score | 2-prong AUC | 3-prong AUC | worse of the two | m_jj sculpting (JSD @ ε_B = 1 %) |
+|---|---:|---:|---:|---:|
+| −τ21 (sum) | **0.893** | 0.658 | 0.658 | 0.018 |
+| −τ32 (sum) | 0.688 | **0.854** | 0.688 | 0.014 |
+| m_J (max) | 0.811 | 0.817 | **0.811** | 0.251 |
+| multiplicity (min) | 0.424 | 0.595 | 0.424 | 0.021 |
+| set AE, Chamfer (max) | 0.488 | 0.532 | 0.488 | 0.004 |
+| **energy-flow VAE, latent 4 (prod)** | 0.829 | 0.805 | 0.805 | **0.009** |
+| energy-flow VAE, mass-decorrelated | 0.725 | 0.794 | 0.725 | 0.015 |
+
+The energy-flow GNN is the only learned score that is useful on both signals, and among single scores only
+the jet mass is as balanced — at the price of strongly sculpting the m_jj spectrum (and with a higher max
+SIC: 1.9 against 1.6).  It does not beat a dedicated observable on the signal that observable was designed
+for.
+
+Final model (b), latent-8 VAE with reconstruction + KL ensemble: *pending*.
 
 ## 6. Supervised reference — *pending*
 
-## 7. Weak supervision on the GNN latents — *pending*
+## 7. Weak supervision on the GNN latents
+
+Unsupervised scores give AUC ≈ 0.8 but only max SIC ≈ 1.5 — too little purity to make a small resonance
+visible.  The standard way to win on this benchmark is weak supervision in the signal region (CATHODE, "Back
+To The Roots").  `gaehep weak` runs the *idealised anomaly detector* (IAD): a classifier separates SR "data"
+(36.3k background-train events + n injected 2-prong signal events) from an independent, perfectly modelled
+background template (the other 36.3k background-train SR events); no event label is used.  Classifier:
+bagged histogram gradient-boosted trees (3 models), evaluated on the test SR (36.6k background, 37.7k
+signal), 3 injection repetitions.  Event features are symmetric in the two jets (ordered by mass):
+
+| injected S/B in SR | 0.41 % | 0.83 % | 1.7 % | 3.3 % | 8.3 % | supervised, same features |
+|---|---:|---:|---:|---:|---:|---:|
+| HL4: m_J1, Δm_J, τ21_J1, τ21_J2 | 1.6 | **7.0** | **9.4** | **10.1** | **10.6** | 11.2 |
+| GNN latents of both jets (2 × 4) | 1.0 | 1.1 | 1.5 | 3.2 | 4.0 | 5.4 |
+| GNN latents + jet masses | 1.0 | 1.8 | 8.0 | 8.9 | 9.2 | 11.0 |
+| GNN anomaly scores + jet masses | 1.3 | 4.1 | 6.7 | 7.0 | 7.1 | 7.4 |
+
+(max SIC on the test events, mean of 3 repetitions; `results/runs/ef_vae_s1/weak.json`,
+`figures/weak_iad.png`.)  The permutation-invariant GNN representation, learned without labels and
+without any physics input beyond the energy flow, plus the two jet masses carries as much information about
+the signal as the expert-designed HL4 features (supervised ceilings 11.0 vs 11.2), and with ≳ 2 % signal
+the idealised weakly supervised search on it reaches max SIC ≈ 8–9 — five to six times the purity of any
+unsupervised score.  At lower signal fractions the 10-dimensional representation needs more signal than
+the 4-dimensional HL4 to be found (1.8 vs 7.0 at S/B = 0.8 %).  The 4-d latents alone miss part of the
+mass information (ceiling 5.4).  Our data and template samples are about three times smaller than in the
+literature, so absolute SICs at fixed S/B are lower than published HL4 numbers (IAD / CATHODE max SIC
+≈ 10–15 at S/B ≈ 0.6 % with ≈ 121k background events; see `docs/literature.md`).
 
 ## 8. Bump hunt — *pending*
 
