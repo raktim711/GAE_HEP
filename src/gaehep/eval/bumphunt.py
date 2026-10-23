@@ -4,7 +4,9 @@ Procedure per signal-injection level and score-cut efficiency:
 
 1. "data" = background test events + ``n_inj`` signal events drawn from the signal test pool;
 2. keep the events whose score exceeds the threshold that passes a fraction ``eff`` of the *sideband*
-   events (the threshold never looks at the signal region, SR = 3.3-3.7 TeV);
+   events (the threshold never looks at the signal region, SR = 3.3-3.7 TeV) - either one fixed threshold
+   or (``mode="qr"``) an m_jj-dependent threshold fitted to the sideband score quantiles, which keeps the
+   background efficiency flat in m_jj and so avoids sculpting the spectrum;
 3. fit the standard 4-parameter dijet function  f(x) = p0 (1-x)^p1 / x^(p2 + p3 ln x),  x = m_jj / 13 TeV,
    to the binned sideband spectrum with a Poisson likelihood;
 4. compare the observed SR count n with the fitted expectation b: local significance
@@ -92,26 +94,74 @@ def poisson_z(n: float, b: float) -> float:
     return float(np.sign(n - b) * np.sqrt(max(t, 0.0)))
 
 
+def mass_dependent_threshold(
+    mjj: np.ndarray,
+    score: np.ndarray,
+    eff: float,
+    edges: np.ndarray,
+    sb_bins: np.ndarray,
+    degree: int = 2,
+    min_events: int = 50,
+) -> np.ndarray:
+    """Per-event threshold t(m_jj): the (1 - eff) score quantile in every *sideband* bin, fitted with a
+    polynomial in m_jj (weights = sqrt(bin count)) and interpolated into the signal region.  Cutting
+    ``score >= t(m_jj)`` keeps a fraction ~eff of the background at every m_jj, so the cut does not
+    sculpt the spectrum (quantile-regression / varying-cut decorrelation, defined without the SR)."""
+    centres = 0.5 * (edges[:-1] + edges[1:])
+    xs, qs, ws = [], [], []
+    for i in np.flatnonzero(sb_bins):
+        in_bin = (mjj >= edges[i]) & (mjj < edges[i + 1])
+        if in_bin.sum() >= min_events:
+            xs.append((centres[i] - 3500.0) / 1000.0)
+            qs.append(np.quantile(score[in_bin], 1 - eff))
+            ws.append(np.sqrt(in_bin.sum()))
+    coef = np.polyfit(np.asarray(xs), np.asarray(qs), deg=min(degree, len(xs) - 1), w=np.asarray(ws))
+    return np.polyval(coef, (mjj - 3500.0) / 1000.0)
+
+
 def search(
     mjj: np.ndarray,
     score: np.ndarray,
     eff: float,
     edges: np.ndarray = DEFAULT_EDGES,
     sr: tuple[float, float] = SR_MJJ,
+    mode: str = "fixed",
 ) -> dict[str, float]:
-    """One bump hunt on a given dataset (mjj, score) with a sideband-defined score threshold."""
+    """One bump hunt on a given dataset (mjj, score) with a sideband-defined score threshold.
+
+    ``mode="fixed"``: one threshold passing a fraction ``eff`` of all sideband events;
+    ``mode="qr"``: m_jj-dependent threshold from sideband quantiles (:func:`mass_dependent_threshold`).
+    """
     in_sr = (mjj >= sr[0]) & (mjj < sr[1])
     in_range = (mjj >= edges[0]) & (mjj < edges[-1])
     sb = in_range & ~in_sr
-    thr = -np.inf if eff >= 1 else np.quantile(score[sb], 1 - eff)
-    sel = score >= thr
-    counts, _ = np.histogram(mjj[sel], bins=edges)
     centres = 0.5 * (edges[:-1] + edges[1:])
     sr_bins = (centres > sr[0]) & (centres < sr[1])
+    if eff >= 1:
+        sel = np.ones(len(mjj), dtype=bool)
+        thr = -np.inf
+    elif mode == "fixed":
+        thr = float(np.quantile(score[sb], 1 - eff))
+        sel = score >= thr
+    elif mode == "qr":
+        t = mass_dependent_threshold(mjj, score, eff, edges, ~sr_bins)
+        sel = score >= t
+        thr = float(np.median(t[in_sr])) if in_sr.any() else float("nan")
+    else:
+        raise ValueError(mode)
+    counts, _ = np.histogram(mjj[sel], bins=edges)
     fit = fit_sidebands(counts, edges, ~sr_bins)
     b = float(_bin_expectation(edges, fit.params)[sr_bins].sum())
     n = float(counts[sr_bins].sum())
-    return {"eff": eff, "n_sr": n, "b_sr": b, "z": poisson_z(n, b), "fit_ok": fit.ok, "threshold": float(thr)}
+    return {
+        "eff": eff,
+        "mode": mode,
+        "n_sr": n,
+        "b_sr": b,
+        "z": poisson_z(n, b),
+        "fit_ok": fit.ok,
+        "threshold": thr,
+    }
 
 
 def run_bumphunt(
@@ -122,6 +172,7 @@ def run_bumphunt(
     n_inj: Sequence[int] = (0, 150, 300, 600, 1200),
     effs: Sequence[float] = (1.0, 0.1, 0.02, 0.005),
     seeds: Sequence[int] = (0, 1, 2),
+    mode: str = "fixed",
 ) -> list[dict[str, float]]:
     rows = []
     for n in [n for n in n_inj if n <= len(mjj_sig)]:  # no injection larger than the signal pool
@@ -132,7 +183,7 @@ def run_bumphunt(
             score = np.r_[score_bkg, score_sig[pick]]
             n_sig_sr = int(np.sum((mjj_sig[pick] >= SR_MJJ[0]) & (mjj_sig[pick] < SR_MJJ[1])))
             for eff in effs:
-                r = search(mjj, score, eff)
+                r = search(mjj, score, eff, mode=mode)
                 r.update({"n_inj": n, "n_sig_sr": n_sig_sr, "seed": seed})
                 rows.append(r)
     return rows

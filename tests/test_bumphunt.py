@@ -36,3 +36,15 @@ def test_injected_bump_found_and_enhanced_by_cut():
     z_cut = search(mjj, score, 0.05)["z"]
     assert z_all > 2.0
     assert z_cut > z_all
+
+
+def test_mass_dependent_threshold_removes_sculpting():
+    mjj, _ = _toy(n_bkg=300_000, seed=3)
+    rng = np.random.default_rng(4)
+    # score whose distribution shifts smoothly but non-linearly with m_jj: a fixed cut distorts the
+    # spectrum shape beyond what the dijet function absorbs; the sideband-fitted varying cut does not
+    score = rng.normal(0, 1, len(mjj)) + 0.8 * ((mjj - 2700) / 1000) ** 2
+    z_fixed = search(mjj, score, 0.1, mode="fixed")["z"]
+    z_qr = search(mjj, score, 0.1, mode="qr")["z"]
+    assert abs(z_qr) < 2.5, z_qr
+    assert abs(z_fixed) > 3.0 > abs(z_qr), (z_fixed, z_qr)

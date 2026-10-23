@@ -316,7 +316,9 @@ def baselines(data: Data | None = None, n_boot: int = 30) -> dict[str, Any]:
     return results
 
 
-def bumphunt_run(name: str, agg: str = "max", data: Data | None = None) -> list[dict[str, Any]]:
+def bumphunt_run(
+    name: str, agg: str = "max", data: Data | None = None, mode: str = "fixed"
+) -> list[dict[str, Any]]:
     """Bump hunt on the background test split with injected 2-prong test signal, using run ``name``'s scores."""
     from gaehep.eval import plots
     from gaehep.eval.bumphunt import run_bumphunt
@@ -329,8 +331,18 @@ def bumphunt_run(name: str, agg: str = "max", data: Data | None = None) -> list[
     tb, ts = data.table("bkg_test"), data.table("sig_test")
     ref = jet_reference(scores)
     rows = run_bumphunt(
-        tb["mjj"], aggregate(scores["bkg_test"], agg, ref), ts["mjj"], aggregate(scores["sig_test"], agg, ref)
+        tb["mjj"],
+        aggregate(scores["bkg_test"], agg, ref),
+        ts["mjj"],
+        aggregate(scores["sig_test"], agg, ref),
+        mode=mode,
     )
-    save_json({"name": name, "agg": agg, "rows": rows, **run_metadata()}, run_dir / f"bumphunt_{agg}.json")
-    plots.plot_bumphunt(rows, run_dir / "figures" / f"bumphunt_{agg}.png", title=f"{name} [{agg}]")
+    tag = agg if mode == "fixed" else f"{agg}_{mode}"
+    save_json(
+        {"name": name, "agg": agg, "mode": mode, "rows": rows, **run_metadata()},
+        run_dir / f"bumphunt_{tag}.json",
+    )
+    plots.plot_bumphunt(
+        rows, run_dir / "figures" / f"bumphunt_{tag}.png", title=f"{name} [{agg}, {mode} cut]"
+    )
     return rows

@@ -71,6 +71,7 @@ def main(argv: list[str] | None = None) -> int:
     bh = sub.add_parser("bumphunt", help="sideband-fit bump hunt using a run's event scores")
     bh.add_argument("run")
     bh.add_argument("--agg", default="max", choices=["max", "min", "sum", "prod"])
+    bh.add_argument("--mode", default="fixed", choices=["fixed", "qr"], help="fixed or m_jj-dependent cut")
     e = sub.add_parser("ensemble")
     e.add_argument("runs", nargs="+")
     e.add_argument("--out", required=True)
@@ -161,7 +162,7 @@ def main(argv: list[str] | None = None) -> int:
             log=_log,
         )
     elif a.cmd == "bumphunt":
-        R.bumphunt_run(a.run, agg=a.agg)
+        R.bumphunt_run(a.run, agg=a.agg, mode=a.mode)
     elif a.cmd == "ensemble":
         R.ensemble_variant(a.runs, a.out)
     elif a.cmd == "baselines":
