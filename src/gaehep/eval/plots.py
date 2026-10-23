@@ -143,3 +143,23 @@ def plot_bumphunt(rows: list[dict], path: Path, title: str = "") -> Path:
     ax.set_title(title)
     ax.legend()
     return _save(fig, path)
+
+
+def plot_weak(res: dict, path: Path, title: str = "") -> Path:
+    """IAD max SIC (mean +- std over repetitions) vs injected S/B, one line per representation; the
+    supervised classifier on the same features is shown as a dashed horizontal line."""
+    fig, ax = plt.subplots(figsize=(6.4, 4.8))
+    for rep, r in res.items():
+        rows = r["iad"]
+        sb = sorted({x["s_over_b"] for x in rows})
+        mean = [np.mean([x["max_sic"] for x in rows if x["s_over_b"] == v]) for v in sb]
+        std = [np.std([x["max_sic"] for x in rows if x["s_over_b"] == v]) for v in sb]
+        line = ax.errorbar(100 * np.asarray(sb), mean, yerr=std, marker="o", capsize=3, label=f"IAD: {rep}")
+        ax.axhline(r["supervised"]["max_sic"], color=line[0].get_color(), ls="--", lw=1)
+    ax.axhline(1, color="grey", lw=1, ls=":")
+    ax.set_xscale("log")
+    ax.set_xlabel("injected S/B in the signal region [%]")
+    ax.set_ylabel("max SIC (test)")
+    ax.set_title(title)
+    ax.legend(title="dashed: supervised, same features")
+    return _save(fig, path)

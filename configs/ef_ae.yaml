@@ -1,6 +1,7 @@
 # M2e: energy-flow graph autoencoder. Same EdgeConv encoder + 8-d jet latent as M2, but the decoder emits
 # n_out points with pT fractions and the loss/score is the pT-weighted multi-scale MMD between the jet's
-# energy flow and its reconstruction (IRC-safe-ish: insensitive to soft multiplicity).
+# energy flow and its reconstruction (insensitive to soft multiplicity, unlike the Chamfer set AE).
+# CPU budget: 15 x 200k jets (~80 min on one core); the Kaggle notebook trains longer on GPU.
 model: ef_ae
 model_args:
   hidden: [48, 48, 48]
@@ -12,11 +13,13 @@ model_args:
 data:
   n_const: 50
 train:
-  epochs: 25
+  epochs: 15
   jets_per_epoch: 200000
   batch_size: 256
   lr: 1.0e-3
   weight_decay: 1.0e-4
-  patience: 5
+  patience: 4
+  val_jets: 30000
   time_budget_min: 100
+  threads: 1
   seed: 1

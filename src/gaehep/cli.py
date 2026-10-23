@@ -56,6 +56,8 @@ def main(argv: list[str] | None = None) -> int:
         s.add_argument("run")
         if name == "flow":
             s.add_argument("--conditional", action="store_true", help="p(z | log m_j, log pT_j)")
+    wk = sub.add_parser("weak", help="idealised weak supervision (IAD) on a run's jet latents vs HL4")
+    wk.add_argument("run")
     bh = sub.add_parser("bumphunt", help="sideband-fit bump hunt using a run's event scores")
     bh.add_argument("run")
     bh.add_argument("--agg", default="max", choices=["max", "min", "sum"])
@@ -92,9 +94,10 @@ def main(argv: list[str] | None = None) -> int:
         summary = R.run(cfg, name, stages=tuple(a.stages.split(",")), log=_log)
         print(f"[{name}] status: {summary.get('status')}")
     elif a.cmd == "dev":
-        from gaehep.train.dev import dev_run
+        from gaehep.train.dev import DEV_TRAIN, dev_run
 
         cfg = yaml.safe_load(a.config.read_text())
+        cfg.setdefault("train", {}).update(DEV_TRAIN)
         for s in a.set:
             _set(cfg, s)
         res = dev_run(cfg, a.name or a.config.stem, bkg_events=a.bkg_events, log=_log)
@@ -125,6 +128,10 @@ def main(argv: list[str] | None = None) -> int:
         R.latent_flow_variant(a.run, conditional=a.conditional)
     elif a.cmd == "qn":
         R.quantile_normalised_variant(a.run)
+    elif a.cmd == "weak":
+        from gaehep.train.weak_run import weak_run
+
+        weak_run(a.run, log=_log)
     elif a.cmd == "bumphunt":
         R.bumphunt_run(a.run, agg=a.agg)
     elif a.cmd == "ensemble":

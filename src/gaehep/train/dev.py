@@ -29,6 +29,9 @@ from gaehep.train.loop import TrainConfig, fit, score_pool
 from gaehep.train.run import Data
 
 DEV_MIN_BKG = 20
+# training budget of the dev protocol (applied over a model config's ``train`` section by ``gaehep dev``):
+# 5 epochs x 120k jets, 20k validation jets, one thread so that two dev runs share the 2 CPU cores.
+DEV_TRAIN = {"epochs": 5, "jets_per_epoch": 120_000, "patience": 3, "val_jets": 20_000, "threads": 1}
 
 
 def dev_dir(name: str) -> Path:
