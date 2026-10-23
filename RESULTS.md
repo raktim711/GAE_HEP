@@ -156,6 +156,10 @@ At latent 4 the VAE's reconstruction score is as good as the plain autoencoder's
 seeds) but its KL score is weak (0.657 prod): with only four latent dimensions the posterior of every jet
 is broad and the KL carries little information, so the equal-weight ensemble (0.798) does not help there.
 
+Seed spread (dev, prod unless noted): latent-4 VAE reconstruction 0.826 / 0.824 / 0.837; latent-8 VAE
+reconstruction 0.803 / 0.792 / 0.796 and KL 0.832 / 0.842 / 0.847 (sum), so at latent 8 the KL term is the
+stronger and stable score, while at latent 4 it varies between seeds (0.66 / 0.71).
+
 **Final models** (short budget, three seeds each, evaluated on the test splits with `gaehep promote`):
 (a) latent-4 energy-flow VAE, reconstruction score (`ef_vae_s*`); (b) latent-8 energy-flow VAE,
 reconstruction + KL rank ensemble (`ef_vae8_s*`), the best dev configuration (0.839, max SIC 1.70).
