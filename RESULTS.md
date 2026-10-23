@@ -144,8 +144,8 @@ The same unsupervised score that is moderate on the 2-prong signal is as good as
 observable on the 3-prong signal (−τ32: 0.854; −τ21 only 0.682), and it barely sculpts the m_jj spectrum
 (JSD 0.010 at ε_B = 1 % for max, 0.008 for prod, versus 0.251 for a jet-mass cut).
 
-Sweep (dev, short budget): latent 2 → 0.821 (prod), finer kernels at latent 4 / mass-conditioned decoder:
-*pending*.  **VAE**: making the latent variational (β = 10⁻³, latent 8) leaves the reconstruction score
+Sweep (dev, short budget): latent 2 → 0.821 (prod); adding a 0.01 kernel at latent 4 → 0.822 (no gain
+over 0.829); mass-conditioned decoder: *pending*.  **VAE**: making the latent variational (β = 10⁻³, latent 8) leaves the reconstruction score
 unchanged (0.803) and adds the per-jet KL divergence of the posterior as a second, density-like score:
 0.811 / 0.832 / 0.778 / 0.817 (max / sum / min / prod; heavier jet 0.810).  An equal-weight rank
 ensemble of the two (sum of per-jet background log-CDFs) gives 0.839 (prod), max SIC 1.70.
