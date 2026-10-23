@@ -233,7 +233,20 @@ model-agnostic of the two.
 
 ## 6. Supervised reference
 
-SUPERVISED
+Same EdgeConv encoder with a binary head, trained per jet on 2-prong signal-training jets against
+background-training jets (labels; 5 epochs × 200k jets, `results/runs/classifier`): the idealised upper bound
+for the 2-prong signal.
+
+| test, SR | 2-prong AUC / max SIC | 3-prong AUC / max SIC (not trained on) | JSD @ ε_B = 1 % |
+|---|---|---|---:|
+| sum of the two jet logits | 0.982 / 15.7 | 0.958 / 8.8 | 0.32 |
+| max | 0.973 / 9.0 | 0.941 / 4.2 | 0.14 |
+
+The unsupervised energy-flow VAE recovers about two thirds of the supervised AUC excess over 0.5 on the
+2-prong signal ((0.829 − 0.5)/(0.982 − 0.5) = 0.68) but only ≈ 4 % of its max-SIC excess over 1 — the
+unsupervised scores rank the bulk of the signal correctly but do not isolate it.  The supervised classifier
+transfers well to the 3-prong signal, but it has learned the signal's jet masses and sculpts m_jj
+strongly.
 
 ## 7. Weak supervision on the GNN latents
 
