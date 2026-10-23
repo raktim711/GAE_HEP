@@ -158,11 +158,16 @@ def plot_weak(res: dict, path: Path, title: str = "") -> Path:
         ax.axhline(r["supervised"]["max_sic"], color=line[0].get_color(), ls="--", lw=1)
     ax.axhline(1, color="grey", lw=1, ls=":")
     ax.set_xscale("log")
-    from matplotlib.ticker import FuncFormatter
+    from matplotlib.ticker import FixedLocator, FuncFormatter, NullFormatter
 
-    ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:g}"))
+    sb_all = sorted({100 * x["s_over_b"] for r in res.values() for x in r["iad"]})
+    ax.xaxis.set_major_locator(FixedLocator(sb_all))
+    ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:.2g}"))
+    ax.xaxis.set_minor_formatter(NullFormatter())
     ax.set_xlabel("injected S/B in the signal region [%]")
     ax.set_ylabel("max SIC (test)")
     ax.set_title(title)
-    ax.legend(title="dashed: supervised, same features")
+    ax.legend(
+        title="dashed: supervised,\nsame features", loc="center left", bbox_to_anchor=(1.02, 0.5), fontsize=10
+    )
     return _save(fig, path)
