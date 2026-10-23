@@ -48,6 +48,9 @@ def main(argv: list[str] | None = None) -> int:
     de = sub.add_parser("dev-eval", help="dev metrics (validation splits) of a fully trained run")
     de.add_argument("run")
     sub.add_parser("dev-baselines", help="single-observable references under the dev protocol")
+    pr = sub.add_parser("promote", help="score + evaluate a dev-protocol model on the test splits")
+    pr.add_argument("dev_run")
+    pr.add_argument("name")
     rc = sub.add_parser("recon", help="input vs reconstruction figure of a (dev) run directory")
     rc.add_argument("run_dir", type=Path)
     df = sub.add_parser("dev-flow", help="latent-flow variants of a dev run")
@@ -121,6 +124,10 @@ def main(argv: list[str] | None = None) -> int:
         from gaehep.eval.recon import recon_figure
 
         print(recon_figure(a.run_dir))
+    elif a.cmd == "promote":
+        from gaehep.train.dev import promote
+
+        promote(a.dev_run, a.name, log=_log)
     elif a.cmd == "dev-baselines":
         from gaehep.train.dev import dev_baselines
 

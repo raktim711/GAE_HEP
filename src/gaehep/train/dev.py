@@ -451,3 +451,22 @@ def dev_report(root: Path | None = None) -> str:
         + "\n"
     )
     return md
+
+
+def promote(dev_run: str, name: str, log=print) -> dict[str, Any]:
+    """Evaluate a dev-protocol model on the *test* splits: copy its weights and history to
+    ``results/runs/<name>`` and run the score + evaluate stages with the dev run's exact config.
+
+    Used for the final models, whose training budget (like every other design choice) was selected on the
+    validation splits."""
+    import shutil
+
+    from gaehep.train.run import _run_dir, run
+
+    src, dst = dev_dir(dev_run), _run_dir(name)
+    dst.mkdir(parents=True, exist_ok=True)
+    for f in ("model.pt", "history.json"):
+        shutil.copy2(src / f, dst / f)
+    cfg = yaml.safe_load((src / "config.yaml").read_text())
+    cfg["promoted_from_dev_run"] = dev_run
+    return run(cfg, name, stages=("score", "evaluate"), log=log)
