@@ -1,0 +1,30 @@
+# GPU grid winner (results/dev/gpu_sweep.md: latent 4, beta 1e-3, kernels 0.02-0.05, 2 epochs) with 100 instead of
+# 50 constituents per jet and k = 16 neighbours: the scale variant gpu_scale_n100 of the GPU run (dev 0.876 / 0.866
+# for two seeds against 0.855 +- 0.002 for the 50-constituent winner).  Confirmed on the test splits with
+# notebooks/kaggle_confirm.ipynb (dev -> promote, five seeds).  `gaehep dev` resets the train section to the
+# 5-epoch dev budget: pass --set train.epochs=2 (the notebook does), or use `gaehep train` with this file.
+model: ef_ae
+model_args:
+  hidden: [48, 48, 48]
+  k: 16
+  latent_dim: 4
+  n_out: 32
+  dec_hidden: [256, 256]
+  sigmas: [0.02, 0.05]
+  variational: true
+  beta: 0.001
+extra_scores: [kl]
+data:
+  n_const: 100
+train:
+  epochs: 2
+  jets_per_epoch: 120000
+  batch_size: 256
+  lr: 1.0e-3
+  weight_decay: 1.0e-4
+  patience: 3
+  val_jets: 20000
+  time_budget_min: 100
+  threads: 4
+  device: cuda
+  seed: 1
