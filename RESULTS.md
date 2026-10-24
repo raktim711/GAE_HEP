@@ -277,9 +277,8 @@ steps and over-fit; a deeper encoder with a lower learning rate under-fits in 2 
 0.835, encoder depth 4 with learning rate 3·10⁻⁴ 0.822 ± 0.002 — and 30 instead of 50 constituents per jet
 (0.835; 100 constituents: 0.855, single seed, at four times the training time).  The graph (k = 6 … 24
 neighbours, static instead of dynamic k-NN, max instead of mean aggregation), the encoder size (width 32–96,
-depth 2–4), the
-latent size (3–6), β (10⁻⁴–10⁻³), VAE vs plain AE, the decoder (128–512 wide, 16–64 points) and the kernel
-set (0.02–0.05 … 0.05–0.8) do not matter at this level.  **Round 3**: the best round-2 variants with seeds —
+depth 2–4), the latent size (3–6), β (10⁻⁴–10⁻³), VAE vs plain AE, the decoder (128–512 wide, 16–64
+points) and the kernel set (0.02–0.05 … 0.05–0.8) do not matter at this level.  **Round 3**: the best round-2 variants with seeds —
 k = 8 neighbours 0.853 ± 0.004 (5 seeds), encoder depth 4 0.852 ± 0.002, learning rate 3·10⁻⁴
 0.852 ± 0.002 (3 seeds) — are within one standard deviation of each other; k = 8 (best mean, and the
 cheapest) is the new final configuration (`configs/ef_vae_k8_e2.yaml`: the previous model trained for
