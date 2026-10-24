@@ -9,7 +9,7 @@ build/
 dist/
 
 # Data and heavy artefacts (live outside the repo by default, see gaehep/config.py)
-data/
+/data/
 *.h5
 *.npy
 *.pt
