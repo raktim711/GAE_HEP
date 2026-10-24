@@ -274,8 +274,10 @@ steps and over-fit; a deeper encoder with a lower learning rate under-fits in 2 
 
 **Round 2: one change to the 2-epoch model** (31 variants, reference 0.847 ± 0.002, 5 seeds): all within
 −0.007 … +0.009 except the changes that move the fit level — 1 epoch 0.813, 2 × 240k jets 0.836, batch 128
-0.835, encoder depth 4 with learning rate 3·10⁻⁴ 0.822 ± 0.002.  The graph (k = 6 … 24 neighbours, static
-instead of dynamic k-NN, max instead of mean aggregation), the encoder size (width 32–96, depth 2–4), the
+0.835, encoder depth 4 with learning rate 3·10⁻⁴ 0.822 ± 0.002 — and 30 instead of 50 constituents per jet
+(0.835; 100 constituents: 0.855, single seed, at four times the training time).  The graph (k = 6 … 24
+neighbours, static instead of dynamic k-NN, max instead of mean aggregation), the encoder size (width 32–96,
+depth 2–4), the
 latent size (3–6), β (10⁻⁴–10⁻³), VAE vs plain AE, the decoder (128–512 wide, 16–64 points) and the kernel
 set (0.02–0.05 … 0.05–0.8) do not matter at this level.  **Round 3**: the best round-2 variants with seeds —
 k = 8 neighbours 0.853 ± 0.004 (5 seeds), encoder depth 4 0.852 ± 0.002, learning rate 3·10⁻⁴
@@ -452,8 +454,8 @@ would be the tool for that.
    sculpts m_jj slightly more.  Tuning an anomaly detector's training length on one signal model tunes it
    toward that signal.
 
-**Limitations.**  CPU-only training (2 cores): small models (48-wide EdgeConv, top-50 constituents), short
-budgets and three to five seeds; the GPU notebook (prepared, not yet run) continues the hyper-parameter study
+**Limitations.**  CPU-only training (2 cores): small models (48-wide EdgeConv, top-50 constituents — 96-wide
+encoders did not help, 100 constituents only possibly, §6), short budgets and three to five seeds; the GPU notebook (prepared, not yet run) continues the hyper-parameter study
 on a 72-point grid with scale variants.  Design choices — the whole hyper-parameter study included — were
 tuned on the 2-prong signal validation split, and earlier test results (including 3-prong) were seen during
 development.  The initial weights of the CPU study's runs were drawn from the process's random state (not

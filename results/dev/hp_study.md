@@ -85,6 +85,7 @@ Reference of round 1 (previous final model, 3 seeds): 0.829 ± 0.006 (3); refere
 | kernels 0.02-0.05 | 0.854 | +0.007 | 1.72 | +0.66 |
 | kernels 0.05-0.8 | 0.849 | +0.002 | 1.71 | +0.81 |
 | 30 constituents | 0.835 | -0.012 | 1.60 | +0.73 |
+| 100 constituents | 0.855 | +0.009 | 1.76 | +0.70 |
 
 ### Seed ensembles and score kinds
 
