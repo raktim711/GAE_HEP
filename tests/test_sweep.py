@@ -110,5 +110,25 @@ def test_sweep_ens_score(tmp_path, monkeypatch):
     runs = tmp_path / "results" / "runs"
     assert (runs / "e_best_seeds" / "metrics.json").exists()
     if out["best"]["point"]["beta"] > 0:
+        assert out["best"]["kind"] == "ens"
         assert (runs / "e_best_s1+ens" / "metrics.json").exists()
         assert (runs / "e_best_seeds+ens" / "metrics.json").exists()
+
+    # score kind as a hyper-parameter: VAE points carry both kinds, the winner is a (point, kind) pair
+    out = sweep(
+        str(cfg_path),
+        prefix="f",
+        grid=grid,
+        overrides=fixed,
+        top_k=2,
+        n_seeds=2,
+        final_seeds=2,
+        score="best",
+        log=lambda *a: None,
+    )
+    for d in out["phase1"]:
+        assert set(d["scores"]) == ({"rec", "ens"} if d["point"]["beta"] > 0 else {"rec"})
+        assert d["auc"] == max(v["auc"] for v in d["scores"].values())
+    top = max(out["seeds"], key=lambda d: d["auc_mean"])
+    assert (out["best"]["name"], out["best"]["kind"]) == (top["name"], top["kind"])
+    assert (runs / "f_best_seeds" / "metrics.json").exists()

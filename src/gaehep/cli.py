@@ -74,7 +74,12 @@ def main(argv: list[str] | None = None) -> int:
     sw.add_argument("--top-k", type=int, default=3)
     sw.add_argument("--seeds", type=int, default=3)
     sw.add_argument("--final-seeds", type=int, default=5)
-    sw.add_argument("--score", default="rec", choices=["rec", "ens"], help="rank by reconstruction or rec+KL")
+    sw.add_argument(
+        "--score",
+        default="rec",
+        choices=["rec", "ens", "best"],
+        help="rank by the reconstruction score, the rec+KL rank ensemble, or the better of the two",
+    )
     sw.add_argument("--set", action="append", default=[], help="fixed override, e.g. data.n_const=100")
     co = sub.add_parser("collapse", help="node-embedding collapse of the legacy GAE on real jets")
     co.add_argument("--dev-runs", nargs="*", default=[])
