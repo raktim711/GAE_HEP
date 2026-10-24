@@ -1,0 +1,2451 @@
+{
+  "base_config": "configs/ef_vae.yaml",
+  "grid": {
+    "latent_dim": [
+      3,
+      4,
+      6,
+      8
+    ],
+    "beta": [
+      0.001,
+      0.01
+    ],
+    "model_args.sigmas": {
+      "s2": [
+        0.02,
+        0.05
+      ],
+      "s3": [
+        0.02,
+        0.05,
+        0.1
+      ],
+      "s5": [
+        0.02,
+        0.05,
+        0.1,
+        0.2,
+        0.4
+      ]
+    },
+    "train.epochs": [
+      2,
+      3,
+      5
+    ]
+  },
+  "overrides": {
+    "train.device": "cuda",
+    "train.threads": 4
+  },
+  "score": "best",
+  "phase1": [
+    {
+      "name": "gpu_l4_b0.001_sigs2_e2",
+      "point": {
+        "latent_dim": 4,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05
+        ],
+        "train.epochs": 2
+      },
+      "labels": {
+        "latent_dim": "4",
+        "beta": "0.001",
+        "model_args.sigmas": "s2",
+        "train.epochs": "2"
+      },
+      "kind": "rec",
+      "auc": 0.8567247151144376,
+      "max_sic": 1.7138270716224504,
+      "scores": {
+        "rec": {
+          "auc": 0.8567247151144376,
+          "max_sic": 1.7138270716224504
+        },
+        "ens": {
+          "auc": 0.7396703364462931,
+          "max_sic": 1.2217874744247923
+        }
+      }
+    },
+    {
+      "name": "gpu_l4_b0.01_sigs5_e5",
+      "point": {
+        "latent_dim": 4,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.4
+        ],
+        "train.epochs": 5
+      },
+      "labels": {
+        "latent_dim": "4",
+        "beta": "0.01",
+        "model_args.sigmas": "s5",
+        "train.epochs": "5"
+      },
+      "kind": "rec",
+      "auc": 0.8551101030233639,
+      "max_sic": 1.7254806423106437,
+      "scores": {
+        "rec": {
+          "auc": 0.8551101030233639,
+          "max_sic": 1.7254806423106437
+        },
+        "ens": {
+          "auc": 0.828193131758215,
+          "max_sic": 1.6590751744362209
+        }
+      }
+    },
+    {
+      "name": "gpu_l8_b0.001_sigs2_e2",
+      "point": {
+        "latent_dim": 8,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05
+        ],
+        "train.epochs": 2
+      },
+      "labels": {
+        "latent_dim": "8",
+        "beta": "0.001",
+        "model_args.sigmas": "s2",
+        "train.epochs": "2"
+      },
+      "kind": "rec",
+      "auc": 0.8543554203581679,
+      "max_sic": 1.7469095509726809,
+      "scores": {
+        "rec": {
+          "auc": 0.8543554203581679,
+          "max_sic": 1.7469095509726809
+        },
+        "ens": {
+          "auc": 0.7187865128416595,
+          "max_sic": 1.1731591111750423
+        }
+      }
+    },
+    {
+      "name": "gpu_l3_b0.001_sigs2_e2",
+      "point": {
+        "latent_dim": 3,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05
+        ],
+        "train.epochs": 2
+      },
+      "labels": {
+        "latent_dim": "3",
+        "beta": "0.001",
+        "model_args.sigmas": "s2",
+        "train.epochs": "2"
+      },
+      "kind": "rec",
+      "auc": 0.8534357346834814,
+      "max_sic": 1.7225002953996191,
+      "scores": {
+        "rec": {
+          "auc": 0.8534357346834814,
+          "max_sic": 1.7225002953996191
+        },
+        "ens": {
+          "auc": 0.7335157493735776,
+          "max_sic": 1.210547799431575
+        }
+      }
+    },
+    {
+      "name": "gpu_l8_b0.001_sigs3_e2",
+      "point": {
+        "latent_dim": 8,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1
+        ],
+        "train.epochs": 2
+      },
+      "labels": {
+        "latent_dim": "8",
+        "beta": "0.001",
+        "model_args.sigmas": "s3",
+        "train.epochs": "2"
+      },
+      "kind": "rec",
+      "auc": 0.853227168076701,
+      "max_sic": 1.710863122488621,
+      "scores": {
+        "rec": {
+          "auc": 0.853227168076701,
+          "max_sic": 1.710863122488621
+        },
+        "ens": {
+          "auc": 0.7957278508175724,
+          "max_sic": 1.4376507386571762
+        }
+      }
+    },
+    {
+      "name": "gpu_l8_b0.001_sigs5_e3",
+      "point": {
+        "latent_dim": 8,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.4
+        ],
+        "train.epochs": 3
+      },
+      "labels": {
+        "latent_dim": "8",
+        "beta": "0.001",
+        "model_args.sigmas": "s5",
+        "train.epochs": "3"
+      },
+      "kind": "ens",
+      "auc": 0.8531249978103245,
+      "max_sic": 1.782946922093852,
+      "scores": {
+        "rec": {
+          "auc": 0.842494166266102,
+          "max_sic": 1.6447809915349374
+        },
+        "ens": {
+          "auc": 0.8531249978103245,
+          "max_sic": 1.782946922093852
+        }
+      }
+    },
+    {
+      "name": "gpu_l4_b0.001_sigs3_e2",
+      "point": {
+        "latent_dim": 4,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1
+        ],
+        "train.epochs": 2
+      },
+      "labels": {
+        "latent_dim": "4",
+        "beta": "0.001",
+        "model_args.sigmas": "s3",
+        "train.epochs": "2"
+      },
+      "kind": "rec",
+      "auc": 0.8522602620463693,
+      "max_sic": 1.7138673019292558,
+      "scores": {
+        "rec": {
+          "auc": 0.8522602620463693,
+          "max_sic": 1.7138673019292558
+        },
+        "ens": {
+          "auc": 0.7912790977239984,
+          "max_sic": 1.433157331020799
+        }
+      }
+    },
+    {
+      "name": "gpu_l6_b0.001_sigs3_e2",
+      "point": {
+        "latent_dim": 6,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1
+        ],
+        "train.epochs": 2
+      },
+      "labels": {
+        "latent_dim": "6",
+        "beta": "0.001",
+        "model_args.sigmas": "s3",
+        "train.epochs": "2"
+      },
+      "kind": "rec",
+      "auc": 0.8517865585620873,
+      "max_sic": 1.703973367602225,
+      "scores": {
+        "rec": {
+          "auc": 0.8517865585620873,
+          "max_sic": 1.703973367602225
+        },
+        "ens": {
+          "auc": 0.7308068906640638,
+          "max_sic": 1.2138910323042897
+        }
+      }
+    },
+    {
+      "name": "gpu_l4_b0.001_sigs3_e3",
+      "point": {
+        "latent_dim": 4,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1
+        ],
+        "train.epochs": 3
+      },
+      "labels": {
+        "latent_dim": "4",
+        "beta": "0.001",
+        "model_args.sigmas": "s3",
+        "train.epochs": "3"
+      },
+      "kind": "rec",
+      "auc": 0.8515430885252587,
+      "max_sic": 1.6961366688997872,
+      "scores": {
+        "rec": {
+          "auc": 0.8515430885252587,
+          "max_sic": 1.6961366688997872
+        },
+        "ens": {
+          "auc": 0.8122342500133133,
+          "max_sic": 1.539443441088185
+        }
+      }
+    },
+    {
+      "name": "gpu_l8_b0.001_sigs5_e2",
+      "point": {
+        "latent_dim": 8,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.4
+        ],
+        "train.epochs": 2
+      },
+      "labels": {
+        "latent_dim": "8",
+        "beta": "0.001",
+        "model_args.sigmas": "s5",
+        "train.epochs": "2"
+      },
+      "kind": "rec",
+      "auc": 0.8500524558701525,
+      "max_sic": 1.7017446950573334,
+      "scores": {
+        "rec": {
+          "auc": 0.8500524558701525,
+          "max_sic": 1.7017446950573334
+        },
+        "ens": {
+          "auc": 0.8325718371273697,
+          "max_sic": 1.6738246157523244
+        }
+      }
+    },
+    {
+      "name": "gpu_l3_b0.001_sigs2_e3",
+      "point": {
+        "latent_dim": 3,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05
+        ],
+        "train.epochs": 3
+      },
+      "labels": {
+        "latent_dim": "3",
+        "beta": "0.001",
+        "model_args.sigmas": "s2",
+        "train.epochs": "3"
+      },
+      "kind": "rec",
+      "auc": 0.8500015787561522,
+      "max_sic": 1.68249209966027,
+      "scores": {
+        "rec": {
+          "auc": 0.8500015787561522,
+          "max_sic": 1.68249209966027
+        },
+        "ens": {
+          "auc": 0.7616873281542541,
+          "max_sic": 1.2866661577641656
+        }
+      }
+    },
+    {
+      "name": "gpu_l6_b0.001_sigs2_e2",
+      "point": {
+        "latent_dim": 6,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05
+        ],
+        "train.epochs": 2
+      },
+      "labels": {
+        "latent_dim": "6",
+        "beta": "0.001",
+        "model_args.sigmas": "s2",
+        "train.epochs": "2"
+      },
+      "kind": "rec",
+      "auc": 0.8498268645351021,
+      "max_sic": 1.665735879066666,
+      "scores": {
+        "rec": {
+          "auc": 0.8498268645351021,
+          "max_sic": 1.665735879066666
+        },
+        "ens": {
+          "auc": 0.6619457405377984,
+          "max_sic": 1.0808952144554076
+        }
+      }
+    },
+    {
+      "name": "gpu_l3_b0.001_sigs3_e2",
+      "point": {
+        "latent_dim": 3,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1
+        ],
+        "train.epochs": 2
+      },
+      "labels": {
+        "latent_dim": "3",
+        "beta": "0.001",
+        "model_args.sigmas": "s3",
+        "train.epochs": "2"
+      },
+      "kind": "rec",
+      "auc": 0.8495441336136587,
+      "max_sic": 1.6746766684941041,
+      "scores": {
+        "rec": {
+          "auc": 0.8495441336136587,
+          "max_sic": 1.6746766684941041
+        },
+        "ens": {
+          "auc": 0.7665818773158009,
+          "max_sic": 1.3123610564614425
+        }
+      }
+    },
+    {
+      "name": "gpu_l8_b0.001_sigs2_e3",
+      "point": {
+        "latent_dim": 8,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05
+        ],
+        "train.epochs": 3
+      },
+      "labels": {
+        "latent_dim": "8",
+        "beta": "0.001",
+        "model_args.sigmas": "s2",
+        "train.epochs": "3"
+      },
+      "kind": "rec",
+      "auc": 0.8495146496308733,
+      "max_sic": 1.6904519746624358,
+      "scores": {
+        "rec": {
+          "auc": 0.8495146496308733,
+          "max_sic": 1.6904519746624358
+        },
+        "ens": {
+          "auc": 0.7853578753349328,
+          "max_sic": 1.389470709155993
+        }
+      }
+    },
+    {
+      "name": "gpu_l3_b0.001_sigs3_e5",
+      "point": {
+        "latent_dim": 3,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1
+        ],
+        "train.epochs": 5
+      },
+      "labels": {
+        "latent_dim": "3",
+        "beta": "0.001",
+        "model_args.sigmas": "s3",
+        "train.epochs": "5"
+      },
+      "kind": "ens",
+      "auc": 0.8487727765682982,
+      "max_sic": 1.8358268431982767,
+      "scores": {
+        "rec": {
+          "auc": 0.8459473833200668,
+          "max_sic": 1.630945824087066
+        },
+        "ens": {
+          "auc": 0.8487727765682982,
+          "max_sic": 1.8358268431982767
+        }
+      }
+    },
+    {
+      "name": "gpu_l3_b0.001_sigs3_e3",
+      "point": {
+        "latent_dim": 3,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1
+        ],
+        "train.epochs": 3
+      },
+      "labels": {
+        "latent_dim": "3",
+        "beta": "0.001",
+        "model_args.sigmas": "s3",
+        "train.epochs": "3"
+      },
+      "kind": "rec",
+      "auc": 0.8485604656161361,
+      "max_sic": 1.657689452795776,
+      "scores": {
+        "rec": {
+          "auc": 0.8485604656161361,
+          "max_sic": 1.657689452795776
+        },
+        "ens": {
+          "auc": 0.7747626917104836,
+          "max_sic": 1.3347902814801151
+        }
+      }
+    },
+    {
+      "name": "gpu_l8_b0.001_sigs3_e3",
+      "point": {
+        "latent_dim": 8,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1
+        ],
+        "train.epochs": 3
+      },
+      "labels": {
+        "latent_dim": "8",
+        "beta": "0.001",
+        "model_args.sigmas": "s3",
+        "train.epochs": "3"
+      },
+      "kind": "rec",
+      "auc": 0.8485386236014102,
+      "max_sic": 1.677937750939508,
+      "scores": {
+        "rec": {
+          "auc": 0.8485386236014102,
+          "max_sic": 1.677937750939508
+        },
+        "ens": {
+          "auc": 0.8194994296332837,
+          "max_sic": 1.5510733868475084
+        }
+      }
+    },
+    {
+      "name": "gpu_l6_b0.001_sigs3_e3",
+      "point": {
+        "latent_dim": 6,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1
+        ],
+        "train.epochs": 3
+      },
+      "labels": {
+        "latent_dim": "6",
+        "beta": "0.001",
+        "model_args.sigmas": "s3",
+        "train.epochs": "3"
+      },
+      "kind": "rec",
+      "auc": 0.8474049190275458,
+      "max_sic": 1.668019365845644,
+      "scores": {
+        "rec": {
+          "auc": 0.8474049190275458,
+          "max_sic": 1.668019365845644
+        },
+        "ens": {
+          "auc": 0.7903389714270099,
+          "max_sic": 1.4153608858871385
+        }
+      }
+    },
+    {
+      "name": "gpu_l4_b0.001_sigs5_e2",
+      "point": {
+        "latent_dim": 4,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.4
+        ],
+        "train.epochs": 2
+      },
+      "labels": {
+        "latent_dim": "4",
+        "beta": "0.001",
+        "model_args.sigmas": "s5",
+        "train.epochs": "2"
+      },
+      "kind": "rec",
+      "auc": 0.8456203333632298,
+      "max_sic": 1.677749422989407,
+      "scores": {
+        "rec": {
+          "auc": 0.8456203333632298,
+          "max_sic": 1.677749422989407
+        },
+        "ens": {
+          "auc": 0.7665492730451978,
+          "max_sic": 1.308696372043441
+        }
+      }
+    },
+    {
+      "name": "gpu_l6_b0.001_sigs5_e2",
+      "point": {
+        "latent_dim": 6,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.4
+        ],
+        "train.epochs": 2
+      },
+      "labels": {
+        "latent_dim": "6",
+        "beta": "0.001",
+        "model_args.sigmas": "s5",
+        "train.epochs": "2"
+      },
+      "kind": "rec",
+      "auc": 0.8450193549811091,
+      "max_sic": 1.6633785105844723,
+      "scores": {
+        "rec": {
+          "auc": 0.8450193549811091,
+          "max_sic": 1.6633785105844723
+        },
+        "ens": {
+          "auc": 0.7927572820729677,
+          "max_sic": 1.4498509140526057
+        }
+      }
+    },
+    {
+      "name": "gpu_l3_b0.001_sigs5_e2",
+      "point": {
+        "latent_dim": 3,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.4
+        ],
+        "train.epochs": 2
+      },
+      "labels": {
+        "latent_dim": "3",
+        "beta": "0.001",
+        "model_args.sigmas": "s5",
+        "train.epochs": "2"
+      },
+      "kind": "rec",
+      "auc": 0.8448859489914179,
+      "max_sic": 1.6584534811157243,
+      "scores": {
+        "rec": {
+          "auc": 0.8448859489914179,
+          "max_sic": 1.6584534811157243
+        },
+        "ens": {
+          "auc": 0.7583482588925355,
+          "max_sic": 1.2793291717228439
+        }
+      }
+    },
+    {
+      "name": "gpu_l6_b0.001_sigs2_e5",
+      "point": {
+        "latent_dim": 6,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05
+        ],
+        "train.epochs": 5
+      },
+      "labels": {
+        "latent_dim": "6",
+        "beta": "0.001",
+        "model_args.sigmas": "s2",
+        "train.epochs": "5"
+      },
+      "kind": "rec",
+      "auc": 0.8442451623057671,
+      "max_sic": 1.6273729214230013,
+      "scores": {
+        "rec": {
+          "auc": 0.8442451623057671,
+          "max_sic": 1.6273729214230013
+        },
+        "ens": {
+          "auc": 0.8101575725640996,
+          "max_sic": 1.5086976858815901
+        }
+      }
+    },
+    {
+      "name": "gpu_l4_b0.001_sigs2_e5",
+      "point": {
+        "latent_dim": 4,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05
+        ],
+        "train.epochs": 5
+      },
+      "labels": {
+        "latent_dim": "4",
+        "beta": "0.001",
+        "model_args.sigmas": "s2",
+        "train.epochs": "5"
+      },
+      "kind": "rec",
+      "auc": 0.8440898814562149,
+      "max_sic": 1.6422313732589886,
+      "scores": {
+        "rec": {
+          "auc": 0.8440898814562149,
+          "max_sic": 1.6422313732589886
+        },
+        "ens": {
+          "auc": 0.8257101709383443,
+          "max_sic": 1.6267883955275138
+        }
+      }
+    },
+    {
+      "name": "gpu_l6_b0.001_sigs2_e3",
+      "point": {
+        "latent_dim": 6,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05
+        ],
+        "train.epochs": 3
+      },
+      "labels": {
+        "latent_dim": "6",
+        "beta": "0.001",
+        "model_args.sigmas": "s2",
+        "train.epochs": "3"
+      },
+      "kind": "rec",
+      "auc": 0.8438880262053378,
+      "max_sic": 1.634535103508027,
+      "scores": {
+        "rec": {
+          "auc": 0.8438880262053378,
+          "max_sic": 1.634535103508027
+        },
+        "ens": {
+          "auc": 0.8033657460803054,
+          "max_sic": 1.4741863777793465
+        }
+      }
+    },
+    {
+      "name": "gpu_l8_b0.001_sigs2_e5",
+      "point": {
+        "latent_dim": 8,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05
+        ],
+        "train.epochs": 5
+      },
+      "labels": {
+        "latent_dim": "8",
+        "beta": "0.001",
+        "model_args.sigmas": "s2",
+        "train.epochs": "5"
+      },
+      "kind": "rec",
+      "auc": 0.8437452155586791,
+      "max_sic": 1.643008987116901,
+      "scores": {
+        "rec": {
+          "auc": 0.8437452155586791,
+          "max_sic": 1.643008987116901
+        },
+        "ens": {
+          "auc": 0.8146915040409152,
+          "max_sic": 1.5223779194543665
+        }
+      }
+    },
+    {
+      "name": "gpu_l4_b0.001_sigs2_e3",
+      "point": {
+        "latent_dim": 4,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05
+        ],
+        "train.epochs": 3
+      },
+      "labels": {
+        "latent_dim": "4",
+        "beta": "0.001",
+        "model_args.sigmas": "s2",
+        "train.epochs": "3"
+      },
+      "kind": "rec",
+      "auc": 0.8434724148163615,
+      "max_sic": 1.6319607366349316,
+      "scores": {
+        "rec": {
+          "auc": 0.8434724148163615,
+          "max_sic": 1.6319607366349316
+        },
+        "ens": {
+          "auc": 0.7828926946814354,
+          "max_sic": 1.3872411085019414
+        }
+      }
+    },
+    {
+      "name": "gpu_l4_b0.001_sigs5_e3",
+      "point": {
+        "latent_dim": 4,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.4
+        ],
+        "train.epochs": 3
+      },
+      "labels": {
+        "latent_dim": "4",
+        "beta": "0.001",
+        "model_args.sigmas": "s5",
+        "train.epochs": "3"
+      },
+      "kind": "rec",
+      "auc": 0.840676242789836,
+      "max_sic": 1.6357551780145125,
+      "scores": {
+        "rec": {
+          "auc": 0.840676242789836,
+          "max_sic": 1.6357551780145125
+        },
+        "ens": {
+          "auc": 0.8145501385801932,
+          "max_sic": 1.55102762542222
+        }
+      }
+    },
+    {
+      "name": "gpu_l3_b0.001_sigs5_e5",
+      "point": {
+        "latent_dim": 3,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.4
+        ],
+        "train.epochs": 5
+      },
+      "labels": {
+        "latent_dim": "3",
+        "beta": "0.001",
+        "model_args.sigmas": "s5",
+        "train.epochs": "5"
+      },
+      "kind": "rec",
+      "auc": 0.8397920298608699,
+      "max_sic": 1.6011237361476083,
+      "scores": {
+        "rec": {
+          "auc": 0.8397920298608699,
+          "max_sic": 1.6011237361476083
+        },
+        "ens": {
+          "auc": 0.7911072410296871,
+          "max_sic": 1.3959327382429203
+        }
+      }
+    },
+    {
+      "name": "gpu_l3_b0.001_sigs5_e3",
+      "point": {
+        "latent_dim": 3,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.4
+        ],
+        "train.epochs": 3
+      },
+      "labels": {
+        "latent_dim": "3",
+        "beta": "0.001",
+        "model_args.sigmas": "s5",
+        "train.epochs": "3"
+      },
+      "kind": "rec",
+      "auc": 0.839700282450643,
+      "max_sic": 1.6264099202761835,
+      "scores": {
+        "rec": {
+          "auc": 0.839700282450643,
+          "max_sic": 1.6264099202761835
+        },
+        "ens": {
+          "auc": 0.7812837429019474,
+          "max_sic": 1.376042805115995
+        }
+      }
+    },
+    {
+      "name": "gpu_l3_b0.001_sigs2_e5",
+      "point": {
+        "latent_dim": 3,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05
+        ],
+        "train.epochs": 5
+      },
+      "labels": {
+        "latent_dim": "3",
+        "beta": "0.001",
+        "model_args.sigmas": "s2",
+        "train.epochs": "5"
+      },
+      "kind": "rec",
+      "auc": 0.8396270706448926,
+      "max_sic": 1.6096581771175624,
+      "scores": {
+        "rec": {
+          "auc": 0.8396270706448926,
+          "max_sic": 1.6096581771175624
+        },
+        "ens": {
+          "auc": 0.8106285061086695,
+          "max_sic": 1.5236358007752693
+        }
+      }
+    },
+    {
+      "name": "gpu_l6_b0.001_sigs5_e3",
+      "point": {
+        "latent_dim": 6,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.4
+        ],
+        "train.epochs": 3
+      },
+      "labels": {
+        "latent_dim": "6",
+        "beta": "0.001",
+        "model_args.sigmas": "s5",
+        "train.epochs": "3"
+      },
+      "kind": "rec",
+      "auc": 0.8391316236812897,
+      "max_sic": 1.6191008037038752,
+      "scores": {
+        "rec": {
+          "auc": 0.8391316236812897,
+          "max_sic": 1.6191008037038752
+        },
+        "ens": {
+          "auc": 0.8040668364336807,
+          "max_sic": 1.479051841860344
+        }
+      }
+    },
+    {
+      "name": "gpu_l4_b0.001_sigs3_e5",
+      "point": {
+        "latent_dim": 4,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1
+        ],
+        "train.epochs": 5
+      },
+      "labels": {
+        "latent_dim": "4",
+        "beta": "0.001",
+        "model_args.sigmas": "s3",
+        "train.epochs": "5"
+      },
+      "kind": "rec",
+      "auc": 0.838953548308099,
+      "max_sic": 1.6058476233863075,
+      "scores": {
+        "rec": {
+          "auc": 0.838953548308099,
+          "max_sic": 1.6058476233863075
+        },
+        "ens": {
+          "auc": 0.8268105486486373,
+          "max_sic": 1.6366015362446567
+        }
+      }
+    },
+    {
+      "name": "gpu_l8_b0.001_sigs5_e5",
+      "point": {
+        "latent_dim": 8,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.4
+        ],
+        "train.epochs": 5
+      },
+      "labels": {
+        "latent_dim": "8",
+        "beta": "0.001",
+        "model_args.sigmas": "s5",
+        "train.epochs": "5"
+      },
+      "kind": "ens",
+      "auc": 0.8377558614113984,
+      "max_sic": 1.683959389162905,
+      "scores": {
+        "rec": {
+          "auc": 0.7924010656363163,
+          "max_sic": 1.453517910352697
+        },
+        "ens": {
+          "auc": 0.8377558614113984,
+          "max_sic": 1.683959389162905
+        }
+      }
+    },
+    {
+      "name": "gpu_l6_b0.001_sigs3_e5",
+      "point": {
+        "latent_dim": 6,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1
+        ],
+        "train.epochs": 5
+      },
+      "labels": {
+        "latent_dim": "6",
+        "beta": "0.001",
+        "model_args.sigmas": "s3",
+        "train.epochs": "5"
+      },
+      "kind": "rec",
+      "auc": 0.8369512431927364,
+      "max_sic": 1.6007806111891547,
+      "scores": {
+        "rec": {
+          "auc": 0.8369512431927364,
+          "max_sic": 1.6007806111891547
+        },
+        "ens": {
+          "auc": 0.8252892167407536,
+          "max_sic": 1.5912869501162574
+        }
+      }
+    },
+    {
+      "name": "gpu_l8_b0.001_sigs3_e5",
+      "point": {
+        "latent_dim": 8,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1
+        ],
+        "train.epochs": 5
+      },
+      "labels": {
+        "latent_dim": "8",
+        "beta": "0.001",
+        "model_args.sigmas": "s3",
+        "train.epochs": "5"
+      },
+      "kind": "rec",
+      "auc": 0.8354260246105529,
+      "max_sic": 1.5690283065198187,
+      "scores": {
+        "rec": {
+          "auc": 0.8354260246105529,
+          "max_sic": 1.5690283065198187
+        },
+        "ens": {
+          "auc": 0.8152875556527966,
+          "max_sic": 1.5331097809282623
+        }
+      }
+    },
+    {
+      "name": "gpu_l4_b0.001_sigs5_e5",
+      "point": {
+        "latent_dim": 4,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.4
+        ],
+        "train.epochs": 5
+      },
+      "labels": {
+        "latent_dim": "4",
+        "beta": "0.001",
+        "model_args.sigmas": "s5",
+        "train.epochs": "5"
+      },
+      "kind": "rec",
+      "auc": 0.8318088446430373,
+      "max_sic": 1.5663866988549175,
+      "scores": {
+        "rec": {
+          "auc": 0.8318088446430373,
+          "max_sic": 1.5663866988549175
+        },
+        "ens": {
+          "auc": 0.8193567284704082,
+          "max_sic": 1.5911458500486082
+        }
+      }
+    },
+    {
+      "name": "gpu_l8_b0.01_sigs3_e5",
+      "point": {
+        "latent_dim": 8,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1
+        ],
+        "train.epochs": 5
+      },
+      "labels": {
+        "latent_dim": "8",
+        "beta": "0.01",
+        "model_args.sigmas": "s3",
+        "train.epochs": "5"
+      },
+      "kind": "rec",
+      "auc": 0.818909903254874,
+      "max_sic": 1.5642116658466694,
+      "scores": {
+        "rec": {
+          "auc": 0.818909903254874,
+          "max_sic": 1.5642116658466694
+        },
+        "ens": {
+          "auc": 0.8087915543509031,
+          "max_sic": 1.5963685653462565
+        }
+      }
+    },
+    {
+      "name": "gpu_l8_b0.01_sigs5_e3",
+      "point": {
+        "latent_dim": 8,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.4
+        ],
+        "train.epochs": 3
+      },
+      "labels": {
+        "latent_dim": "8",
+        "beta": "0.01",
+        "model_args.sigmas": "s5",
+        "train.epochs": "3"
+      },
+      "kind": "rec",
+      "auc": 0.8161858044027545,
+      "max_sic": 1.6020340434627445,
+      "scores": {
+        "rec": {
+          "auc": 0.8161858044027545,
+          "max_sic": 1.6020340434627445
+        },
+        "ens": {
+          "auc": 0.7466671165720259,
+          "max_sic": 1.3744339288619827
+        }
+      }
+    },
+    {
+      "name": "gpu_l6_b0.001_sigs5_e5",
+      "point": {
+        "latent_dim": 6,
+        "beta": 0.001,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.4
+        ],
+        "train.epochs": 5
+      },
+      "labels": {
+        "latent_dim": "6",
+        "beta": "0.001",
+        "model_args.sigmas": "s5",
+        "train.epochs": "5"
+      },
+      "kind": "rec",
+      "auc": 0.8160947795854961,
+      "max_sic": 1.4993191773680066,
+      "scores": {
+        "rec": {
+          "auc": 0.8160947795854961,
+          "max_sic": 1.4993191773680066
+        },
+        "ens": {
+          "auc": 0.8055132376404195,
+          "max_sic": 1.4952678675219253
+        }
+      }
+    },
+    {
+      "name": "gpu_l6_b0.01_sigs5_e5",
+      "point": {
+        "latent_dim": 6,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.4
+        ],
+        "train.epochs": 5
+      },
+      "labels": {
+        "latent_dim": "6",
+        "beta": "0.01",
+        "model_args.sigmas": "s5",
+        "train.epochs": "5"
+      },
+      "kind": "rec",
+      "auc": 0.8155605644143021,
+      "max_sic": 1.5826830040202475,
+      "scores": {
+        "rec": {
+          "auc": 0.8155605644143021,
+          "max_sic": 1.5826830040202475
+        },
+        "ens": {
+          "auc": 0.808475890707507,
+          "max_sic": 1.5977934321112677
+        }
+      }
+    },
+    {
+      "name": "gpu_l8_b0.01_sigs5_e2",
+      "point": {
+        "latent_dim": 8,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.4
+        ],
+        "train.epochs": 2
+      },
+      "labels": {
+        "latent_dim": "8",
+        "beta": "0.01",
+        "model_args.sigmas": "s5",
+        "train.epochs": "2"
+      },
+      "kind": "rec",
+      "auc": 0.8150586031656053,
+      "max_sic": 1.5887758983896514,
+      "scores": {
+        "rec": {
+          "auc": 0.8150586031656053,
+          "max_sic": 1.5887758983896514
+        },
+        "ens": {
+          "auc": 0.7573753750476473,
+          "max_sic": 1.3951738903869864
+        }
+      }
+    },
+    {
+      "name": "gpu_l8_b0.01_sigs5_e5",
+      "point": {
+        "latent_dim": 8,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.4
+        ],
+        "train.epochs": 5
+      },
+      "labels": {
+        "latent_dim": "8",
+        "beta": "0.01",
+        "model_args.sigmas": "s5",
+        "train.epochs": "5"
+      },
+      "kind": "rec",
+      "auc": 0.8139336353976312,
+      "max_sic": 1.5639003544066354,
+      "scores": {
+        "rec": {
+          "auc": 0.8139336353976312,
+          "max_sic": 1.5639003544066354
+        },
+        "ens": {
+          "auc": 0.7909367419342859,
+          "max_sic": 1.5268488210373015
+        }
+      }
+    },
+    {
+      "name": "gpu_l6_b0.01_sigs3_e5",
+      "point": {
+        "latent_dim": 6,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1
+        ],
+        "train.epochs": 5
+      },
+      "labels": {
+        "latent_dim": "6",
+        "beta": "0.01",
+        "model_args.sigmas": "s3",
+        "train.epochs": "5"
+      },
+      "kind": "ens",
+      "auc": 0.8109251524189436,
+      "max_sic": 1.645110563535885,
+      "scores": {
+        "rec": {
+          "auc": 0.7778862749903304,
+          "max_sic": 1.4771054849222314
+        },
+        "ens": {
+          "auc": 0.8109251524189436,
+          "max_sic": 1.645110563535885
+        }
+      }
+    },
+    {
+      "name": "gpu_l6_b0.01_sigs2_e5",
+      "point": {
+        "latent_dim": 6,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05
+        ],
+        "train.epochs": 5
+      },
+      "labels": {
+        "latent_dim": "6",
+        "beta": "0.01",
+        "model_args.sigmas": "s2",
+        "train.epochs": "5"
+      },
+      "kind": "ens",
+      "auc": 0.8080024609326827,
+      "max_sic": 1.5791671844518116,
+      "scores": {
+        "rec": {
+          "auc": 0.7871429208311379,
+          "max_sic": 1.436380927422612
+        },
+        "ens": {
+          "auc": 0.8080024609326827,
+          "max_sic": 1.5791671844518116
+        }
+      }
+    },
+    {
+      "name": "gpu_l8_b0.01_sigs3_e2",
+      "point": {
+        "latent_dim": 8,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1
+        ],
+        "train.epochs": 2
+      },
+      "labels": {
+        "latent_dim": "8",
+        "beta": "0.01",
+        "model_args.sigmas": "s3",
+        "train.epochs": "2"
+      },
+      "kind": "rec",
+      "auc": 0.8056113460584438,
+      "max_sic": 1.5528114976311123,
+      "scores": {
+        "rec": {
+          "auc": 0.8056113460584438,
+          "max_sic": 1.5528114976311123
+        },
+        "ens": {
+          "auc": 0.705582046008414,
+          "max_sic": 1.2263822468642291
+        }
+      }
+    },
+    {
+      "name": "gpu_l3_b0.01_sigs3_e5",
+      "point": {
+        "latent_dim": 3,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1
+        ],
+        "train.epochs": 5
+      },
+      "labels": {
+        "latent_dim": "3",
+        "beta": "0.01",
+        "model_args.sigmas": "s3",
+        "train.epochs": "5"
+      },
+      "kind": "ens",
+      "auc": 0.8022393659715293,
+      "max_sic": 1.6153185888223358,
+      "scores": {
+        "rec": {
+          "auc": 0.7778808445946893,
+          "max_sic": 1.4789648520822907
+        },
+        "ens": {
+          "auc": 0.8022393659715293,
+          "max_sic": 1.6153185888223358
+        }
+      }
+    },
+    {
+      "name": "gpu_l3_b0.01_sigs2_e5",
+      "point": {
+        "latent_dim": 3,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05
+        ],
+        "train.epochs": 5
+      },
+      "labels": {
+        "latent_dim": "3",
+        "beta": "0.01",
+        "model_args.sigmas": "s2",
+        "train.epochs": "5"
+      },
+      "kind": "ens",
+      "auc": 0.8000268081991265,
+      "max_sic": 1.5453441789527773,
+      "scores": {
+        "rec": {
+          "auc": 0.7868230639588495,
+          "max_sic": 1.4369610789955303
+        },
+        "ens": {
+          "auc": 0.8000268081991265,
+          "max_sic": 1.5453441789527773
+        }
+      }
+    },
+    {
+      "name": "gpu_l3_b0.01_sigs2_e2",
+      "point": {
+        "latent_dim": 3,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05
+        ],
+        "train.epochs": 2
+      },
+      "labels": {
+        "latent_dim": "3",
+        "beta": "0.01",
+        "model_args.sigmas": "s2",
+        "train.epochs": "2"
+      },
+      "kind": "ens",
+      "auc": 0.7981380268184468,
+      "max_sic": 1.6416805647017854,
+      "scores": {
+        "rec": {
+          "auc": 0.7871109844116113,
+          "max_sic": 1.4303196763728652
+        },
+        "ens": {
+          "auc": 0.7981380268184468,
+          "max_sic": 1.6416805647017854
+        }
+      }
+    },
+    {
+      "name": "gpu_l8_b0.01_sigs2_e5",
+      "point": {
+        "latent_dim": 8,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05
+        ],
+        "train.epochs": 5
+      },
+      "labels": {
+        "latent_dim": "8",
+        "beta": "0.01",
+        "model_args.sigmas": "s2",
+        "train.epochs": "5"
+      },
+      "kind": "rec",
+      "auc": 0.7882863913584538,
+      "max_sic": 1.4416206424315934,
+      "scores": {
+        "rec": {
+          "auc": 0.7882863913584538,
+          "max_sic": 1.4416206424315934
+        },
+        "ens": {
+          "auc": 0.7864746865610671,
+          "max_sic": 1.4694743035015003
+        }
+      }
+    },
+    {
+      "name": "gpu_l4_b0.01_sigs2_e5",
+      "point": {
+        "latent_dim": 4,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05
+        ],
+        "train.epochs": 5
+      },
+      "labels": {
+        "latent_dim": "4",
+        "beta": "0.01",
+        "model_args.sigmas": "s2",
+        "train.epochs": "5"
+      },
+      "kind": "rec",
+      "auc": 0.7877953018494177,
+      "max_sic": 1.4401900181388625,
+      "scores": {
+        "rec": {
+          "auc": 0.7877953018494177,
+          "max_sic": 1.4401900181388625
+        },
+        "ens": {
+          "auc": 0.7797271462675314,
+          "max_sic": 1.4642053160783846
+        }
+      }
+    },
+    {
+      "name": "gpu_l8_b0.01_sigs2_e3",
+      "point": {
+        "latent_dim": 8,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05
+        ],
+        "train.epochs": 3
+      },
+      "labels": {
+        "latent_dim": "8",
+        "beta": "0.01",
+        "model_args.sigmas": "s2",
+        "train.epochs": "3"
+      },
+      "kind": "rec",
+      "auc": 0.7876838583066135,
+      "max_sic": 1.4360875542322593,
+      "scores": {
+        "rec": {
+          "auc": 0.7876838583066135,
+          "max_sic": 1.4360875542322593
+        },
+        "ens": {
+          "auc": 0.7842221343627027,
+          "max_sic": 1.4998144376496498
+        }
+      }
+    },
+    {
+      "name": "gpu_l6_b0.01_sigs2_e2",
+      "point": {
+        "latent_dim": 6,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05
+        ],
+        "train.epochs": 2
+      },
+      "labels": {
+        "latent_dim": "6",
+        "beta": "0.01",
+        "model_args.sigmas": "s2",
+        "train.epochs": "2"
+      },
+      "kind": "rec",
+      "auc": 0.7876231823940266,
+      "max_sic": 1.4362135773597158,
+      "scores": {
+        "rec": {
+          "auc": 0.7876231823940266,
+          "max_sic": 1.4362135773597158
+        },
+        "ens": {
+          "auc": 0.7300922900118557,
+          "max_sic": 1.2656715916373138
+        }
+      }
+    },
+    {
+      "name": "gpu_l6_b0.01_sigs2_e3",
+      "point": {
+        "latent_dim": 6,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05
+        ],
+        "train.epochs": 3
+      },
+      "labels": {
+        "latent_dim": "6",
+        "beta": "0.01",
+        "model_args.sigmas": "s2",
+        "train.epochs": "3"
+      },
+      "kind": "rec",
+      "auc": 0.7874392277416841,
+      "max_sic": 1.435234715506374,
+      "scores": {
+        "rec": {
+          "auc": 0.7874392277416841,
+          "max_sic": 1.435234715506374
+        },
+        "ens": {
+          "auc": 0.7534735043989708,
+          "max_sic": 1.3389086542448925
+        }
+      }
+    },
+    {
+      "name": "gpu_l4_b0.01_sigs2_e3",
+      "point": {
+        "latent_dim": 4,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05
+        ],
+        "train.epochs": 3
+      },
+      "labels": {
+        "latent_dim": "4",
+        "beta": "0.01",
+        "model_args.sigmas": "s2",
+        "train.epochs": "3"
+      },
+      "kind": "rec",
+      "auc": 0.7872157275468906,
+      "max_sic": 1.4358943927890353,
+      "scores": {
+        "rec": {
+          "auc": 0.7872157275468906,
+          "max_sic": 1.4358943927890353
+        },
+        "ens": {
+          "auc": 0.7543410757929079,
+          "max_sic": 1.3656443359746657
+        }
+      }
+    },
+    {
+      "name": "gpu_l3_b0.01_sigs2_e3",
+      "point": {
+        "latent_dim": 3,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05
+        ],
+        "train.epochs": 3
+      },
+      "labels": {
+        "latent_dim": "3",
+        "beta": "0.01",
+        "model_args.sigmas": "s2",
+        "train.epochs": "3"
+      },
+      "kind": "rec",
+      "auc": 0.7871146302215881,
+      "max_sic": 1.435291139370005,
+      "scores": {
+        "rec": {
+          "auc": 0.7871146302215881,
+          "max_sic": 1.435291139370005
+        },
+        "ens": {
+          "auc": 0.7608857864298967,
+          "max_sic": 1.3776672846077727
+        }
+      }
+    },
+    {
+      "name": "gpu_l8_b0.01_sigs2_e2",
+      "point": {
+        "latent_dim": 8,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05
+        ],
+        "train.epochs": 2
+      },
+      "labels": {
+        "latent_dim": "8",
+        "beta": "0.01",
+        "model_args.sigmas": "s2",
+        "train.epochs": "2"
+      },
+      "kind": "rec",
+      "auc": 0.7870085623325335,
+      "max_sic": 1.4339820549535511,
+      "scores": {
+        "rec": {
+          "auc": 0.7870085623325335,
+          "max_sic": 1.4339820549535511
+        },
+        "ens": {
+          "auc": 0.7394085607209323,
+          "max_sic": 1.3065425226625758
+        }
+      }
+    },
+    {
+      "name": "gpu_l4_b0.01_sigs2_e2",
+      "point": {
+        "latent_dim": 4,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05
+        ],
+        "train.epochs": 2
+      },
+      "labels": {
+        "latent_dim": "4",
+        "beta": "0.01",
+        "model_args.sigmas": "s2",
+        "train.epochs": "2"
+      },
+      "kind": "rec",
+      "auc": 0.7865203850921276,
+      "max_sic": 1.4331409316852544,
+      "scores": {
+        "rec": {
+          "auc": 0.7865203850921276,
+          "max_sic": 1.4331409316852544
+        },
+        "ens": {
+          "auc": 0.7648303885991121,
+          "max_sic": 1.4293811661502795
+        }
+      }
+    },
+    {
+      "name": "gpu_l3_b0.01_sigs5_e5",
+      "point": {
+        "latent_dim": 3,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.4
+        ],
+        "train.epochs": 5
+      },
+      "labels": {
+        "latent_dim": "3",
+        "beta": "0.01",
+        "model_args.sigmas": "s5",
+        "train.epochs": "5"
+      },
+      "kind": "ens",
+      "auc": 0.7844459849056022,
+      "max_sic": 1.53856953914385,
+      "scores": {
+        "rec": {
+          "auc": 0.7778072605440767,
+          "max_sic": 1.5000637193724977
+        },
+        "ens": {
+          "auc": 0.7844459849056022,
+          "max_sic": 1.53856953914385
+        }
+      }
+    },
+    {
+      "name": "gpu_l3_b0.01_sigs5_e2",
+      "point": {
+        "latent_dim": 3,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.4
+        ],
+        "train.epochs": 2
+      },
+      "labels": {
+        "latent_dim": "3",
+        "beta": "0.01",
+        "model_args.sigmas": "s5",
+        "train.epochs": "2"
+      },
+      "kind": "rec",
+      "auc": 0.7785533377839221,
+      "max_sic": 1.4991351099240087,
+      "scores": {
+        "rec": {
+          "auc": 0.7785533377839221,
+          "max_sic": 1.4991351099240087
+        },
+        "ens": {
+          "auc": 0.7256041446531274,
+          "max_sic": 1.1894428489149615
+        }
+      }
+    },
+    {
+      "name": "gpu_l3_b0.01_sigs3_e2",
+      "point": {
+        "latent_dim": 3,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1
+        ],
+        "train.epochs": 2
+      },
+      "labels": {
+        "latent_dim": "3",
+        "beta": "0.01",
+        "model_args.sigmas": "s3",
+        "train.epochs": "2"
+      },
+      "kind": "rec",
+      "auc": 0.7784048777740563,
+      "max_sic": 1.4737119851900984,
+      "scores": {
+        "rec": {
+          "auc": 0.7784048777740563,
+          "max_sic": 1.4737119851900984
+        },
+        "ens": {
+          "auc": 0.7353475444451607,
+          "max_sic": 1.2495496893505158
+        }
+      }
+    },
+    {
+      "name": "gpu_l6_b0.01_sigs3_e3",
+      "point": {
+        "latent_dim": 6,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1
+        ],
+        "train.epochs": 3
+      },
+      "labels": {
+        "latent_dim": "6",
+        "beta": "0.01",
+        "model_args.sigmas": "s3",
+        "train.epochs": "3"
+      },
+      "kind": "rec",
+      "auc": 0.7783035833779444,
+      "max_sic": 1.47742006447368,
+      "scores": {
+        "rec": {
+          "auc": 0.7783035833779444,
+          "max_sic": 1.47742006447368
+        },
+        "ens": {
+          "auc": 0.7441480917940064,
+          "max_sic": 1.3118684210260734
+        }
+      }
+    },
+    {
+      "name": "gpu_l4_b0.01_sigs5_e3",
+      "point": {
+        "latent_dim": 4,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.4
+        ],
+        "train.epochs": 3
+      },
+      "labels": {
+        "latent_dim": "4",
+        "beta": "0.01",
+        "model_args.sigmas": "s5",
+        "train.epochs": "3"
+      },
+      "kind": "rec",
+      "auc": 0.7782807560091707,
+      "max_sic": 1.5041071962221935,
+      "scores": {
+        "rec": {
+          "auc": 0.7782807560091707,
+          "max_sic": 1.5041071962221935
+        },
+        "ens": {
+          "auc": 0.7308989446288834,
+          "max_sic": 1.2368816929086779
+        }
+      }
+    },
+    {
+      "name": "gpu_l6_b0.01_sigs5_e2",
+      "point": {
+        "latent_dim": 6,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.4
+        ],
+        "train.epochs": 2
+      },
+      "labels": {
+        "latent_dim": "6",
+        "beta": "0.01",
+        "model_args.sigmas": "s5",
+        "train.epochs": "2"
+      },
+      "kind": "rec",
+      "auc": 0.7782367763735046,
+      "max_sic": 1.500364083285114,
+      "scores": {
+        "rec": {
+          "auc": 0.7782367763735046,
+          "max_sic": 1.500364083285114
+        },
+        "ens": {
+          "auc": 0.6950570305405451,
+          "max_sic": 1.1106742902627167
+        }
+      }
+    },
+    {
+      "name": "gpu_l4_b0.01_sigs3_e5",
+      "point": {
+        "latent_dim": 4,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1
+        ],
+        "train.epochs": 5
+      },
+      "labels": {
+        "latent_dim": "4",
+        "beta": "0.01",
+        "model_args.sigmas": "s3",
+        "train.epochs": "5"
+      },
+      "kind": "rec",
+      "auc": 0.7782178575757874,
+      "max_sic": 1.4779541738045048,
+      "scores": {
+        "rec": {
+          "auc": 0.7782178575757874,
+          "max_sic": 1.4779541738045048
+        },
+        "ens": {
+          "auc": 0.7575276888866778,
+          "max_sic": 1.376740077369036
+        }
+      }
+    },
+    {
+      "name": "gpu_l6_b0.01_sigs5_e3",
+      "point": {
+        "latent_dim": 6,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.4
+        ],
+        "train.epochs": 3
+      },
+      "labels": {
+        "latent_dim": "6",
+        "beta": "0.01",
+        "model_args.sigmas": "s5",
+        "train.epochs": "3"
+      },
+      "kind": "rec",
+      "auc": 0.7780827874325931,
+      "max_sic": 1.500627730257476,
+      "scores": {
+        "rec": {
+          "auc": 0.7780827874325931,
+          "max_sic": 1.500627730257476
+        },
+        "ens": {
+          "auc": 0.7496374554006862,
+          "max_sic": 1.3527271455406717
+        }
+      }
+    },
+    {
+      "name": "gpu_l3_b0.01_sigs3_e3",
+      "point": {
+        "latent_dim": 3,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1
+        ],
+        "train.epochs": 3
+      },
+      "labels": {
+        "latent_dim": "3",
+        "beta": "0.01",
+        "model_args.sigmas": "s3",
+        "train.epochs": "3"
+      },
+      "kind": "rec",
+      "auc": 0.7780080319055013,
+      "max_sic": 1.4776801332028497,
+      "scores": {
+        "rec": {
+          "auc": 0.7780080319055013,
+          "max_sic": 1.4776801332028497
+        },
+        "ens": {
+          "auc": 0.7201954705945828,
+          "max_sic": 1.1957488242671483
+        }
+      }
+    },
+    {
+      "name": "gpu_l3_b0.01_sigs5_e3",
+      "point": {
+        "latent_dim": 3,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.4
+        ],
+        "train.epochs": 3
+      },
+      "labels": {
+        "latent_dim": "3",
+        "beta": "0.01",
+        "model_args.sigmas": "s5",
+        "train.epochs": "3"
+      },
+      "kind": "rec",
+      "auc": 0.7777739555772615,
+      "max_sic": 1.5013568446542696,
+      "scores": {
+        "rec": {
+          "auc": 0.7777739555772615,
+          "max_sic": 1.5013568446542696
+        },
+        "ens": {
+          "auc": 0.7360291028916331,
+          "max_sic": 1.2732645039013268
+        }
+      }
+    },
+    {
+      "name": "gpu_l6_b0.01_sigs3_e2",
+      "point": {
+        "latent_dim": 6,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1
+        ],
+        "train.epochs": 2
+      },
+      "labels": {
+        "latent_dim": "6",
+        "beta": "0.01",
+        "model_args.sigmas": "s3",
+        "train.epochs": "2"
+      },
+      "kind": "rec",
+      "auc": 0.777710619208746,
+      "max_sic": 1.4693393509264652,
+      "scores": {
+        "rec": {
+          "auc": 0.777710619208746,
+          "max_sic": 1.4693393509264652
+        },
+        "ens": {
+          "auc": 0.7360061331939414,
+          "max_sic": 1.2772324199874874
+        }
+      }
+    },
+    {
+      "name": "gpu_l8_b0.01_sigs3_e3",
+      "point": {
+        "latent_dim": 8,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1
+        ],
+        "train.epochs": 3
+      },
+      "labels": {
+        "latent_dim": "8",
+        "beta": "0.01",
+        "model_args.sigmas": "s3",
+        "train.epochs": "3"
+      },
+      "kind": "rec",
+      "auc": 0.7776339805605851,
+      "max_sic": 1.4753451226193237,
+      "scores": {
+        "rec": {
+          "auc": 0.7776339805605851,
+          "max_sic": 1.4753451226193237
+        },
+        "ens": {
+          "auc": 0.7742450633324272,
+          "max_sic": 1.4710762216528392
+        }
+      }
+    },
+    {
+      "name": "gpu_l4_b0.01_sigs5_e2",
+      "point": {
+        "latent_dim": 4,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.4
+        ],
+        "train.epochs": 2
+      },
+      "labels": {
+        "latent_dim": "4",
+        "beta": "0.01",
+        "model_args.sigmas": "s5",
+        "train.epochs": "2"
+      },
+      "kind": "rec",
+      "auc": 0.7772289343566767,
+      "max_sic": 1.497250627837401,
+      "scores": {
+        "rec": {
+          "auc": 0.7772289343566767,
+          "max_sic": 1.497250627837401
+        },
+        "ens": {
+          "auc": 0.7433322186424431,
+          "max_sic": 1.3008976256622153
+        }
+      }
+    },
+    {
+      "name": "gpu_l4_b0.01_sigs3_e3",
+      "point": {
+        "latent_dim": 4,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1
+        ],
+        "train.epochs": 3
+      },
+      "labels": {
+        "latent_dim": "4",
+        "beta": "0.01",
+        "model_args.sigmas": "s3",
+        "train.epochs": "3"
+      },
+      "kind": "rec",
+      "auc": 0.7770927474788949,
+      "max_sic": 1.4740867532167423,
+      "scores": {
+        "rec": {
+          "auc": 0.7770927474788949,
+          "max_sic": 1.4740867532167423
+        },
+        "ens": {
+          "auc": 0.747529224725187,
+          "max_sic": 1.3214855989433258
+        }
+      }
+    },
+    {
+      "name": "gpu_l4_b0.01_sigs3_e2",
+      "point": {
+        "latent_dim": 4,
+        "beta": 0.01,
+        "model_args.sigmas": [
+          0.02,
+          0.05,
+          0.1
+        ],
+        "train.epochs": 2
+      },
+      "labels": {
+        "latent_dim": "4",
+        "beta": "0.01",
+        "model_args.sigmas": "s3",
+        "train.epochs": "2"
+      },
+      "kind": "rec",
+      "auc": 0.7766682131615973,
+      "max_sic": 1.4720396721468838,
+      "scores": {
+        "rec": {
+          "auc": 0.7766682131615973,
+          "max_sic": 1.4720396721468838
+        },
+        "ens": {
+          "auc": 0.7189678179864514,
+          "max_sic": 1.1840583227746548
+        }
+      }
+    }
+  ],
+  "seeds": [
+    {
+      "name": "gpu_l4_b0.001_sigs2_e2",
+      "kind": "rec",
+      "auc_mean": 0.8549597306967535,
+      "auc_std": 0.002024392594679927,
+      "n": 3
+    },
+    {
+      "name": "gpu_l8_b0.001_sigs2_e2",
+      "kind": "rec",
+      "auc_mean": 0.8530930431435007,
+      "auc_std": 0.001233124681595998,
+      "n": 3
+    },
+    {
+      "name": "gpu_l4_b0.01_sigs5_e5",
+      "kind": "rec",
+      "auc_mean": 0.8339818422751512,
+      "auc_std": 0.01706686756892558,
+      "n": 3
+    },
+    {
+      "name": "gpu_l4_b0.01_sigs5_e5",
+      "kind": "ens",
+      "auc_mean": 0.801796664645158,
+      "auc_std": 0.020517043232612945,
+      "n": 3
+    },
+    {
+      "name": "gpu_l4_b0.001_sigs2_e2",
+      "kind": "ens",
+      "auc_mean": 0.7668498534727438,
+      "auc_std": 0.0192577739071273,
+      "n": 3
+    },
+    {
+      "name": "gpu_l8_b0.001_sigs2_e2",
+      "kind": "ens",
+      "auc_mean": 0.7469809153416502,
+      "auc_std": 0.04649091911031561,
+      "n": 3
+    }
+  ],
+  "best": {
+    "point": {
+      "latent_dim": 4,
+      "beta": 0.001,
+      "model_args.sigmas": [
+        0.02,
+        0.05
+      ],
+      "train.epochs": 2
+    },
+    "labels": {
+      "latent_dim": "4",
+      "beta": "0.001",
+      "model_args.sigmas": "s2",
+      "train.epochs": "2"
+    },
+    "name": "gpu_l4_b0.001_sigs2_e2",
+    "kind": "rec"
+  },
+  "promoted": [
+    "gpu_best_s1",
+    "gpu_best_s2",
+    "gpu_best_s3",
+    "gpu_best_s4",
+    "gpu_best_s5"
+  ],
+  "hours": 2.9754899629619387,
+  "time": "2026-10-24 22:01:26 UTC",
+  "git": "158320a",
+  "python": "3.13.15",
+  "numpy": "2.1.3",
+  "host": "ebea2743e00b",
+  "torch": "2.11.0+cu128",
+  "torch_threads": 4
+}

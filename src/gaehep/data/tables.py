@@ -49,15 +49,23 @@ def _rel_dev(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     return np.max(np.abs(a - b) / np.maximum(np.abs(b), 1.0), axis=-1)
 
 
-def match_features(ours_p4: np.ndarray, feat: dict[str, np.ndarray], tol: float = 1e-3) -> dict[str, np.ndarray]:
+def match_features(
+    ours_p4: np.ndarray, feat: dict[str, np.ndarray], tol: float = 1e-3
+) -> dict[str, np.ndarray]:
     """Match official (j1, j2) to our pT-ordered jets (direct or swapped).
 
     ``feat`` holds 1D arrays pxj1, pyj1, pzj1, mj1, pxj2, pyj2, pzj2, mj2 (and tau*).
     Returns ``matched`` (bool), ``swapped`` (bool) and the deviations of the chosen assignment.
     """
     obs = jet_observables(ours_p4)
-    ours = [np.stack([ours_p4[:, k, 0], ours_p4[:, k, 1], ours_p4[:, k, 2], obs["m"][:, k]], axis=-1) for k in (0, 1)]
-    off = [np.stack([feat[f"px{j}"], feat[f"py{j}"], feat[f"pz{j}"], feat[f"m{j}"]], axis=-1) for j in ("j1", "j2")]
+    ours = [
+        np.stack([ours_p4[:, k, 0], ours_p4[:, k, 1], ours_p4[:, k, 2], obs["m"][:, k]], axis=-1)
+        for k in (0, 1)
+    ]
+    off = [
+        np.stack([feat[f"px{j}"], feat[f"py{j}"], feat[f"pz{j}"], feat[f"m{j}"]], axis=-1)
+        for j in ("j1", "j2")
+    ]
     dev_direct = np.maximum(_rel_dev(ours[0], off[0]), _rel_dev(ours[1], off[1]))
     dev_swap = np.maximum(_rel_dev(ours[0], off[1]), _rel_dev(ours[1], off[0]))
     dev_direct = np.where(np.isnan(dev_direct), np.inf, dev_direct)
@@ -74,7 +82,9 @@ def read_features(path: str | Path) -> dict[str, np.ndarray]:
     return {c: df[c].to_numpy() for c in df.columns}
 
 
-def build_tables(sample: str, proc_root: Path | None = None, feat_path: Path | None = None, tol: float = 1e-3) -> dict:
+def build_tables(
+    sample: str, proc_root: Path | None = None, feat_path: Path | None = None, tol: float = 1e-3
+) -> dict:
     root = (Path(proc_root) if proc_root else processed_dir()) / sample
     p4 = np.load(root / "jets_p4.npy")
     n = len(p4)
@@ -112,10 +122,10 @@ def build_tables(sample: str, proc_root: Path | None = None, feat_path: Path | N
                 "feature_file": str(feat_path),
                 "match_tolerance": tol,
                 "matched_fraction": float(np.mean(m["matched"])),
-                "swapped_fraction_of_matched": float(np.mean(sw[m["matched"]])) if m["matched"].any() else None,
-                "dev_quantiles": {
-                    q: float(np.quantile(m["dev"][finite], q)) for q in (0.5, 0.9, 0.99, 0.999)
-                }
+                "swapped_fraction_of_matched": float(np.mean(sw[m["matched"]]))
+                if m["matched"].any()
+                else None,
+                "dev_quantiles": {q: float(np.quantile(m["dev"][finite], q)) for q in (0.5, 0.9, 0.99, 0.999)}
                 if finite.any()
                 else None,
                 "n_unmatched": int(np.sum(~m["matched"])),

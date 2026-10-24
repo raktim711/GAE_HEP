@@ -57,7 +57,9 @@ def node_features(
 
 def jet_level_features(m: np.ndarray, pt: np.ndarray, n: np.ndarray) -> np.ndarray:
     """Raw jet-level features (log m, log pT, log n) used for conditioning and multiplicity heads."""
-    return np.stack([np.log(np.maximum(m, 1.0)), np.log(pt), np.log(np.maximum(n, 1))], axis=-1).astype(np.float32)
+    return np.stack([np.log(np.maximum(m, 1.0)), np.log(pt), np.log(np.maximum(n, 1))], axis=-1).astype(
+        np.float32
+    )
 
 
 # --------------------------------------------------------------------------------------------- storage
@@ -216,7 +218,11 @@ def make_batch(pool: JetPool, idx: np.ndarray, scaler: Scaler) -> JetBatch:
 
 
 def iterate_batches(
-    pool: JetPool, scaler: Scaler, batch_size: int, shuffle: bool = False, rng: np.random.Generator | None = None,
+    pool: JetPool,
+    scaler: Scaler,
+    batch_size: int,
+    shuffle: bool = False,
+    rng: np.random.Generator | None = None,
     limit: int | None = None,
 ):
     """Yield :class:`JetBatch` objects over (a random subset of) the pool."""

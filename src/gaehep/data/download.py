@@ -111,7 +111,7 @@ def main(argv: list[str] | None = None) -> int:
     if unknown:
         p.error(f"unknown file(s): {unknown}")
     # small files first so that problems surface early
-    for name in sorted(args.files, key=lambda n: ("events_anomalydetection_v2.h5" == n, n)):
+    for name in sorted(args.files, key=lambda n: (n == "events_anomalydetection_v2.h5", n)):
         download_file(name, args.out)
     return 0
 

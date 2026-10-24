@@ -49,7 +49,9 @@ def _tau(rng: np.random.Generator, n: int, prongs: int) -> dict[str, np.ndarray]
     return {"tau1": t1, "tau2": t1 * r21, "tau3": t1 * r21 * r32}
 
 
-def write_sample(out: Path, parts: list[tuple[int, int, tuple | None, int]], n_max: int, rng: np.random.Generator) -> None:
+def write_sample(
+    out: Path, parts: list[tuple[int, int, tuple | None, int]], n_max: int, rng: np.random.Generator
+) -> None:
     """parts: list of (n_events, prongs, masses, label)."""
     cols: dict[str, list[np.ndarray]] = {}
     consts = []
@@ -58,8 +60,18 @@ def write_sample(out: Path, parts: list[tuple[int, int, tuple | None, int]], n_m
         consts.append(const)
         mjj = rng.normal(3500, 120, n) if label else 2400 + rng.exponential(600, n)
         tau = _tau(rng, n, prongs)
-        add = {"pt": pt, "eta": eta, "phi": phi, "m": mj, "e": e, "n_const": n_const, "mjj": mjj,
-               "label": np.full(n, label, np.int8), "n_jets": np.full(n, 2, np.int16), **tau}
+        add = {
+            "pt": pt,
+            "eta": eta,
+            "phi": phi,
+            "m": mj,
+            "e": e,
+            "n_const": n_const,
+            "mjj": mjj,
+            "label": np.full(n, label, np.int8),
+            "n_jets": np.full(n, 2, np.int16),
+            **tau,
+        }
         for k, v in add.items():
             cols.setdefault(k, []).append(v)
     out.mkdir(parents=True, exist_ok=True)

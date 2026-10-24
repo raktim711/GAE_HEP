@@ -1,0 +1,34 @@
+model: ef_ae
+model_args:
+  hidden:
+  - 48
+  - 48
+  - 48
+  k: 12
+  latent_dim: 4
+  n_out: 32
+  dec_hidden:
+  - 256
+  - 256
+  sigmas:
+  - 0.02
+  - 0.05
+  variational: true
+  beta: 0.001
+extra_scores:
+- kl
+data:
+  n_const: 50
+train:
+  epochs: 2
+  jets_per_epoch: 120000
+  batch_size: 256
+  lr: 0.001
+  weight_decay: 0.0001
+  patience: 3
+  val_jets: 20000
+  time_budget_min: 100
+  threads: 4
+  seed: 3
+  device: cuda
+promoted_from_dev_run: gpu_l4_b0.001_sigs2_e2_s3

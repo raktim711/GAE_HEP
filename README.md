@@ -35,6 +35,7 @@ chosen on the 2-prong *validation* split and applied unchanged to both signals (
 | set autoencoder, Chamfer on constituents | 0.488 | 0.532 | 0.004 |
 | energy-flow graph VAE (latent 4, 5 epochs; 3 seeds) | 0.829 ± 0.006 | **0.805 ± 0.002** | **0.008** |
 | **energy-flow graph VAE after the hyper-parameter study** (2 epochs, k = 8; 5 seeds) | **0.853 ± 0.005** | 0.799 ± 0.002 | 0.012 |
+| same, GPU grid winner (2 epochs, kernels 0.02–0.05; 5 seeds) | **0.855 ± 0.002** | 0.801 ± 0.004 | 0.018 |
 
 * Constituent-level graph autoencoders are *inverted* detectors here (signal jets are simpler than QCD);
   reconstructing the IRC-safe energy flow instead fixes this and reaches the level of an oracle (histogram)
@@ -45,7 +46,9 @@ chosen on the 2-prong *validation* split and applied unchanged to both signals (
   kernels or a stronger KL weight do the same and do not combine with it); graph, encoder, decoder and
   latent-size choices barely matter at the optimum.  The tuned model gains 0.024 AUC, 11 % max SIC and 35 %
   background rejection on the 2-prong signal (test), but not on the never-tuned 3-prong signal: the
-  training length tunes the detector toward the signal it was tuned on.  Latent-space flows added nothing.
+  training length tunes the detector toward the signal it was tuned on.  A 72-point GPU grid (Kaggle T4)
+  reached the same recipe independently and found one more lever on the dev split: 100 instead of 50
+  constituents per jet (+0.016, two seeds; not yet on the test splits).  Latent-space flows added nothing.
 * Unsupervised max SIC is only ≈ 1.6–1.8.  In the signal region, supervised classifiers on the GNN's
   permutation-invariant jet latents plus jet masses reach AUC 0.974–0.980 vs 0.970 for the standard
   (m_J1, Δm_J, τ21_J1, τ21_J2) features; in an idealised weakly supervised search those standard features

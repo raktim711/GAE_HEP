@@ -29,6 +29,8 @@ from gaehep.train.loop import TrainConfig, fit, resolve_device, score_pool
 from gaehep.train.run import Data, extra_score_keys
 
 DEV_MIN_BKG = 20
+# name prefixes of hyper-parameter-sweep dev entries (CPU study: hp_, fx_, cd_, e2_, seed ensembles; GPU: gpu_)
+SWEEP_PREFIXES = ("hp_", "fx_", "cd_", "e2_", "seeds", "x_", "gpu_")
 # training budget of the dev protocol (applied over a model config's ``train`` section by ``gaehep dev``):
 # 5 epochs x 120k jets, 20k validation jets, one thread so that two dev runs share the 2 CPU cores.
 DEV_TRAIN = {"epochs": 5, "jets_per_epoch": 120_000, "patience": 3, "val_jets": 20_000, "threads": 1}
@@ -476,7 +478,16 @@ def dev_report(root: Path | None = None) -> str:
             f"{m['bkg_spearman']['tau21']:+.2f} | {d.get('train_minutes') or 0:.0f} |"
         )
     md = "\n".join(lines)
-    _plot_dev([load_json(p) for p in sorted(root.glob("*/dev_metrics.json"))], root / "summary.png")
+    # the figure shows the design-study entries; hyper-parameter sweep entries have their own tables/figures
+    # (scripts/hp_study.py, <prefix>_sweep.md) and would make it hundreds of rows tall
+    _plot_dev(
+        [
+            d
+            for d in (load_json(p) for p in sorted(root.glob("*/dev_metrics.json")))
+            if not d["name"].startswith(SWEEP_PREFIXES)
+        ],
+        root / "summary.png",
+    )
     (root / "summary.md").write_text(
         "# Development runs (validation splits: bkg_val vs 2-prong sig_val; never the test splits)\n\n"
         "AUC / max SIC in the signal region (3.3-3.7 TeV) for event scores max/sum/min over the two jets and "

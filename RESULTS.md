@@ -319,10 +319,54 @@ signal dependence of the training budget already seen in §5 (the long-trained l
 3-prong detector): the training length decides which kind of jet the autoencoder still reconstructs badly,
 so tuning it on one signal model tunes the detector toward that signal.
 
-**GPU.**  The Kaggle notebook (`notebooks/kaggle_gaehep.ipynb`) runs the GPU continuation of this study — a
-72-point grid around these results (latent 3–8 × β × kernel sets × 2/3/5 epochs, both score kinds, `gaehep
-sweep --score best`), seed confirmation, the best configuration with five seeds on the test splits, and scale
-variants of it (100 constituents, 128-wide or deeper encoder, 64 decoder points, 300k jets per epoch).
+### GPU continuation
+
+`notebooks/kaggle_gaehep.ipynb` on a Kaggle T4 (3 h 52 min including data preparation; all outputs in
+`results/dev/gpu_*`, `results/runs/gpu_*` and `results/gpu/`): a 72-point `gaehep sweep --score best` grid —
+latent size 3 / 4 / 6 / 8 × β = 10⁻³ / 10⁻² × kernel scales 0.02–0.05 / 0.02–0.1 / 0.02–0.4 × 2 / 3 / 5 epochs,
+every point scored with the reconstruction score and with the rec + KL rank ensemble (ranking in
+`results/dev/gpu_sweep.md`) — then three seeds for the best three points, five seeds of the winner scored on
+the test splits, and scale variants of the winner (two seeds each, dev).  It reproduces the CPU picture
+independently:
+
+* At β = 10⁻³ all 36 grid points lie between 0.79 and 0.857; the best are trained for 2 epochs with narrow
+  kernels, and at that point the latent size hardly matters (2 epochs, kernels 0.02–0.05: 0.850–0.857 for
+  latent 3–8).  2 epochs give the best reconstruction AUC in all 12 (latent, kernel) cells (one tie with
+  3 epochs) and 5 epochs the lowest or equal-lowest in 11 of 12.
+* At β = 10⁻² the reconstruction AUC sits at a fixed value whatever the latent size and training length —
+  0.787–0.788 for all 12 points with kernels 0.02–0.05, 0.777–0.779 for 17 of the 24 with the wider kernel
+  sets: the posterior collapses, the decoder emits one template jet whatever the input, and the score becomes
+  the jet's distance to that template.  The points that escape (latent 6/8, and latent 4 with kernels
+  0.02–0.4 and 5 epochs at 0.855) are unstable over seeds (the latter: 0.834 ± 0.021).
+* The rec + KL ensemble again has single good points (0.853 for latent 8, kernels 0.02–0.4, 3 epochs) but is
+  unstable over seeds (0.747–0.802 seed means for the three confirmed points), so the reconstruction score
+  wins.
+* Winner (seed-confirmed): latent 4, β = 10⁻³, kernels 0.02–0.05, 2 epochs, k = 12 — dev 0.855 ± 0.002
+  (5 seeds; latent 8: 0.853 ± 0.002, 3 seeds), the same recipe as the CPU study's final model
+  (0.853 ± 0.004), found by a different search.
+
+*test*, five seeds (`gpu_best_s*`, ensemble `gpu_best_seeds`), SR, prod aggregation, next to the CPU
+study's final model:
+
+| model | 2-prong AUC | max SIC | 1/ε_B at ε_S = 0.3 | 3-prong AUC | JSD @ ε_B = 1 % |
+|---|---:|---:|---:|---:|---:|
+| CPU final (2 epochs, k = 8, kernels 0.02–0.4) | 0.853 ± 0.005 | 1.74 ± 0.05 | 20.4 | 0.799 ± 0.002 | 0.012 |
+| GPU winner (2 epochs, k = 12, kernels 0.02–0.05) | 0.855 ± 0.002 | 1.74 ± 0.01 | 25.5 | 0.801 ± 0.004 | 0.018 |
+| GPU winner, 5-seed ensemble | 0.859 | 1.77 | 26.9 | 0.805 | 0.017 |
+| GPU winner, mass-decorrelated (ensemble + qn) | 0.783 | 1.50 | 24.0 | 0.755 | 0.005 |
+
+The two searches end at the same 2-prong AUC and max SIC and the same flat 3-prong AUC; the narrower kernels
+buy a higher background rejection at ε_S = 0.3 (25.5 vs 20.4) for slightly more m_jj sculpting.  The weak
+supervision (`results/runs/gpu_best_s1/weak.json`, five bagged models instead of three, so the HL4 row is
+2.0 / 8.1 / 9.4 / 10.1 / 10.7 here) gives the anomaly scores + masses 1.5 / 5.4 / 7.6 / 7.8 / 7.9 and the
+latents + masses 1.1 / 2.9 / 8.5 / 9.1 / 9.5 at S/B = 0.41 … 8.3 %, the bump hunt a response
+Z(1200) − Z(0) = +6.4 at ε = 10 % (−3.4 → +3.0), both comparable to the CPU final model.
+
+Scale variants of the winner (dev, two seeds, against 0.855 ± 0.002): **100 constituents 0.876 / 0.866**
+(max SIC 1.96 / 1.83), 64 decoder points 0.863 / 0.852, a 4-layer encoder 0.854 / 0.829, a 128-wide encoder
+0.850 / 0.850, 300k instead of 120k jets per epoch 0.845 / 0.843 (more training again lowers the AUC).  More
+constituents is the one direction of scale that helps — both seeds lie above all five 50-constituent seeds,
+and the CPU study saw +0.008 with 100 constituents at 2 epochs — but it has not been run on the test splits.
 
 ## 7. Supervised reference
 
@@ -453,11 +497,13 @@ would be the tool for that.
    test AUC by 0.024, max SIC by 11 %, the background rejection at ε_S = 0.3 by 35 % and the weakly
    supervised and bump-hunt results — but not the never-tuned 3-prong signal (0.799 vs 0.805), and it
    sculpts m_jj slightly more.  Tuning an anomaly detector's training length on one signal model tunes it
-   toward that signal.
+   toward that signal.  An independent 72-point GPU grid lands on the same recipe (2 epochs, latent 4,
+   β = 10⁻³, narrow kernels; test 0.855 ± 0.002 / 0.801 ± 0.004) and finds one further direction: 100
+   instead of 50 constituents per jet (+0.016 on the 2-prong dev split, two seeds).
 
 **Limitations.**  CPU-only training (2 cores): small models (48-wide EdgeConv, top-50 constituents — 96-wide
-encoders did not help, 100 constituents only possibly, §6), short budgets and three to five seeds; the GPU notebook (prepared, not yet run) continues the hyper-parameter study
-on a 72-point grid with scale variants.  Design choices — the whole hyper-parameter study included — were
+encoders did not help, 100 constituents did on the dev split, §6), short budgets and three to five seeds;
+one GPU run (Kaggle T4) repeated the study on a 72-point grid with scale variants.  Design choices — the whole hyper-parameter study included — were
 tuned on the 2-prong signal validation split, and earlier test results (including 3-prong) were seen during
 development.  The initial weights of the CPU study's runs were drawn from the process's random state (not
 from `train.seed`; fixed since, so new runs are exactly reproducible); seeds of one configuration are

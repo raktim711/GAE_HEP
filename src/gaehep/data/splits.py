@@ -26,12 +26,14 @@ BKG_FRACTIONS = (0.6, 0.1, 0.3)
 SIG_FRACTIONS = (0.4, 0.1, 0.5)
 
 
-def _split(idx: np.ndarray, fractions: tuple[float, float, float], rng: np.random.Generator) -> list[np.ndarray]:
+def _split(
+    idx: np.ndarray, fractions: tuple[float, float, float], rng: np.random.Generator
+) -> list[np.ndarray]:
     idx = idx.copy()
     rng.shuffle(idx)
     n = len(idx)
-    n_a = int(round(fractions[0] * n))
-    n_b = int(round(fractions[1] * n))
+    n_a = round(fractions[0] * n)
+    n_b = round(fractions[1] * n)
     parts = [idx[:n_a], idx[n_a : n_a + n_b], idx[n_a + n_b :]]
     return [np.sort(p) for p in parts]
 
@@ -81,7 +83,7 @@ def main(argv: list[str] | None = None) -> int:
     splits = make_splits(rnd["n_jets"], rnd["label"], n_jets_qqq, seed=a.seed)
     check_disjoint(splits)
     np.savez(root / "splits.npz", **splits)
-    summary = {k: int(len(v)) for k, v in splits.items()}
+    summary = {k: len(v) for k, v in splits.items()}
     save_json({"seed": a.seed, "sizes": summary, **run_metadata()}, root / "splits.json")
     print(summary)
     return 0

@@ -251,7 +251,10 @@ def preprocess(
                 done += 1
                 el = time.time() - t0
                 eta = el / done * (len(jobs) - done)
-                print(f"  chunk {s}-{e} done in {dt:.1f}s ({done}/{len(jobs)}, elapsed {el / 60:.1f} min, eta {eta / 60:.1f} min)", flush=True)
+                print(
+                    f"  chunk {s}-{e} done in {dt:.1f}s ({done}/{len(jobs)}, elapsed {el / 60:.1f} min, eta {eta / 60:.1f} min)",
+                    flush=True,
+                )
     meta = {
         "sample": sample,
         "source": str(src),
