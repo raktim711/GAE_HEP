@@ -15,7 +15,7 @@ import numpy as np
 import torch
 import yaml
 
-from gaehep.config import load_json, processed_dir, results_dir, run_metadata, save_json
+from gaehep.config import load_json, processed_dir, results_dir, run_metadata, save_json, seed_everything
 from gaehep.data.dataset import JetPool, JetStore, Scaler, fit_scaler
 from gaehep.data.splits import load_splits
 from gaehep.eval.evaluate import TEST_KEYS, evaluate_scores, make_figures, write_metrics
@@ -105,10 +105,11 @@ def run(
     dcfg = cfg.get("data", {})
     data = data or Data(n_const=int(dcfg.get("n_const", 50)))
     scaler = data.scaler()
+    tcfg = TrainConfig.from_dict(cfg.get("train"))
+    seed_everything(tcfg.seed)  # the initial weights are part of the seed's randomness
     model = build_model(cfg["model"], **cfg.get("model_args", {}))
     n_params = sum(p.numel() for p in model.parameters())
     log(f"[{name}] model {cfg['model']} with {n_params:,} parameters, {data.n_const} nodes/jet")
-    tcfg = TrainConfig.from_dict(cfg.get("train"))
     max_train = dcfg.get("max_train_events")
     summary: dict[str, Any] = {"status": "skipped"}
 

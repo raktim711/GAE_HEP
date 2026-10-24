@@ -1,0 +1,32 @@
+# Final model of the hyper-parameter study (results/dev/hp_study.md, RESULTS.md §5): the latent-4 energy-flow
+# VAE of configs/ef_vae.yaml trained for only 2 epochs (x 120k jets) with k = 8 EdgeConv neighbours.  On the
+# 2-prong validation split the anomaly score peaks at an intermediate fit of the background: shorter training
+# (and nothing else of ~30 one-at-a-time changes) gave a robust gain (5 seeds); k = 8 had the best 3-seed mean
+# of the round-3 candidates.  Scores: energy-MMD reconstruction ("score"; the main score) and the KL divergence
+# of the jet posterior ("+kl", extra_scores; weak and unstable after 2 epochs, reported for completeness).
+# The reported models were trained with `gaehep dev configs/ef_vae_k8_e2.yaml --name <dev run> --set
+# train.seed=<s>` and scored on the test splits with `gaehep promote <dev run> hp_final_s<s>`.
+model: ef_ae
+model_args:
+  hidden: [48, 48, 48]
+  k: 8
+  latent_dim: 4
+  n_out: 32
+  dec_hidden: [256, 256]
+  sigmas: [0.02, 0.05, 0.1, 0.2, 0.4]
+  variational: true
+  beta: 0.001
+extra_scores: [kl]
+data:
+  n_const: 50
+train:                      # 2 epochs; `gaehep dev` applies the rest of the dev budget (120k jets per epoch)
+  epochs: 2
+  jets_per_epoch: 120000
+  batch_size: 256
+  lr: 1.0e-3
+  weight_decay: 1.0e-4
+  patience: 3
+  val_jets: 20000
+  time_budget_min: 100
+  threads: 1
+  seed: 1

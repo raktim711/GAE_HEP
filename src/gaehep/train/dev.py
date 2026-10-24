@@ -21,7 +21,7 @@ import torch
 import yaml
 from scipy.stats import spearmanr
 
-from gaehep.config import load_json, results_dir, run_metadata, save_json
+from gaehep.config import load_json, results_dir, run_metadata, save_json, seed_everything
 from gaehep.eval.evaluate import aggregate, region_mask
 from gaehep.eval.metrics import auc, summarize
 from gaehep.models import build_model
@@ -102,10 +102,11 @@ def dev_run(
     if data is None or data.n_const != n_const:
         data = Data(n_const=n_const)
     scaler = data.scaler()
+    tcfg = TrainConfig.from_dict(cfg.get("train"))
+    seed_everything(tcfg.seed)  # the initial weights are part of the seed's randomness
     model = build_model(cfg["model"], **cfg.get("model_args", {}))
     if model.supervised:
         raise ValueError("the dev protocol is for unsupervised models")
-    tcfg = TrainConfig.from_dict(cfg.get("train"))
     log(f"[dev:{name}] {cfg['model']} with {sum(p.numel() for p in model.parameters()):,} parameters")
     hist = out_dir / "history.json"
     if (out_dir / "model.pt").exists() and hist.exists() and load_json(hist).get("status") == "done":

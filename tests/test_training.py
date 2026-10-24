@@ -96,3 +96,28 @@ def test_rerun_after_finish_does_not_train_more(tmp_path, scaler):
     assert s1["epochs_done"] == s2["epochs_done"] == 2 and len(s2["history"]) == 2
     for a, b in zip(m.state_dict().values(), m2.state_dict().values(), strict=True):
         assert torch.equal(a, b)
+
+
+def test_seed_fixes_initial_weights(tmp_path, monkeypatch):
+    """train.seed determines the whole run, including the initial weights (dev protocol)."""
+    import torch
+
+    from gaehep.data.fake import make_fake
+    from gaehep.train.dev import dev_dir, dev_run
+
+    make_fake(tmp_path / "data", 1200, 300, 20)
+    monkeypatch.setenv("GAEHEP_DATA", str(tmp_path / "data"))
+    monkeypatch.setenv("GAEHEP_RESULTS", str(tmp_path / "results"))
+    cfg = {
+        "model": "ef_ae",
+        "model_args": {"hidden": [8, 8], "k": 4, "n_out": 6, "dec_hidden": [16], "latent_dim": 2},
+        "data": {"n_const": 20},
+        "train": {"epochs": 1, "jets_per_epoch": 300, "val_jets": 100, "batch_size": 64, "threads": 1},
+    }
+    quiet = lambda *a: None  # noqa: E731
+    weights = {}
+    for name, seed in (("a", 1), ("b", 1), ("c", 2)):
+        dev_run({**cfg, "train": {**cfg["train"], "seed": seed}}, name, log=quiet)
+        weights[name] = torch.load(dev_dir(name) / "model.pt", weights_only=True)
+    assert all(torch.equal(weights["a"][k], weights["b"][k]) for k in weights["a"])
+    assert not all(torch.equal(weights["a"][k], weights["c"][k]) for k in weights["a"])

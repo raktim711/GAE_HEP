@@ -71,7 +71,9 @@ ROUND2 = {  # one change to e2
     "encoder depth 2": ["e2_d2"],
     "encoder depth 4": ["e2_d4", "e2_d4_s2", "e2_d4_s3"],
     "depth 4 + learning rate 3·10⁻⁴": ["e2_d4lr", "e2_d4lr_s2", "e2_d4lr_s3"],
-    "k = 8 neighbours": ["e2_k8"],
+    "k = 6 neighbours": ["e2_k6"],
+    "k = 8 neighbours": ["e2_k8", "e2_k8_s2", "e2_k8_s3", "e2_k8_s4", "e2_k8_s5"],
+    "k = 8 + learning rate 3·10⁻⁴": ["e2_k8lr"],
     "k = 16": ["e2_k16"],
     "k = 24": ["e2_k24"],
     "max aggregation": ["e2_aggrmax"],
@@ -223,6 +225,7 @@ def seed_ensemble_table() -> list[str]:
         ("3 epochs", "seeds3_e3"),
         ("2 epochs (e2), 3 seeds", "seeds3_e2"),
         ("2 epochs (e2), 5 seeds", "seeds5_e2"),
+        ("2 epochs, k = 8 (final), 5 seeds", "seeds5_e2k8"),
         ("latent 8, 5 epochs", "seeds3_d6"),
     ]
     out = [
