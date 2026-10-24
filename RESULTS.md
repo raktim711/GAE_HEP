@@ -238,20 +238,22 @@ model-agnostic of the two.
 
 Protocol: every run is a dev run (2-prong signal validation split, SR, prod aggregation of the
 reconstruction score; one CPU core per run, two runs in parallel; 78 runs, about 22 CPU-hours); leads were
-repeated with 3–5 seeds (single-seed differences below ≈ 0.01 are within the noise; seeds of one
-configuration differ by ±0.002–0.007); the 3-prong signal was never looked at, and the test splits only for
+repeated with 3–5 seeds (the seed-to-seed standard deviation of one configuration is 0.002–0.010, so
+single-seed differences below ≈ 0.01 are within the noise); the 3-prong signal was never looked at, and the
+test splits only for
 the final configuration.  All tables: `results/dev/hp_study.md`; figures `results/figures/hp_effects.png`
 and `hp_budget.png` (`scripts/hp_study.py`).  Reference: the previous final model (§5, latent-4 VAE,
-β = 10⁻³, kernels 0.02–0.4, 5 epochs × 120k jets), dev AUC 0.829 ± 0.006 (3 seeds).
+β = 10⁻³, kernels 0.02–0.4, 5 epochs × 120k jets), dev AUC 0.829 ± 0.007 (3 seeds; ± = sample standard
+deviation over seeds throughout).
 
 **Round 1: one change to the previous final model** (21 variants; dev AUC, seeds in brackets):
 
 | change | dev AUC | change | dev AUC |
 |---|---:|---|---:|
 | **2 epochs** | **0.847 ± 0.002 (5)** | β = 10⁻⁴ / 3·10⁻³ | 0.830 / 0.841 |
-| **kernels 0.02–0.1** (without 0.2, 0.4) | **0.843 ± 0.004 (3)** | β = 3·10⁻² / 0.1 | 0.779 / 0.780 |
-| **β = 10⁻²** | **0.841 ± 0.007 (3)** | latent 3 / 6 | 0.839 / 0.796 |
-| 3 epochs | 0.841 ± 0.004 (3) | encoder width 32 / 64 | 0.838 / 0.830 |
+| **kernels 0.02–0.1** (without 0.2, 0.4) | **0.843 ± 0.005 (3)** | β = 3·10⁻² / 0.1 | 0.779 / 0.780 |
+| **β = 10⁻²** | **0.841 ± 0.008 (3)** | latent 3 / 6 | 0.839 / 0.796 |
+| 3 epochs | 0.841 ± 0.005 (3) | encoder width 32 / 64 | 0.838 / 0.830 |
 | 10 epochs | 0.819 | encoder depth 2 / 4 | 0.836 / 0.825 |
 | kernels 0.02–0.05 | 0.845 | kernel sets with a 0.01 scale (3 sets) | 0.824–0.831 |
 
@@ -279,7 +281,7 @@ steps and over-fit; a deeper encoder with a lower learning rate under-fits in 2 
 neighbours, static instead of dynamic k-NN, max instead of mean aggregation), the encoder size (width 32–96,
 depth 2–4), the latent size (3–6), β (10⁻⁴–10⁻³), VAE vs plain AE, the decoder (128–512 wide, 16–64
 points) and the kernel set (0.02–0.05 … 0.05–0.8) do not matter at this level.  **Round 3**: the best round-2 variants with seeds —
-k = 8 neighbours 0.853 ± 0.004 (5 seeds), encoder depth 4 0.852 ± 0.002, learning rate 3·10⁻⁴
+k = 8 neighbours 0.853 ± 0.004 (5 seeds), encoder depth 4 0.852 ± 0.003, learning rate 3·10⁻⁴
 0.852 ± 0.002 (3 seeds) — are within one standard deviation of each other; k = 8 (best mean, and the
 cheapest) is the new final configuration (`configs/ef_vae_k8_e2.yaml`: the previous model trained for
 2 epochs with k = 8; about 5 CPU-minutes of training per model).  Its margin over k = 12 (+0.006) is partly a
