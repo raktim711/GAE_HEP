@@ -60,6 +60,8 @@ Reference of round 1 (previous final model, 3 seeds): 0.829 ± 0.006 (3); refere
 | 2 × 240k jets | 0.836 | -0.011 | 1.61 | +0.69 |
 | learning rate 3·10⁻⁴ | 0.852 ± 0.002 (3) | +0.005 | 1.72 ± 0.01 (3) | +0.74 |
 | learning rate 3·10⁻³ | 0.849 | +0.002 | 1.68 | +0.72 |
+| batch 128 | 0.835 | -0.012 | 1.58 | +0.69 |
+| batch 512 | 0.855 | +0.008 | 1.72 | +0.75 |
 | latent 3 | 0.843 | -0.004 | 1.65 | +0.71 |
 | latent 6 | 0.849 | +0.002 | 1.70 | +0.71 |
 | β = 10⁻⁴ | 0.843 | -0.004 | 1.66 | +0.72 |
@@ -82,6 +84,7 @@ Reference of round 1 (previous final model, 3 seeds): 0.829 ± 0.006 (3); refere
 | decoder 512 × 2 | 0.847 | +0.000 | 1.69 | +0.72 |
 | kernels 0.02-0.05 | 0.854 | +0.007 | 1.72 | +0.66 |
 | kernels 0.05-0.8 | 0.849 | +0.002 | 1.71 | +0.81 |
+| 30 constituents | 0.835 | -0.012 | 1.60 | +0.73 |
 
 ### Seed ensembles and score kinds
 

@@ -7,7 +7,9 @@
 > validation split, so 2-prong numbers are signal-tuned.  No choice was made with the 3-prong signal, but the
 > test results (2- and 3-prong) of earlier models — the Chamfer set AE and the long-budget energy-flow AE —
 > were seen during development; the training-budget choice was taken after the long run's test numbers were
-> available (on its dev result, and against its better 3-prong number, §5).
+> available (on its dev result, and against its better 3-prong number, §5).  The hyper-parameter study of §6
+> made all of its choices on the same 2-prong validation split; its final model was scored on the test splits
+> only after the choice.
 
 ## 1. Setup in one paragraph
 
@@ -180,7 +182,8 @@ single-seed differences of the same size as this spread.
 **Final models** (short budget, three seeds each, trained with `gaehep dev` and evaluated on the test splits
 with `gaehep promote`; `configs/ef_vae.yaml` carries the same budget): (a) latent-4 energy-flow VAE,
 reconstruction score (`ef_vae_s*`); (b) latent-8 energy-flow VAE, reconstruction + KL rank ensemble
-(`ef_vae8_s*+ens`).
+(`ef_vae8_s*+ens`).  The hyper-parameter study of §6 replaces model (a) by the same VAE trained for 2 epochs
+with k = 8 neighbours.
 
 *test*, final model (a), mean ± standard deviation over three seeds; bootstrap (statistical) uncertainty of a
 single seed in brackets; the "3-seed ensemble" averages the per-jet background CDFs of the three seeds:
@@ -231,7 +234,94 @@ is more mass-like (dCor with m_J 0.77 vs 0.64): it is worse on the 3-prong signa
 aggregation (0.789 vs 0.805) and sculpts m_jj more (JSD 0.028 vs 0.008).  Model (a) is the more
 model-agnostic of the two.
 
-## 6. Supervised reference
+## 6. Hyper-parameter study
+
+Protocol: every run is a dev run (2-prong signal validation split, SR, prod aggregation of the
+reconstruction score; one CPU core per run, two runs in parallel; 78 runs, about 22 CPU-hours); leads were
+repeated with 3–5 seeds (single-seed differences below ≈ 0.01 are within the noise; seeds of one
+configuration differ by ±0.002–0.007); the 3-prong signal was never looked at, and the test splits only for
+the final configuration.  All tables: `results/dev/hp_study.md`; figures `results/figures/hp_effects.png`
+and `hp_budget.png` (`scripts/hp_study.py`).  Reference: the previous final model (§5, latent-4 VAE,
+β = 10⁻³, kernels 0.02–0.4, 5 epochs × 120k jets), dev AUC 0.829 ± 0.006 (3 seeds).
+
+**Round 1: one change to the previous final model** (21 variants; dev AUC, seeds in brackets):
+
+| change | dev AUC | change | dev AUC |
+|---|---:|---|---:|
+| **2 epochs** | **0.847 ± 0.002 (5)** | β = 10⁻⁴ / 3·10⁻³ | 0.830 / 0.841 |
+| **kernels 0.02–0.1** (without 0.2, 0.4) | **0.843 ± 0.004 (3)** | β = 3·10⁻² / 0.1 | 0.779 / 0.780 |
+| **β = 10⁻²** | **0.841 ± 0.007 (3)** | latent 3 / 6 | 0.839 / 0.796 |
+| 3 epochs | 0.841 ± 0.004 (3) | encoder width 32 / 64 | 0.838 / 0.830 |
+| 10 epochs | 0.819 | encoder depth 2 / 4 | 0.836 / 0.825 |
+| kernels 0.02–0.05 | 0.845 | kernel sets with a 0.01 scale (3 sets) | 0.824–0.831 |
+
+**The three gains do not add up.**  Each pair of {2 epochs, kernels 0.02–0.1, β = 10⁻²}, and all three
+together, gives 0.815–0.817 — *below* the reference.  The training-budget scan explains why
+(`hp_budget.png`): the dev AUC is an inverted U in the background validation loss the model reaches,
+
+| training (epochs × jets) | 1 × 120k | 2 × 60k | 2 × 120k | 3 × 120k | 2 × 240k | 5 × 120k | 10 × 120k |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| validation loss | 0.414 | 0.293 | 0.24–0.25 | 0.21 | 0.19 | 0.18 | 0.15 |
+| dev AUC | 0.813 | 0.850 | 0.847 | 0.841 | 0.836 | 0.829 | 0.819 |
+
+so the score is best at an *intermediate* fit of the background: an autoencoder that fits the background
+better also reproduces the signal's clean two-prong jets better (§5), and one that fits it too poorly does
+not yet resolve the jet substructure.  Narrower kernels and a stronger KL weight make the reconstruction
+coarser in the same way; combined with each other or with short training they under-fit (a higher
+validation loss than either change alone; the scores also become more mass-like, ρ(score, m_J) = +0.77–0.81
+instead of +0.64–0.72).  The same mechanism explains the round-2 losses below (smaller batches mean more
+steps and over-fit; a deeper encoder with a lower learning rate under-fits in 2 epochs).
+
+**Round 2: one change to the 2-epoch model** (31 variants, reference 0.847 ± 0.002, 5 seeds): all within
+−0.007 … +0.009 except the changes that move the fit level — 1 epoch 0.813, 2 × 240k jets 0.836, batch 128
+0.835, encoder depth 4 with learning rate 3·10⁻⁴ 0.822 ± 0.002.  The graph (k = 6 … 24 neighbours, static
+instead of dynamic k-NN, max instead of mean aggregation), the encoder size (width 32–96, depth 2–4), the
+latent size (3–6), β (10⁻⁴–10⁻³), VAE vs plain AE, the decoder (128–512 wide, 16–64 points) and the kernel
+set (0.02–0.05 … 0.05–0.8) do not matter at this level.  **Round 3**: the best round-2 variants with seeds —
+k = 8 neighbours 0.853 ± 0.004 (5 seeds), encoder depth 4 0.852 ± 0.002, learning rate 3·10⁻⁴
+0.852 ± 0.002 (3 seeds) — are within one standard deviation of each other; k = 8 (best mean, and the
+cheapest) is the new final configuration (`configs/ef_vae_k8_e2.yaml`: the previous model trained for
+2 epochs with k = 8; about 5 CPU-minutes of training per model).  Its margin over k = 12 (+0.006) is partly a
+selection effect among three similar candidates.
+
+**Score kinds.**  The rank ensemble of a VAE's reconstruction and KL scores reached 0.870 in one seed (kernels
+0.02–0.1) but varied between 0.777 and 0.870 over three seeds: at latent 4 the KL score is weak, and after
+2 epochs it is at or below random for most seeds (dev AUC 0.43–0.70) — whether the ensemble helps depends on
+the seed.  Ensembles over seeds do not rescue it (2-epoch model: 0.868 for three seeds, 0.851 for five),
+so the final model keeps the reconstruction score.  (A cross-model ensemble of the 2-epoch reconstruction
+score with the KL score of the 5-epoch latent-8 VAE reaches 0.863 on dev but is strongly mass-correlated,
+ρ = +0.78, like model (b) of §5.)
+
+*test*, final model of the study (five seeds, mean ± standard deviation; ensemble = average of the five
+per-jet background CDFs) against the previous final model of §5 (three seeds); SR, prod aggregation:
+
+| model | 2-prong AUC | max SIC | 1/ε_B at ε_S = 0.3 | 3-prong AUC | max SIC | JSD @ ε_B = 1 % |
+|---|---:|---:|---:|---:|---:|---:|
+| previous (5 epochs, k = 12) | 0.829 ± 0.006 | 1.57 ± 0.04 | 15.1 | **0.805 ± 0.002** | 1.45 ± 0.01 | **0.008** |
+| **new (2 epochs, k = 8)** | **0.853 ± 0.005** | **1.74 ± 0.05** | **20.4** | 0.799 ± 0.002 | 1.44 ± 0.01 | 0.012 |
+| new, 5-seed ensemble | 0.856 | 1.76 | 20.9 | 0.802 | 1.45 | 0.013 |
+| new, sum / max / min aggregation | 0.839 / 0.802 / 0.832 | | | 0.825 / 0.814 / 0.754 | | |
+| previous, sum / max / min | 0.804 / 0.764 / 0.811 | | | 0.845 / 0.835 / 0.756 | | |
+| new, mass-decorrelated (ensemble + qn) | 0.767 | 1.38 | | 0.767 | | 0.011 |
+| previous, mass-decorrelated (3-seed ensemble + qn) | 0.725 | 1.15 | | 0.794 | | 0.015 |
+
+The dev result carries over to the test splits seed by seed (dev 0.860 / 0.851 / 0.851 / 0.854 / 0.851, test
+0.861 / 0.850 / 0.849 / 0.853 / 0.850; bootstrap uncertainty of one seed ±0.001): on the 2-prong signal the
+study gains 0.024 in AUC, 11 % in max SIC and 35 % in background rejection at ε_S = 0.3, and the same
+direction holds for the weak supervision (§8) and bump hunt (§9).  It does **not** carry over to the 3-prong
+signal, which played no role in the study: the chosen aggregation is unchanged within 0.006, the sum and max
+aggregations lose 0.02, and the mass-decorrelated score loses 0.03 there while gaining 0.04 on the 2-prong
+signal; m_jj sculpting rises from 0.008 to 0.012 (random cuts 0.003, a jet-mass cut 0.25).  This is the
+signal dependence of the training budget already seen in §5 (the long-trained latent-8 AE was the better
+3-prong detector): the training length decides which kind of jet the autoencoder still reconstructs badly,
+so tuning it on one signal model tunes the detector toward that signal.
+
+**GPU.**  The Kaggle notebook (`notebooks/kaggle_gaehep.ipynb`) runs the GPU continuation of this study — a
+72-point grid around these results (latent 3–8 × β × kernel sets × 2/3/5 epochs, both score kinds, `gaehep
+sweep --score best`), seed confirmation, the best configuration with five seeds on the test splits, and scale
+variants of it (100 constituents, 128-wide or deeper encoder, 64 decoder points, 300k jets per epoch).
+
+## 7. Supervised reference
 
 Same EdgeConv encoder with a binary head, trained per jet on 2-prong signal-training jets against
 background-training jets (labels; 5 epochs × 200k jets, `results/runs/classifier`): the idealised upper bound
@@ -243,12 +333,13 @@ for the 2-prong signal.
 | max | 0.973 / 9.0 | 0.941 / 4.2 | 0.14 |
 
 The unsupervised energy-flow VAE recovers about two thirds of the supervised AUC excess over 0.5 on the
-2-prong signal ((0.829 − 0.5)/(0.982 − 0.5) = 0.68) but only ≈ 4 % of its max-SIC excess over 1 — the
-unsupervised scores rank the bulk of the signal correctly but do not isolate it.  The supervised classifier
+2-prong signal ((0.829 − 0.5)/(0.982 − 0.5) = 0.68; 0.73 for the model of §6) but only ≈ 4 % of its max-SIC
+excess over 1 (5 % for §6) — the unsupervised scores rank the bulk of the signal correctly but do not isolate
+it.  The supervised classifier
 transfers well to the 3-prong signal, but it has learned the signal's jet masses and sculpts m_jj
 strongly.
 
-## 7. Weak supervision on the GNN latents
+## 8. Weak supervision on the GNN latents
 
 Unsupervised GNN scores give AUC ≈ 0.8 but only max SIC ≈ 1.6 — too little purity to make a small
 resonance visible.  The standard way to win on this benchmark is weak supervision in the signal region
@@ -268,8 +359,14 @@ labels (one training each).  max SIC on the test events (mean of 3 repetitions):
 | latent-4 VAE: anomaly scores + jet masses | 1.2 | 4.1 | 6.7 | 7.0 | 7.1 | 7.4 / 0.963 |
 | latent-8 VAE: latents of both jets (2 × 8) | 1.0 | 1.1 | 1.5 | 4.6 | 6.6 | 10.9 / 0.968 |
 | latent-8 VAE: latents + jet masses | 1.0 | 1.5 | 7.6 | 9.3 | 10.3 | 15.3 / 0.980 |
+| §6 model (2 epochs, k = 8): latents of both jets | 1.1 | 1.4 | 2.2 | 4.2 | 4.8 | 5.8 / 0.950 |
+| §6 model: latents + jet masses | 1.3 | 2.2 | **9.2** | 9.1 | 9.6 | 11.5 / 0.974 |
+| §6 model: anomaly scores + jet masses | **1.7** | 6.2 | 8.0 | 8.2 | 8.2 | 8.5 / 0.967 |
 
-(`results/runs/ef_vae_s1/weak.json`, `results/runs/ef_vae8_s1/weak.json`, `figures/weak_iad.png`.)  The
+(`results/runs/ef_vae_s1/weak.json`, `results/runs/ef_vae8_s1/weak.json`, `results/runs/hp_final_s1/weak.json`,
+`figures/weak_iad.png`.)  The model of §6 improves every GNN row: its anomaly scores plus the jet masses match
+HL4 at the lowest signal fraction (1.7 vs 1.6) and reach 6.2 at S/B = 0.8 % (4.1 for the latent-4 VAE of §5),
+its latents plus masses 9.2 at S/B = 1.7 % (HL4 9.4).  The
 permutation-invariant GNN representation — learned without labels, from the energy flow alone — carries
 signal information comparable to the expert-designed HL4 features: with the two jet masses added the
 supervised classifiers reach AUC 0.974 (latent 4) and 0.980 (latent 8) against 0.970 for HL4 (max SIC 11.0
@@ -283,7 +380,7 @@ and test events were not); and our data and template samples are about three tim
 literature, so absolute SICs at fixed S/B are lower than published HL4 numbers (IAD / CATHODE max SIC
 ≈ 10–15 at S/B ≈ 0.6 % with ≈ 121k background events; see `docs/literature.md`).
 
-## 8. Bump hunt
+## 9. Bump hunt
 
 `gaehep bumphunt`: n signal events (test split) are injected into the 300k background test events, a cut on
 the event score keeps a fraction ε of the *sideband* events (fixed threshold, or with `--mode qr` an
@@ -307,10 +404,13 @@ background efficiency of this particular cut is 0.0950 ± 0.0015 in the SR of th
 (0.0948 / 0.0978 / 0.0928 / 0.0941 in its four 100-GeV bins) against 0.100 in the sidebands — but
 0.101 ± 0.003 on the independent background-validation events, so this is a ≈ 3σ downward fluctuation of the
 test background under this cut, not a systematic sculpting; the m_jj-dependent cut does not change it.
-Either way the unsupervised score is too impure to help a bump hunt; the weakly supervised classifier of §7
+The model of §6 (5-seed ensemble, prod, fixed cut at ε = 10 %) gives Z = −3.5 / −1.9 / −0.3 / +3.1 for
+0 / 300 / 600 / 1200 injected events: a response Z(1200) − Z(0) = +6.6, between the previous model's +5.1 and
+−τ21's +8.2, with a similar deficit at zero signal (−4.0 / −1.5 for 0 / 1200 events with the 2 % cut).
+Either way the unsupervised score is too impure to help a bump hunt; the weakly supervised classifier of §8
 would be the tool for that.
 
-## 9. Conclusions
+## 10. Conclusions
 
 1. **The AIMS GAE could not represent individual objects.**  On complete graphs GCN and GIN produce exactly
    one embedding per event, and GAT and SAGE(sum) collapse within a few layers, also after training; the
@@ -324,27 +424,41 @@ would be the tool for that.
    the same mass.  (A recent, not peer-reviewed report of inverted event-level graph-autoencoder AUCs on
    this dataset is listed, unverified, in `docs/literature.md`.)
 3. **Reconstructing the energy flow instead works.**  With an IRC-safe, pT-weighted kernel distance (energy
-   MMD) between the jet and its reconstruction, soft constituents barely enter the score.  The final
-   latent-4 energy-flow VAE reaches SR AUC 0.829 ± 0.006 on the (tuning) 2-prong signal and 0.805 ± 0.002 on
-   the 3-prong signal with the same event score, with m_jj sculpting close to the statistical floor (JSD
-   0.008 at ε_B = 1 %), and keeps AUC 0.72–0.79 after the jet mass is decorrelated.
+   MMD) between the jet and its reconstruction, soft constituents barely enter the score.  The latent-4
+   energy-flow VAE reaches SR AUC 0.829 ± 0.006 on the (tuning) 2-prong signal and 0.805 ± 0.002 on the
+   3-prong signal with the same event score — 0.853 ± 0.005 and 0.799 ± 0.002 after the hyper-parameter
+   study (§6) — with m_jj sculpting close to the statistical floor (JSD 0.008 / 0.012 at ε_B = 1 %), and keeps
+   AUC 0.73–0.79 (after §6: 0.77 on both signals) when the jet mass is decorrelated.
 4. **Unsupervised scores reach about the level of an oracle background density.**  A histogram estimate of
    the background density in (m_J, pT_J, τ21) gives AUC 0.80; the energy-flow model matches or exceeds it.
    On the 2-prong dev split a tighter bottleneck and shorter training helped (a better background model also
    reconstructs the signal better), latent-space densities (flows, conditional flows, event-level flows) did
-   not.  Unsupervised GNN scores give max SIC ≈ 1.5–1.7, below a dedicated observable on its own signal
+   not.  Unsupervised GNN scores give max SIC ≈ 1.5–1.8, below a dedicated observable on its own signal
    (τ21: 2.3) and too little to help a bump hunt; against a supervised EdgeConv classifier (AUC 0.982,
-   max SIC 15.7) they recover two thirds of the AUC excess but only ≈ 4 % of the SIC excess.
+   max SIC 15.7) they recover 68–73 % of the AUC excess but only 4–5 % of the SIC excess.
 5. **The learned representation carries signal information comparable to expert features.**  In the signal
    region, supervised classifiers on the permutation-invariant jet latents plus the two jet masses reach AUC
    0.974–0.980 against 0.970 for (m_J1, Δm_J, τ21_J1, τ21_J2).  In the idealised weakly supervised search
-   HL4 is better at every signal fraction, much more so at low ones (SIC 7.0 vs 1.5–1.8 at S/B = 0.8 %); from
-   S/B ≈ 2 % on the GNN representation reaches max SIC 8–10.
+   HL4 is better at almost every signal fraction, by far at low ones for the GNN latents (SIC 7.0 vs 1.5–2.2
+   at S/B = 0.8 %), less so for the anomaly scores plus jet masses of the §6 model (6.2; equal to HL4 at
+   S/B = 0.4 %); from S/B ≈ 2 % on the GNN representation reaches max SIC 8–10.
+6. **The training budget is the hyper-parameter that matters, and its optimum depends on the signal.**  In
+   about 80 dev runs the anomaly score is best at an intermediate fit of the background (an inverted U in
+   the background validation loss); shorter training, narrower kernel scales and a stronger KL weight each
+   move the fit toward that optimum and do not combine, and at the optimum the graph, encoder, decoder and
+   latent-size choices barely matter.  The chosen model (2 epochs, k = 8; five seeds) improves the 2-prong
+   test AUC by 0.024, max SIC by 11 %, the background rejection at ε_S = 0.3 by 35 % and the weakly
+   supervised and bump-hunt results — but not the never-tuned 3-prong signal (0.799 vs 0.805), and it
+   sculpts m_jj slightly more.  Tuning an anomaly detector's training length on one signal model tunes it
+   toward that signal.
 
 **Limitations.**  CPU-only training (2 cores): small models (48-wide EdgeConv, top-50 constituents), short
-budgets and three seeds; the GPU notebook repeats the final models with five seeds and a scale study.  Design
-choices were tuned on the 2-prong signal validation split, and earlier test results (including 3-prong) were
-seen during development.  One signal model per topology; the 3-prong signal shares the colour-singlet
+budgets and three to five seeds; the GPU notebook (prepared, not yet run) continues the hyper-parameter study
+on a 72-point grid with scale variants.  Design choices — the whole hyper-parameter study included — were
+tuned on the 2-prong signal validation split, and earlier test results (including 3-prong) were seen during
+development.  The initial weights of the CPU study's runs were drawn from the process's random state (not
+from `train.seed`; fixed since, so new runs are exactly reproducible); seeds of one configuration are
+therefore independent but not bit-reproducible.  One signal model per topology; the 3-prong signal shares the colour-singlet
 resonance structure.  Weak supervision is idealised (perfect background template, data and template drawn
 from the autoencoder's training background, samples three times smaller than in the literature).
 Significances in the bump hunt ignore fit and efficiency uncertainties.

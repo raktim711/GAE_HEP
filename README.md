@@ -33,17 +33,24 @@ chosen on the 2-prong *validation* split and applied unchanged to both signals (
 | −τ32 (3-prong observable) | 0.688 | **0.854** | 0.014 |
 | jet mass | 0.811 | 0.817 | 0.251 |
 | set autoencoder, Chamfer on constituents | 0.488 | 0.532 | 0.004 |
-| **energy-flow graph VAE** (latent 4, 3 seeds) | 0.829 ± 0.006 | 0.805 ± 0.002 | 0.008 |
+| energy-flow graph VAE (latent 4, 5 epochs; 3 seeds) | 0.829 ± 0.006 | **0.805 ± 0.002** | **0.008** |
+| **energy-flow graph VAE after the hyper-parameter study** (2 epochs, k = 8; 5 seeds) | **0.853 ± 0.005** | 0.799 ± 0.002 | 0.012 |
 
 * Constituent-level graph autoencoders are *inverted* detectors here (signal jets are simpler than QCD);
   reconstructing the IRC-safe energy flow instead fixes this and reaches the level of an oracle (histogram)
   estimate of the background density in (m_J, pT_J, τ21) (AUC ≈ 0.80).
-* On the 2-prong validation split, shorter training and a tighter bottleneck worked better (a better
-  background model also reconstructs the signal better); latent-space flows added nothing.
-* Unsupervised max SIC is only ≈ 1.6.  In the signal region, supervised classifiers on the GNN's
+* Hyper-parameter study (78 dev runs, `results/dev/hp_study.md`): the anomaly score is best at an
+  *intermediate* fit of the background — an autoencoder that fits QCD better also reconstructs the signal's
+  clean two-prong jets better.  Training for 2 instead of 5 epochs is the one change that matters (narrower
+  kernels or a stronger KL weight do the same and do not combine with it); graph, encoder, decoder and
+  latent-size choices barely matter at the optimum.  The tuned model gains 0.024 AUC, 11 % max SIC and 35 %
+  background rejection on the 2-prong signal (test), but not on the never-tuned 3-prong signal: the
+  training length tunes the detector toward the signal it was tuned on.  Latent-space flows added nothing.
+* Unsupervised max SIC is only ≈ 1.6–1.8.  In the signal region, supervised classifiers on the GNN's
   permutation-invariant jet latents plus jet masses reach AUC 0.974–0.980 vs 0.970 for the standard
   (m_J1, Δm_J, τ21_J1, τ21_J2) features; in an idealised weakly supervised search those standard features
-  remain better at every signal fraction, and the GNN representation reaches max SIC 8–10 for S/B ≳ 2 %.
+  remain better at almost every signal fraction, and the GNN representation reaches max SIC 8–10 for
+  S/B ≳ 2 %.
 
 ## Data
 
@@ -98,23 +105,34 @@ gaehep preprocess --sample qqq
 gaehep tables --sample rnd && gaehep tables --sample qqq && gaehep splits
 gaehep baselines                   # single observables -> results/runs/baseline_*/
 
-# development protocol (validation splits only) and the final model, three seeds
-for s in 1 2 3; do
-  gaehep dev configs/ef_vae.yaml --name ef_vae_dev_s$s --set train.seed=$s   # ~20 min on one core
-  gaehep promote ef_vae_dev_s$s ef_vae_s$s                                  # test splits -> results/runs/
+# development protocol (validation splits only) and the final model of the hyper-parameter study, five seeds
+for s in 1 2 3 4 5; do
+  gaehep dev configs/ef_vae.yaml --name e2_k8_s$s --set train.epochs=2 --set model_args.k=8 \
+         --set train.seed=$s                                                # ~9 min on one core
+  gaehep promote e2_k8_s$s hp_final_s$s                                     # test splits -> results/runs/
 done
-gaehep ensemble ef_vae_s1 ef_vae_s2 ef_vae_s3 --out ef_vae_3seeds
-gaehep qn ef_vae_3seeds                         # mass-decorrelated variant
-gaehep bumphunt ef_vae_3seeds --agg prod        # sideband-fit bump hunt with injected signal
-gaehep weak ef_vae_s1                           # weak supervision (IAD) on the jet latents vs HL4
+gaehep ensemble hp_final_s1 hp_final_s2 hp_final_s3 hp_final_s4 hp_final_s5 --out hp_final_5seeds
+gaehep qn hp_final_5seeds                       # mass-decorrelated variant
+gaehep bumphunt hp_final_5seeds --agg prod      # sideband-fit bump hunt with injected signal
+gaehep weak hp_final_s1 --n-models 3            # weak supervision (IAD) on the jet latents vs HL4
+gaehep dev-ensemble RUN1 RUN2 ... --out NAME    # rank ensemble of dev runs (seeds, or rec + KL scores)
 gaehep collapse                                 # legacy AIMS GAE collapse study
 gaehep report && gaehep dev-report              # results/summary.md, results/dev/summary.md
+python scripts/hp_study.py                      # hyper-parameter study tables and figures
+
+# hyper-parameter sweep (dev protocol) -> seed confirmation -> best configuration on the test splits
+gaehep sweep configs/ef_vae.yaml --prefix sw --score best --budget-hours 8 \
+       --grid '{latent_dim: [3, 4, 6], train.epochs: [2, 3, 5], model_args.sigmas: {s3: [0.02, 0.05, 0.1]}}'
 
 gaehep train configs/set_ae.yaml   # any config: train + score + evaluate -> results/runs/set_ae/
 ```
 
 Data live outside the repo (`GAEHEP_DATA`, default `/home/claude/data/lhco`); results in `results/`.
-[`notebooks/kaggle_gaehep.ipynb`](notebooks/kaggle_gaehep.ipynb) runs the pipeline on a Kaggle GPU: the final models with the validated budget and five seeds each (dev → promote), ensembles, mass decorrelation, bump hunt, the weak-supervision study, and a scale study (wider encoders, 100 constituents, longer training) under the dev protocol; reruns reuse finished runs.
+[`notebooks/kaggle_gaehep.ipynb`](notebooks/kaggle_gaehep.ipynb) runs the GPU continuation of the
+hyper-parameter study on Kaggle: a 72-point `gaehep sweep` grid (latent size × β × kernel scales × epochs, both
+score kinds), seed confirmation, the best configuration with five seeds on the test splits (ensemble, mass
+decorrelation, bump hunt, weak supervision) and scale variants of it (100 constituents, wider or deeper
+encoder, more decoder points, more jets per epoch); every step is idempotent, so reruns reuse finished runs.
 
 ## Layout
 
