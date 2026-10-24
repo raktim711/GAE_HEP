@@ -1,11 +1,13 @@
 # Final model of the hyper-parameter study (results/dev/hp_study.md, RESULTS.md §5): the latent-4 energy-flow
 # VAE of configs/ef_vae.yaml trained for only 2 epochs (x 120k jets) with k = 8 EdgeConv neighbours.  On the
 # 2-prong validation split the anomaly score peaks at an intermediate fit of the background: shorter training
-# (and nothing else of ~30 one-at-a-time changes) gave a robust gain (5 seeds); k = 8 had the best 3-seed mean
-# of the round-3 candidates.  Scores: energy-MMD reconstruction ("score"; the main score) and the KL divergence
+# gave the largest gain (5 seeds); the other gains (kernel scales 0.02-0.1, beta = 1e-2) do not combine with it,
+# and k = 8 had the best 3-seed mean of the round-3 candidates.  Scores: energy-MMD reconstruction ("score"; the main score) and the KL divergence
 # of the jet posterior ("+kl", extra_scores; weak and unstable after 2 epochs, reported for completeness).
-# The reported models were trained with `gaehep dev configs/ef_vae_k8_e2.yaml --name <dev run> --set
-# train.seed=<s>` and scored on the test splits with `gaehep promote <dev run> hp_final_s<s>`.
+# The reported models are the dev runs e2_k8[_s<s>] (`gaehep dev configs/ef_vae.yaml --name e2_k8_s<s> --set
+# train.epochs=2 --set model_args.k=8 --set train.seed=<s>`), scored on the test splits with `gaehep promote
+# e2_k8_s<s> hp_final_s<s>`.  `gaehep train configs/ef_vae_k8_e2.yaml --set train.seed=<s>` trains the same
+# model in one go (`gaehep dev` with this file would reset the epochs to the 5-epoch dev budget).
 model: ef_ae
 model_args:
   hidden: [48, 48, 48]
