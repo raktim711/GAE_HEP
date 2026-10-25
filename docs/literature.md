@@ -36,3 +36,41 @@ Conventions used by the literature (and adopted here where relevant):
 Take-away for this project: fully unsupervised results on this dataset sit around AUC 0.75–0.93 with max SIC
 ≈ 2–4; weakly supervised HL4 methods reach max SIC ≈ 6.5–14 at S/B ≈ 0.6%, idealised/supervised ≈ 15–17.
 Label-free single observables already give AUC ≈ 0.8, so they are mandatory baselines.
+
+---
+
+## Method literature sweep (25 Oct 2026): what could improve an unsupervised jet score
+
+Read through the fetch tool (abstract + body text; summaries below are of what the text says).  The fetch
+tool became unavailable (rate limit) part-way through the sweep, so the second group was **not read** and is
+listed from search hits only.
+
+**Read**
+
+| Paper | What it says that matters here |
+|---|---|
+| Finke et al., *Autoencoders for unsupervised anomaly detection in high energy physics*, arXiv:2104.09051 (JHEP 06 (2021) 161) | CNN AE on 40×40 top-tagging images. Direct tagger (train QCD, find top) AUC 0.912 (MSE) / 0.928 (kernel MSE); the **inverse** tagger (train top, find QCD) 0.365 / 0.486 — **complexity bias**: the AE reconstructs sparse jets better whatever they are. Mitigations: intensity remapping of the pixels and a *kernel* (smeared) MSE; none of the inverse taggers beats a pixel-count tagger. (This paper does not use EMD or Chamfer losses.) |
+| Fraser et al., *Challenges for unsupervised anomaly detection in particle physics*, arXiv:2110.06948 | VAE on jet images: **the lowest validation loss is not the best detector** (the network with one downsampling block had the lowest loss and was the worst detector); Wasserstein-trained networks were no better than MSE-trained ones; a training-free **k-medoids score with a Wasserstein distance** to a few QCD medoids matches the VAE (top 0.87 vs 0.84, W 0.71 vs 0.65 AUC). |
+| Mikuni & Nachman, *High-dimensional and permutation invariant anomaly detection*, arXiv:2306.03933 | Point-cloud **diffusion model** (DeepSets + transformer layers), likelihood from the probability-flow ODE; score = −log p(jet) − (1/N) log p(particles | jet), i.e. the particle part is **normalised by the multiplicity**. Benchmarks: top-tagging data with a hidden-valley Z′ signal (QCD vs Z′: AUC 0.924, max SIC 3.8), not LHCO. |
+| *A Normalized Autoencoder for LHC Triggers*, arXiv:2206.14225 | Energy-based AE (energy = reconstruction MSE; Langevin sampling of negatives, two-stage training, many stabilisation tricks) on jet images: top vs QCD AUC 0.91 (NAE) vs 0.875 (AE); the **inverse** direction 0.89 vs 0.58. Very sensitive to the pixel remapping exponent and the sampler temperature. |
+| Ostdiek, *Deep Set Auto Encoders for Anomaly Detection in Particle Physics*, arXiv:2109.01695 (SciPost Phys. 12, 045) | Permutation-invariant (DeepSets, Chamfer-type loss) VAE on Dark Machines events: the best detector had **no reconstruction term at all** (β = 1, score = KL of the latent); fixed-target scores beat reconstruction scores, reason unclear. |
+| Araz et al., arXiv:2506.19920 | (details of the table above) subjets from exclusive k_T clustering as nodes, pT as the only node feature, **edge features θ_ij, k_T,ij, z_ij reconstructed from pairs of latents**, 2-d bottleneck, trained on signal-contaminated data (S/B = 3 %); performance peaks at 25–30 subjets; relative geometry beats absolute positions. Their node feature is the absolute pT in GeV and no SR-restricted metric is given, so AUC 0.925 is not comparable to our signal-region numbers (jet pT alone separates signal from the bulk of a pT > 1.2 TeV QCD sample). |
+| Tsan et al., arXiv:2111.12849; Dillon et al., arXiv:2205.10380 | abstracts only (learned EMD for particle graph AEs; contrastive transformer + latent density/bump hunt). |
+
+**Not read** (title/search hit only; do not quote numbers): Atkinson et al., *IRC-safe Graph Autoencoder for
+unsupervised anomaly detection*, arXiv:2204.12231; Atkinson et al., *Anomaly detection with Convolutional
+Graph Neural Networks*, arXiv:2105.07988; *Anomalous Jet Identification via Sequence Modeling*,
+arXiv:2105.09274; Dillon et al., *Anomalies, representations, and self-supervision*, arXiv:2301.04660;
+Dillon et al., *Better Latent Spaces for Better Autoencoders*, arXiv:2104.08291; *Symmetries, safety, and
+self-supervision* (SciPost Phys. 12, 188); HEP-JEPA, arXiv:2502.03933.  From memory (not re-checked):
+likelihood regret (Xiao et al., NeurIPS 2020) and the input-complexity correction of likelihood scores
+(Serrà et al., ICLR 2020) against complexity bias; random-network distillation (Burda et al. 2018) and Deep
+SVDD (Ruff et al. 2018) as fixed-target scores.
+
+**Ideas this suggests for our energy-flow graph VAE** (status filled in RESULTS.md §11):
+1. complexity bias → a likelihood-type (cross-entropy) loss and an energy-exponent remapping instead of the
+   bounded kernel distance; 2. "best fit ≠ lowest loss" is our inverted U (§6), so a *different* kind of
+   information is needed, not more fitting: fixed-target scores (random-network distillation), training-free
+   optimal-transport/kernel-embedding k-NN scores; 3. symmetry-aware inputs (principal-axis alignment, so
+   that the latent does not spend a dimension on the jet's orientation); 4. the signal-region-local
+   training that resonant searches use (train on a window around the SR).
