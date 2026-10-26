@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import copy
 import itertools
+import shutil
 from pathlib import Path
 from typing import Any
 
@@ -158,8 +159,16 @@ def run(
         scores, latents = {}, {}
         extra: dict[str, dict[str, np.ndarray]] = {k: {} for k in keys}
         lat_splits = [("bkg_train", int(dcfg.get("latent_train_events", 100_000)))]
+        part_dir = run_dir / "_partial"  # per-split cache: a restarted scoring job resumes where it stopped
+        part_dir.mkdir(exist_ok=True)
         for split, cap in [(s, None) for s in SCORE_SPLITS if data.has(s)] + lat_splits:
-            out = score_pool(model, data.pool(split, cap), scaler, with_embed=True, keys=keys)
+            part = part_dir / f"{split}.npz"
+            if part.exists():
+                out = dict(np.load(part))
+            else:
+                out = score_pool(model, data.pool(split, cap), scaler, with_embed=True, keys=keys)
+                np.savez(part.with_suffix(".tmp.npz"), **out)
+                part.with_suffix(".tmp.npz").rename(part)
             if split != "bkg_train":
                 scores[split] = out["score"].reshape(-1, 2).astype(np.float32)
                 for k in keys:
@@ -174,6 +183,7 @@ def run(
         for k in keys:  # extra per-jet scores of the same model (e.g. a VAE's KL term) as their own runs
             (_run_dir(f"{name}+{k}")).mkdir(parents=True, exist_ok=True)
             np.savez(_run_dir(f"{name}+{k}") / "scores.npz", **extra[k])
+        shutil.rmtree(part_dir, ignore_errors=True)
 
     if "evaluate" in stages:
         evaluate_run(name, data=data, cfg=cfg, history=summary.get("history"))
