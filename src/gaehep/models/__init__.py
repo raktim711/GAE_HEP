@@ -9,6 +9,7 @@ from gaehep.models.classifier import EdgeConvClassifier
 from gaehep.models.deep_svdd import DeepSVDD
 from gaehep.models.ef_ae import EnergyFlowAE
 from gaehep.models.node_gae import NodeGAE
+from gaehep.models.rnd import RandomDistillation
 from gaehep.models.set_ae import SetAE
 
 REGISTRY: dict[str, type[JetModel]] = {
@@ -16,6 +17,7 @@ REGISTRY: dict[str, type[JetModel]] = {
     "ef_ae": EnergyFlowAE,
     "node_gae": NodeGAE,
     "deep_svdd": DeepSVDD,
+    "rnd": RandomDistillation,
     "classifier": EdgeConvClassifier,
 }
 
@@ -37,6 +39,7 @@ __all__ = [
     "EnergyFlowAE",
     "JetModel",
     "NodeGAE",
+    "RandomDistillation",
     "SetAE",
     "build_model",
 ]

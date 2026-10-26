@@ -53,6 +53,15 @@ def main(argv: list[str] | None = None) -> int:
     pr.add_argument("name")
     rc = sub.add_parser("recon", help="input vs reconstruction figure of a (dev) run directory")
     rc.add_argument("run_dir", type=Path)
+    dk = sub.add_parser(
+        "dev-kme", help="training-free kernel-embedding kNN / Mahalanobis scores (dev entries)"
+    )
+    dk.add_argument("name")
+    dk.add_argument("--bank-jets", type=int, default=100_000)
+    dk.add_argument("--n-pca", type=int, default=64)
+    dk.add_argument("-k", type=int, default=10)
+    dk.add_argument("--dim", type=int, default=128, help="random Fourier features per kernel scale")
+    dk.add_argument("--bank-mjj", default=None, help="restrict the bank to an m_jj window, e.g. 3300,3700")
     dn = sub.add_parser("dev-ensemble", help="rank ensemble of dev entries (seeds, or rec + KL scores)")
     dn.add_argument("runs", nargs="+")
     dn.add_argument("--out", required=True)
@@ -137,6 +146,13 @@ def main(argv: list[str] | None = None) -> int:
         from gaehep.train.dev import dev_eval_run
 
         dev_eval_run(a.run, log=_log)
+    elif a.cmd == "dev-kme":
+        from gaehep.train.dev import dev_kme
+
+        win = tuple(float(x) for x in a.bank_mjj.split(",")) if a.bank_mjj else None
+        dev_kme(
+            a.name, bank_jets=a.bank_jets, n_pca=a.n_pca, k=a.k, dim_per_scale=a.dim, bank_mjj=win, log=_log
+        )
     elif a.cmd == "dev-ensemble":
         from gaehep.train.dev import dev_ensemble
 

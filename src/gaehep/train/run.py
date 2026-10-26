@@ -60,17 +60,30 @@ class Data:
     def has(self, split: str) -> bool:
         return split in self.splits and (self.root / SPLIT_SAMPLE[split] / "events.npz").exists()
 
-    def events(self, split: str, max_events: int | None = None, seed: int = 0) -> np.ndarray:
+    def events(
+        self,
+        split: str,
+        max_events: int | None = None,
+        seed: int = 0,
+        mjj: tuple[float, float] | None = None,
+    ) -> np.ndarray:
+        """Event indices of a split, optionally restricted to an m_jj window (same units as the event table,
+        GeV) *before* the random cap, so that ``mjj`` pools are subsets of the window's events."""
         ev = self.splits[split]
+        if mjj is not None:
+            m = self.store(SPLIT_SAMPLE[split])["mjj"][ev]
+            ev = ev[(m >= mjj[0]) & (m <= mjj[1])]
         if max_events is not None and len(ev) > max_events:
             ev = np.sort(np.random.default_rng(seed).choice(ev, max_events, replace=False))
         return ev
 
-    def pool(self, split: str, max_events: int | None = None) -> JetPool:
-        key = f"{split}:{max_events}"
+    def pool(
+        self, split: str, max_events: int | None = None, mjj: tuple[float, float] | None = None
+    ) -> JetPool:
+        key = f"{split}:{max_events}:{mjj}"
         if key not in self._pools:
             self._pools[key] = self.store(SPLIT_SAMPLE[split]).pool(
-                self.events(split, max_events), self.n_const
+                self.events(split, max_events, mjj=mjj), self.n_const
             )
         return self._pools[key]
 
@@ -118,8 +131,9 @@ def run(
         log(f"[{name}] already trained (model.pt present); skipping training")
         stages = tuple(s for s in stages if s != "train")
     if "train" in stages:
-        train_pool = data.pool("bkg_train", max_train)
-        val_pool = data.pool("bkg_val")
+        win = train_window(dcfg)
+        train_pool = data.pool("bkg_train", max_train, mjj=win)
+        val_pool = data.pool("bkg_val", mjj=win)
         if model.supervised:
             train_pool = concat_pools([train_pool, data.pool("sig_train")])
             val_pool = concat_pools([val_pool, data.pool("sig_val")])
@@ -159,6 +173,13 @@ def run(
         for k in keys:
             evaluate_run(f"{name}+{k}", data=data, cfg={"extra_score": k, "source": name, "model": cfg})
     return summary
+
+
+def train_window(dcfg: dict[str, Any]) -> tuple[float, float] | None:
+    """Optional m_jj window (GeV) of the training and validation background (config ``data.train_mjj``), as
+    in resonance searches that fit the signal-region background locally.  Evaluation is unaffected."""
+    w = dcfg.get("train_mjj")
+    return None if w is None else (float(w[0]), float(w[1]))
 
 
 def extra_score_keys(cfg: dict[str, Any]) -> tuple[str, ...]:

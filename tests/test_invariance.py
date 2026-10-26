@@ -18,11 +18,25 @@ MODELS = {
     "node_gae": dict(enc_hidden=(16, 16), node_latent=2, dec_hidden=(16,), k=4),
     "deep_svdd": dict(hidden=(16, 16), k=4, latent_dim=4),
     "classifier": dict(hidden=(16, 16), k=4, head_hidden=(8,)),
+    "rnd": dict(hidden=(16, 16), teacher_hidden=(16, 16), k=4, out_dim=6, head_hidden=(16,)),
     "set_ae_max": dict(hidden=(16, 16), k=4, latent_dim=4, n_out=40, dec_hidden=(32,), aggr="max"),
     "ef_ae": dict(hidden=(16, 16), k=4, latent_dim=4, n_out=8, dec_hidden=(32,)),
     "ef_ae_cond": dict(hidden=(16, 16), k=4, latent_dim=4, n_out=8, dec_hidden=(32,), cond_dim=2),
     "ef_ae_vae_recon": dict(  # the final-model configuration (score = reconstruction)
         hidden=(16, 16), k=4, latent_dim=4, n_out=8, dec_hidden=(32,), variational=True
+    ),
+    "ef_ae_nll": dict(hidden=(16, 16), k=4, latent_dim=4, n_out=8, dec_hidden=(32,), loss="nll"),
+    "ef_ae_align_pow": dict(
+        hidden=(16, 16), k=4, latent_dim=4, n_out=8, dec_hidden=(32,), align=True, energy_power=2.0
+    ),
+    "ef_ae_ewmp": dict(
+        hidden=(16, 16),
+        latent_dim=4,
+        n_out=8,
+        dec_hidden=(32,),
+        encoder="ewmp",
+        radii=(0.1, 0.4),
+        variational=True,
     ),
     "ef_ae_vae_kl": dict(
         hidden=(16, 16), k=4, latent_dim=4, n_out=8, dec_hidden=(32,), variational=True, score="kl"
@@ -44,7 +58,7 @@ def test_score_invariant_to_node_order_and_padding(name, pool, scaler):
     m = _model(name)
     idx = np.arange(12)
     b0 = make_batch(pool, idx, scaler)
-    if name == "deep_svdd":
+    if name in ("deep_svdd", "rnd"):
         m.prepare([b0])
     perm_pool = permute_nodes(pool, seed=3)
     pad_pool = permute_nodes(pool, seed=4, pad_extra=7)
@@ -77,7 +91,7 @@ def test_score_invariant_to_extra_padding(name, pool, scaler):
     m = _model(name)
     idx = np.arange(10)
     b0 = make_batch(pool, idx, scaler)
-    if name == "deep_svdd":
+    if name in ("deep_svdd", "rnd"):
         m.prepare([b0])
     padded = permute_nodes(pool, seed=5, pad_extra=7)
     with torch.no_grad():
@@ -136,7 +150,7 @@ def test_encoder_pool_invariant(pool, scaler):
 def test_score_and_embed_consistent(name, pool, scaler):
     m = _model(name)
     b = make_batch(pool, np.arange(8), scaler)
-    if name == "deep_svdd":
+    if name in ("deep_svdd", "rnd"):
         m.prepare([b])
     with torch.no_grad():
         s1, z1 = m.score_and_embed(b)

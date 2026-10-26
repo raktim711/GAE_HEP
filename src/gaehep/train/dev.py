@@ -26,11 +26,11 @@ from gaehep.eval.evaluate import aggregate, region_mask
 from gaehep.eval.metrics import auc, summarize
 from gaehep.models import build_model
 from gaehep.train.loop import TrainConfig, fit, resolve_device, score_pool
-from gaehep.train.run import Data, extra_score_keys
+from gaehep.train.run import Data, extra_score_keys, train_window
 
 DEV_MIN_BKG = 20
 # name prefixes of hyper-parameter-sweep dev entries (CPU study: hp_, fx_, cd_, e2_, seed ensembles; GPU: gpu_)
-SWEEP_PREFIXES = ("hp_", "fx_", "cd_", "e2_", "seeds", "x_", "gpu_")
+SWEEP_PREFIXES = ("hp_", "fx_", "cd_", "e2_", "seeds", "x_", "gpu_", "lt_")
 # training budget of the dev protocol (applied over a model config's ``train`` section by ``gaehep dev``):
 # 5 epochs x 120k jets, 20k validation jets, one thread so that two dev runs share the 2 CPU cores.
 DEV_TRAIN = {"epochs": 5, "jets_per_epoch": 120_000, "patience": 3, "val_jets": 20_000, "threads": 1}
@@ -119,8 +119,8 @@ def dev_run(
         t0 = time.time()
         summary = fit(
             model,
-            data.pool("bkg_train", dcfg.get("max_train_events")),
-            data.pool("bkg_val"),
+            data.pool("bkg_train", dcfg.get("max_train_events"), mjj=train_window(dcfg)),
+            data.pool("bkg_val", mjj=train_window(dcfg)),
             scaler,
             tcfg,
             out_dir,
@@ -210,6 +210,44 @@ def dev_ensemble(names: list[str], out_name: str, log=print) -> dict[str, Any]:
         {"source_runs": list(names), "posthoc": "rank_ensemble", "train_minutes": 0},
     )
     log(f"[dev:{out_name}] {headline(res['metrics'])}")
+    return res
+
+
+def dev_kme(
+    out_name: str,
+    bank_jets: int = 100_000,
+    n_pca: int = 64,
+    k: int = 10,
+    dim_per_scale: int = 128,
+    sigmas: tuple[float, ...] | None = None,
+    bank_mjj: tuple[float, float] | None = None,
+    log=print,
+) -> dict[str, Any]:
+    """Training-free scores in the energy-MMD geometry (:mod:`gaehep.eval.kme`): kNN distance, whitened kNN
+    distance and Mahalanobis distance of the random-Fourier kernel mean embedding to a bank of background-
+    *training* jets (optionally restricted to an m_jj window).  Three dev entries ``<out_name>+knn`` etc."""
+    from gaehep.eval.kme import EmbeddingScorer, KernelEmbedding, embed_pool
+    from gaehep.losses.mmd import DEFAULT_SIGMAS
+
+    data = Data(n_const=50)
+    scaler = data.scaler()
+    emb = KernelEmbedding(sigmas or DEFAULT_SIGMAS, dim_per_scale, seed=0)
+    bank_pool = data.pool("bkg_train", max_events=bank_jets // 2, mjj=bank_mjj)
+    scorer = EmbeddingScorer(embed_pool(bank_pool, scaler, emb), n_pca=n_pca, k=k)
+    tables = (_tab(data, "bkg_val", None), _tab(data, "sig_val", None))
+    sc_b = scorer.scores(embed_pool(data.pool("bkg_val"), scaler, emb))
+    sc_s = scorer.scores(embed_pool(data.pool("sig_val"), scaler, emb))
+    res = {}
+    for key in sc_b:
+        res[key] = _save_dev(
+            f"{out_name}+{key}",
+            sc_b[key].reshape(-1, 2),
+            sc_s[key].reshape(-1, 2),
+            data,
+            {"posthoc": "kme", "bank_jets": len(bank_pool), "n_pca": n_pca, "k": k, "train_minutes": 0},
+            tables=tables,
+        )
+        log(f"[dev:{out_name}+{key}] {headline(res[key]['metrics'])}")
     return res
 
 

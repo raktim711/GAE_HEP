@@ -44,3 +44,27 @@ def energy_mmd(
     t2 = torch.einsum("bi,bij,bj->b", target_w, k_tt, target_w)
     t3 = torch.einsum("bi,bij,bj->b", pred_w, k_pt, target_w)
     return (t1 + t2 - 2.0 * t3).clamp(min=0.0)
+
+
+def energy_nll(
+    pred: torch.Tensor,
+    pred_w: torch.Tensor,
+    pred_sigma: torch.Tensor,
+    target: torch.Tensor,
+    target_w: torch.Tensor,
+) -> torch.Tensor:
+    """Per-jet energy-weighted cross-entropy  -sum_i z_i log sum_a w_a N(x_i | mu_a, sigma_a^2 I).
+
+    The decoder is read as a Gaussian mixture density for the *energy flow*: constituent i (a sample of the
+    flow, weighted by its energy fraction z_i) is scored by the mixture.  Like the MMD it is invariant to the
+    order of both sets, to padding (zero weight) and to collinear splittings, and changes by O(z) under a
+    soft emission; unlike the MMD (bounded by the kernel's range) it is unbounded for energy placed where the
+    decoder has no mass, i.e. it behaves like a log-likelihood in the tails.  It contains the entropy of the
+    target flow, so it also grows with the spread of the jet.
+
+    pred (B, P, 2), pred_w (B, P) summing to 1, pred_sigma (B, P) > 0; target (B, T, 2), target_w (B, T).
+    """
+    d2 = (target[:, :, None, :] - pred[:, None, :, :]).pow(2).sum(-1)  # (B, T, P)
+    var = pred_sigma.pow(2)[:, None, :]
+    logp = torch.log(pred_w.clamp(min=1e-12))[:, None, :] - torch.log(2.0 * torch.pi * var) - 0.5 * d2 / var
+    return -(target_w * torch.logsumexp(logp, dim=-1)).sum(-1)
