@@ -1,0 +1,27 @@
+model: rnd
+model_args:
+  hidden:
+  - 48
+  - 48
+  - 48
+  teacher_hidden:
+  - 64
+  - 64
+  - 64
+  k: 8
+  out_dim: 32
+  head_hidden:
+  - 128
+data:
+  n_const: 50
+train:
+  epochs: 5
+  jets_per_epoch: 120000
+  batch_size: 256
+  lr: 0.001
+  weight_decay: 0.0001
+  patience: 3
+  val_jets: 20000
+  time_budget_min: 100
+  threads: 1
+  seed: 1

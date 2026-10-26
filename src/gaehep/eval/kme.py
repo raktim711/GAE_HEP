@@ -67,7 +67,7 @@ class EmbeddingScorer:
         return ((x - self.mean) @ self.vt.T).astype(np.float32)
 
     @torch.no_grad()
-    def scores(self, x: np.ndarray, batch: int = 4096) -> dict[str, np.ndarray]:
+    def scores(self, x: np.ndarray, batch: int = 1024) -> dict[str, np.ndarray]:
         q_all = self._project(x)
         knn, knn_w = [], []
         bank_w = self.bank / torch.from_numpy(self.sv)

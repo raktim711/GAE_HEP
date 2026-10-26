@@ -22,6 +22,7 @@ import yaml
 from scipy.stats import spearmanr
 
 from gaehep.config import load_json, results_dir, run_metadata, save_json, seed_everything
+from gaehep.data.dataset import iterate_batches
 from gaehep.eval.evaluate import aggregate, region_mask
 from gaehep.eval.metrics import auc, summarize
 from gaehep.models import build_model
@@ -248,6 +249,95 @@ def dev_kme(
             tables=tables,
         )
         log(f"[dev:{out_name}+{key}] {headline(res[key]['metrics'])}")
+    return res
+
+
+def dev_profile(
+    name: str,
+    out_name: str | None = None,
+    train_jets: int = 100_000,
+    n_components: int = 6,
+    log=print,
+) -> dict[str, Any]:
+    """Density of the *error profile*: for a trained dev energy-flow model, the per-kernel-scale MMD errors
+    (and optionally the latent mean and the KL term) of a jet form a short vector; a Gaussian mixture fitted
+    to that vector on background-training jets gives -log p as a label-free score that flags jets whose error
+    across angular scales is unusual even when the total reconstruction error is moderate.  Entries
+    ``<out>+prof_mmd`` (5 log-errors), ``+prof_mmdkl`` (adds log KL), ``+prof_all`` (adds the 4 latent
+    means), each as a GMM density; ``+prof_maha`` is the Mahalanobis distance of the 5 log-errors."""
+    from sklearn.mixture import GaussianMixture
+
+    from gaehep.losses.mmd import energy_mmd
+
+    out_name = out_name or name
+    cfg = yaml.safe_load((dev_dir(name) / "config.yaml").read_text())
+    data = Data(n_const=int(cfg.get("data", {}).get("n_const", 50)))
+    scaler = data.scaler()
+    model = build_model(cfg["model"], **cfg.get("model_args", {}))
+    model.load_state_dict(torch.load(dev_dir(name) / "model.pt", weights_only=True, map_location="cpu"))
+    model.eval()
+    torch.set_num_threads(1)
+    sig = tuple(model.sigmas)
+
+    @torch.no_grad()
+    def feats(pool) -> np.ndarray:
+        rows = []
+        for b in iterate_batches(pool, scaler, 1024):
+            out = model(b)
+            xy, w = model.target_flow(b)
+            cols = [energy_mmd(out["xy"], out["w"], xy, w, (s,)) for s in sig]
+            cols.append(model.losses(b, out)["kl"])
+            cols.extend(out["z"].unbind(-1))
+            rows.append(torch.stack(cols, dim=1).numpy())
+        return np.concatenate(rows).astype(np.float64)
+
+    ns = len(sig)
+    f_tr = feats(data.pool("bkg_train", max_events=train_jets // 2))
+    f_b, f_s = feats(data.pool("bkg_val")), feats(data.pool("sig_val"))
+
+    def prep(f: np.ndarray, cols: list[int]) -> np.ndarray:
+        x = f[:, cols].copy()
+        for j, c in enumerate(cols):
+            if c <= ns:  # errors and KL are positive and heavy-tailed: log scale
+                x[:, j] = np.log(np.maximum(x[:, j], 1e-9))
+        return x
+
+    sets = {
+        "prof_mmd": list(range(ns)),
+        "prof_mmdkl": list(range(ns + 1)),
+        "prof_all": list(range(f_tr.shape[1])),
+    }
+    tables = (_tab(data, "bkg_val", None), _tab(data, "sig_val", None))
+    res = {}
+    for key, cols in sets.items():
+        x_tr = prep(f_tr, cols)
+        mu, sd = x_tr.mean(0), x_tr.std(0) + 1e-9
+        gm = GaussianMixture(n_components, covariance_type="full", random_state=0, reg_covar=1e-4).fit(
+            (x_tr - mu) / sd
+        )
+        sc = [-gm.score_samples((prep(f, cols) - mu) / sd) for f in (f_b, f_s)]
+        res[key] = _save_dev(
+            f"{out_name}+{key}",
+            sc[0].reshape(-1, 2),
+            sc[1].reshape(-1, 2),
+            data,
+            {"posthoc": "error_profile_gmm", "source_run": name, "train_minutes": 0},
+            tables=tables,
+        )
+        log(f"[dev:{out_name}+{key}] {headline(res[key]['metrics'])}")
+        if key == "prof_mmd":  # Mahalanobis distance of the log-error vector
+            xs = [(prep(f, cols) - mu) / sd for f in (f_tr, f_b, f_s)]
+            cov_inv = np.linalg.inv(np.cov(xs[0].T) + 1e-6 * np.eye(len(cols)))
+            md = [np.einsum("ij,jk,ik->i", x, cov_inv, x) for x in xs[1:]]
+            res["prof_maha"] = _save_dev(
+                f"{out_name}+prof_maha",
+                md[0].reshape(-1, 2),
+                md[1].reshape(-1, 2),
+                data,
+                {"posthoc": "error_profile_mahalanobis", "source_run": name, "train_minutes": 0},
+                tables=tables,
+            )
+            log(f"[dev:{out_name}+prof_maha] {headline(res['prof_maha']['metrics'])}")
     return res
 
 

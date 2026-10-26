@@ -62,6 +62,10 @@ def main(argv: list[str] | None = None) -> int:
     dk.add_argument("-k", type=int, default=10)
     dk.add_argument("--dim", type=int, default=128, help="random Fourier features per kernel scale")
     dk.add_argument("--bank-mjj", default=None, help="restrict the bank to an m_jj window, e.g. 3300,3700")
+    dpf = sub.add_parser("dev-profile", help="GMM / Mahalanobis density of a dev model's error profile")
+    dpf.add_argument("run")
+    dpf.add_argument("--out", default=None)
+    dpf.add_argument("--components", type=int, default=6)
     dn = sub.add_parser("dev-ensemble", help="rank ensemble of dev entries (seeds, or rec + KL scores)")
     dn.add_argument("runs", nargs="+")
     dn.add_argument("--out", required=True)
@@ -153,6 +157,10 @@ def main(argv: list[str] | None = None) -> int:
         dev_kme(
             a.name, bank_jets=a.bank_jets, n_pca=a.n_pca, k=a.k, dim_per_scale=a.dim, bank_mjj=win, log=_log
         )
+    elif a.cmd == "dev-profile":
+        from gaehep.train.dev import dev_profile
+
+        dev_profile(a.run, a.out, n_components=a.components, log=_log)
     elif a.cmd == "dev-ensemble":
         from gaehep.train.dev import dev_ensemble
 
