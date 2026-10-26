@@ -19,7 +19,9 @@ Variants studied in RESULTS.md §11 (all off by default, which reproduces the ea
 * ``align``: rotate/reflect (deta, dphi) into the jet's principal-axis frame (energy-weighted second moments;
   the signs fixed by the third moments), so that the latent does not spend a dimension on the orientation.
 * ``encoder`` = ``"edgeconv"`` (default) or ``"ewmp"``: an infrared- and collinear-safe energy-weighted
-  message-passing encoder on radius graphs (:mod:`gaehep.models.ewmp`; ``radii`` sets the balls).
+  message-passing encoder on radius graphs (:mod:`gaehep.models.ewmp`; ``radii`` sets the balls).  ``ewmp_checkpoint`` recomputes the pairwise
+  messages in the backward pass: ~30 % more time for a several-fold smaller training memory, needed at 100
+  constituents per jet.
 
 ``variational=True`` turns the bottleneck into a Gaussian VAE latent (loss = MMD + beta * KL); the KL term
 of a jet is a density-like anomaly score that does not reward "simple" jets the way reconstruction does.
@@ -82,6 +84,7 @@ class EnergyFlowAE(JetModel):
         encoder: str = "edgeconv",
         radii: Sequence[float] = (0.3,),
         min_sigma: float = 0.01,
+        ewmp_checkpoint: bool = False,
     ):
         super().__init__()
         if loss not in ("mmd", "nll", "mmd+nll"):
@@ -96,7 +99,10 @@ class EnergyFlowAE(JetModel):
         self.coord_scale, self.min_sigma, self.irc = float(coord_scale), float(min_sigma), encoder == "ewmp"
         self.use_nll = "nll" in loss
         if self.irc:
-            self.encoder = EWMPEncoder(3, hidden, radii)  # inputs: (deta, dphi, dR)
+            self.eval_batch_size = 256  # dense (B, N, N, C) pairwise messages: keep the scoring batches small
+            self.encoder = EWMPEncoder(
+                3, hidden, radii, checkpoint=ewmp_checkpoint
+            )  # inputs: (deta, dphi, dR)
         else:
             self.encoder = EdgeConvEncoder(in_dim, hidden, k=k, dynamic=dynamic, aggr=aggr)
         self.to_latent = mlp(2 * self.encoder.out_dim, [128], latent_dim * (2 if variational else 1))

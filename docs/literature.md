@@ -73,10 +73,24 @@ likelihood regret (Xiao et al., NeurIPS 2020) and the input-complexity correctio
 (Serrà et al., ICLR 2020) against complexity bias; random-network distillation (Burda et al. 2018) and Deep
 SVDD (Ruff et al. 2018) as fixed-target scores.
 
-**Ideas this suggests for our energy-flow graph VAE** (status filled in RESULTS.md §11):
+**Ideas this suggests for our energy-flow graph VAE** (outcomes below; details and numbers in RESULTS.md §11):
 1. complexity bias → a likelihood-type (cross-entropy) loss and an energy-exponent remapping instead of the
    bounded kernel distance; 2. "best fit ≠ lowest loss" is our inverted U (§6), so a *different* kind of
    information is needed, not more fitting: fixed-target scores (random-network distillation), training-free
    optimal-transport/kernel-embedding k-NN scores; 3. symmetry-aware inputs (principal-axis alignment, so
    that the latent does not spend a dimension on the jet's orientation); 4. the signal-region-local
    training that resonant searches use (train on a window around the SR).
+
+5. IRC-safe encoder (radius graph, pT-weighted messages, directions-only node features; Atkinson et al.).
+
+**Outcomes** (dev: 2-prong signal validation split; test: held-out splits; baseline = final model of RESULTS.md §6,
+dev AUC 0.853 ± 0.004):
+
+| idea | outcome |
+|---|---|
+| 1. likelihood (energy cross-entropy) loss; energy exponent p | worse (0.79–0.81) / no gain (p = 0.5: 0.860 vs 0.860 for the same seed; p = 2: 0.784) |
+| 2. fixed-target / training-free scores | random-network distillation at chance (0.49); kernel-embedding kNN 0.82–0.84 without any training; density of the error profile 0.37–0.63 |
+| 3. principal-axis alignment | worse (0.75; 0.81 with 1 epoch) |
+| 4. SR-local training window | no gain (0.850 / 0.851) |
+| 5. IRC-safe encoder | dev equal (0.857 ± 0.002, 3 seeds); **test: same 2-prong AUC, 3-prong AUC +0.018 (never tuned), m_jj sculpting −30 %** |
+| (from the grid study) 100 constituents per jet | dev +0.013 (0.866 ± 0.003, 3 CPU seeds); test in RESULTS.md §11.3 |

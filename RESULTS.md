@@ -511,3 +511,101 @@ therefore independent but not bit-reproducible.  One signal model per topology; 
 resonance structure.  Weak supervision is idealised (perfect background template, data and template drawn
 from the autoencoder's training background, samples three times smaller than in the literature).
 Significances in the bump hunt ignore fit and efficiency uncertainties.
+
+## 11. Literature-informed variants (follow-up study)
+
+After the hyper-parameter study (§6) the anomaly-detection and graph-autoencoder literature was surveyed for
+ideas that could lift the energy-flow graph VAE (papers, what was read and what was not: `docs/literature.md`).
+The transferable ideas were implemented as options of the existing model (the defaults reproduce the saved
+models exactly; unit tests cover permutation/padding invariance of every new variant) and as dev-protocol tools
+(`gaehep dev-kme`, `dev-profile`), and every variant was run with the dev protocol of §6 (2 epochs × 120k jets,
+k = 8 unless stated, SR metrics against the 2-prong signal *validation* split).  Reference for all rows: the
+final model of §6, dev prod-AUC **0.853 ± 0.004** (five seeds; seed 1: 0.860), max SIC 1.73 ± 0.04.
+
+### 11.1 Variants that did not help (dev, single seed unless stated)
+
+| idea (source) | what was done | dev AUC (prod) | max SIC |
+|---|---|---:|---:|
+| Likelihood instead of kernel distance (complexity bias: Finke et al., NAE, likelihood-based scores) | decoder also emits a width σ per point; energy-weighted cross-entropy −Σ z_i log Σ_j w_j N(x_i; μ_j, σ_j) replaces the MMD, β = 10⁻³ / 10⁻² | 0.808 / 0.790 | 1.61 / 1.64 |
+| the same, scored with the MMD of the NLL-trained model | | 0.838 / 0.806 | 1.66 / 1.53 |
+| MMD + NLL loss | β = 10⁻² | 0.803 | 1.65 |
+| Energy exponent p (the energy flow weights pT^p instead of pT) | p = 0.5 / 2 | 0.860 / 0.784 | 1.77 / 1.34 |
+| Symmetry-aware inputs (Atkinson et al.; Ostdiek): principal-axis alignment | jets rotated/reflected into their energy principal-axis frame; full / 1 epoch | 0.748 / 0.805 | 1.34 / 1.48 |
+| Signal-region-local training (as resonant searches do) | train only on jets from events with m_jj in 3.3–3.7 / 3.0–4.0 TeV | 0.850 / 0.851 | 1.71 / 1.73 |
+| Fixed-target score (Ostdiek; random-network distillation) | student EdgeConv net regresses a frozen random teacher on background jets | 0.485 | 1.00 |
+| Training-free kernel-embedding score (Fraser et al.) | random-Fourier-feature embedding of the energy flow (the MMD kernel mean map), k-NN distance to background jets; raw / whitened | 0.816 / 0.841 | 1.60 / 1.77 |
+| the same, Mahalanobis distance of the embedding | | 0.833 | 1.70 |
+| Density of the error profile (complexity-bias correction) | GMM / Mahalanobis fitted to the per-kernel-scale MMD errors of the trained model (+ KL, + latent mean) | 0.37–0.63 | 1.00–1.09 |
+| KL score of the VAE (Ostdiek) | score = KL(q(z|x) ‖ p(z)) instead of the reconstruction | 0.45 (five seeds) | 1.02 |
+
+Observations.  (i) The same inverted U as in §6 shows up again: the likelihood loss, the energy exponents and
+the kernel-embedding scores are all *different* ways of changing how well the background is fitted, and they
+land at or below the final model, never above it — the plateau at ≈ 0.85–0.86 is shared by methods that look
+unrelated.  (ii) The energy exponent is the one that came out equal: p = 0.5 gives 0.860 on one seed against
+0.860 for the same seed of the baseline — no gain.  (iii) Training-free scores are competitive but not better
+(whitened k-NN 0.841 without any training, 0.84 max SIC 1.77), consistent with Fraser et al.  (iv) Everything
+that adds a density estimate on top of a trained model (error profiles, latent flows of §5) *removes* the
+information the reconstruction score carries; the profile densities sit at chance or below.
+
+### 11.2 An infrared- and collinear-safe encoder generalises better to the unseen signal
+
+The energy-flow *loss* of §5 is IRC safe, but the EdgeConv encoder is not: its nodes carry log pT features
+and its neighbourhoods are k-nearest-neighbour graphs, both of which change when a constituent splits into
+two collinear halves or a soft particle is emitted.  Following Atkinson et al. (arXiv:2204.12231; see
+`docs/literature.md`) `encoder: ewmp` replaces it by **energy-weighted message passing on radius graphs**
+(`models/ewmp.py`): nodes carry only directions (Δη, Δφ, ΔR), a node's neighbours are all constituents
+within ΔR < 0.3, messages are averaged with the neighbours' pT fractions as weights, and the readout is the
+pT-weighted mean and mean-square of the node features.  The pT fractions enter only as weights, so the
+encoder — and with it the whole score — is exactly invariant under collinear splittings (unit-tested, also
+with the NLL loss and the principal-axis frame) and changes by O(z) under a soft emission of energy
+fraction z; all scores stay permutation- and padding-invariant.  Same size as the baseline (126,648 vs
+127,368 parameters), same training recipe (2 epochs, latent 4, β = 10⁻³, kernels 0.02–0.4); training
+takes about three times as long (15 vs 5 min at 50 constituents on one core) because of the dense pairwise
+messages.
+
+*dev*, three seeds: **0.857 ± 0.002** (max SIC 1.74 ± 0.03) against 0.853 ± 0.004 (1.73 ± 0.04) for the
+EdgeConv model — equal within the seed spread.  Radius 0.3 is what Atkinson et al. use; two radii (0.1 and
+0.4) gave 0.850 and 1 / 3 epochs 0.854 / 0.844 (single seeds), i.e. the same flat dependence on the
+training length as in §6.
+
+*test*, SR, prod aggregation (EdgeConv: the five seeds of §6, `hp_final_s*`; IRC-safe: `lt_ewmp_s1–3`; the
+3-prong signal was never used for any choice):
+
+| model | 2-prong AUC | max SIC | 1/ε_B at ε_S = 0.3 | 3-prong AUC | max SIC | 1/ε_B at ε_S = 0.3 | JSD @ ε_B = 1 % |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| EdgeConv + k-NN (final model of §6), 5 seeds | 0.853 ± 0.005 | 1.74 ± 0.05 | 20.4 | 0.799 ± 0.002 | 1.44 ± 0.01 | 10.1 | 0.0124 |
+| **IRC-safe radius-graph encoder**, 3 seeds | 0.857 ± 0.002 | 1.75 ± 0.02 | 19.8 | **0.817 ± 0.005** | **1.52 ± 0.01** | 11.0 | **0.0087** |
+| EdgeConv, 5-seed ensemble | 0.856 | 1.76 | 20.9 | 0.802 | 1.45 | 10.3 | 0.0126 |
+| IRC-safe, 3-seed ensemble | 0.860 | 1.77 | 20.1 | 0.820 | 1.52 | 11.1 | 0.0114 |
+| EdgeConv, ensemble + m_J-decorrelation (qn) | 0.767 | 1.38 | | 0.767 | 1.28 | | 0.011 |
+| IRC-safe, ensemble + m_J-decorrelation (qn) | 0.766 | 1.33 | | 0.800 | 1.41 | | 0.013 |
+
+The 2-prong numbers — the signal everything was tuned on — are the same.  The never-tuned 3-prong signal
+improves in every aggregation (prod +0.018, max +0.010, sum +0.010, min +0.018 AUC; the seed spread is
+0.002–0.008), its max SIC by 0.08 and its background rejection at ε_S = 0.3 by 9 %, and the mass-decorrelated
+3-prong AUC by 0.033; the seed-averaged m_jj sculpting at ε_B = 1 % drops by 26–30 % (prod 0.0124 → 0.0087; max
+0.018 → 0.014; sum 0.019 → 0.013) — though the ensembles end up at the same sculpting level
+(0.011–0.013).  The weakly supervised search (seed 1 of each model, `results/runs/lt_ewmp_s1/weak.json`) and the bump
+hunt of §9 (the two seed ensembles) are unchanged: the anomaly score + masses reaches max SIC 1.4 / 6.4 / 8.3 / 8.2 / 8.4 at
+S/B = 0.41 … 8.3 % (EdgeConv: 1.7 / 6.2 / 8.0 / 8.2 / 8.2), the latents + masses 1.1 / 2.9 / 8.5 / 9.2 / 9.5
+(1.3 / 2.2 / 9.2 / 9.1 / 9.6), and the injected-signal response Z(1200) − Z(0) is +6.4 against +6.6 (zero-
+signal bias −2.5 against −3.5 at the 10 % cut).
+
+**Is the gain really about IRC safety?**  A direct measurement on the saved models (`results/irc_probe.json`,
+8000 + 8000 signal-region background and signal-validation events, jet-level SR AUC; constituents are never
+dropped, only split or added):
+
+| perturbation | EdgeConv: ΔAUC / rank correlation of the background scores | IRC-safe: ΔAUC / rank correlation |
+|---|---|---|
+| hardest constituent split in two collinear halves | +0.001 / 0.994 | 0.000 / 1.000 |
+| five hardest constituents split | +0.001 / 0.978 | 0.000 / 1.000 |
+| every constituent split (50 → up to 100) | −0.027 / 0.901 | 0.000 / 1.000 |
+| 10 soft emissions of 0.2 % pT each | −0.003 / 0.969 | −0.002 / 0.995 |
+| 10 soft emissions of 1 % pT each | −0.065 / 0.565 | −0.034 / 0.823 |
+
+The EdgeConv model's score is *not* a function of the jet's energy flow alone — it moves under perturbations
+that leave the energy flow (or, for soft emissions, almost leave it) unchanged — whereas the IRC-safe
+encoder is invariant by construction, and robust to soft emissions up to the O(z) change of the target.
+The model with the sensitivity is the one that generalises worse to a signal with a different constituent
+structure (3 prongs); we have not separated this from other differences of the two encoders (radius graph,
+weighted pooling), so this is the best-supported explanation, not a proof.

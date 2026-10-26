@@ -19,6 +19,7 @@ from collections.abc import Sequence
 
 import torch
 from torch import nn
+from torch.utils.checkpoint import checkpoint
 
 
 class EWMPBlock(nn.Module):
@@ -46,8 +47,15 @@ class EWMPBlock(nn.Module):
 class EWMPEncoder(nn.Module):
     """Stack of :class:`EWMPBlock`; ``pool`` is the pT-weighted mean (and mean of squares) of the nodes."""
 
-    def __init__(self, in_dim: int, hidden: Sequence[int] = (48, 48, 48), radii: Sequence[float] = (0.3,)):
+    def __init__(
+        self,
+        in_dim: int,
+        hidden: Sequence[int] = (48, 48, 48),
+        radii: Sequence[float] = (0.3,),
+        checkpoint: bool = False,
+    ):
         super().__init__()
+        self.checkpoint = checkpoint
         dims = [in_dim, *hidden]
         self.blocks = nn.ModuleList(EWMPBlock(dims[i], dims[i + 1], radii) for i in range(len(hidden)))
         self.out_dim = dims[-1]
@@ -57,7 +65,10 @@ class EWMPEncoder(nn.Module):
     ) -> torch.Tensor:
         h = x
         for blk in self.blocks:
-            h = blk(h, mask, coords, z)
+            if self.checkpoint and self.training and torch.is_grad_enabled():
+                h = checkpoint(blk, h, mask, coords, z, use_reentrant=False)
+            else:
+                h = blk(h, mask, coords, z)
         return h
 
     @staticmethod

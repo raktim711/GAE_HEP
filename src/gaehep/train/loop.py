@@ -76,9 +76,10 @@ def _lr_lambda(total: int, warmup: int):
 
 @torch.no_grad()
 def mean_loss(
-    model: JetModel, pool: JetPool, scaler: Scaler, idx: np.ndarray, batch_size: int = 1024
+    model: JetModel, pool: JetPool, scaler: Scaler, idx: np.ndarray, batch_size: int | None = None
 ) -> float:
     model.eval()
+    batch_size = batch_size or getattr(model, "eval_batch_size", 1024)
     dev = _model_device(model)
     tot, n = 0.0, 0
     sub = pool.subset(idx)
@@ -229,13 +230,15 @@ def score_pool(
     model: JetModel,
     pool: JetPool,
     scaler: Scaler,
-    batch_size: int = 1024,
+    batch_size: int | None = None,
     with_embed: bool = False,
     keys: tuple[str, ...] = (),
 ) -> dict[str, np.ndarray]:
     """Per-jet anomaly scores (and optionally graph latents and the extra per-jet loss terms ``keys``) for
-    every jet in ``pool`` (row order kept)."""
+    every jet in ``pool`` (row order kept).  ``batch_size`` defaults to the model's ``eval_batch_size``
+    (1024; smaller for encoders with dense pairwise messages)."""
     model.eval()
+    batch_size = batch_size or getattr(model, "eval_batch_size", 1024)
     dev = _model_device(model)
     scores, embeds = [], []
     extra: dict[str, list[np.ndarray]] = {k: [] for k in keys}

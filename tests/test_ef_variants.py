@@ -115,3 +115,18 @@ def test_energy_nll_properties():
     far = energy_nll(pred + 5.0, pw, sig, tgt, tw)
     assert (far > base + 100).all()
     assert (energy_mmd(pred + 5.0, pw, tgt, tw) < 3 * 2).all()
+
+
+def test_ewmp_checkpointing_gives_the_same_gradients(pool, scaler):
+    """Gradient checkpointing only trades compute for memory: loss and gradients are unchanged."""
+    grads = []
+    for ckpt in (False, True):
+        torch.manual_seed(0)
+        m = build_model("ef_ae", **EWMP, ewmp_checkpoint=ckpt).train()
+        torch.manual_seed(1)
+        loss = m.losses(make_batch(pool, np.arange(12), scaler))["total"].mean()
+        loss.backward()
+        grads.append([p.grad.clone() for p in m.parameters() if p.grad is not None])
+    assert len(grads[0]) == len(grads[1]) > 0
+    for a, b in zip(*grads, strict=True):
+        assert torch.allclose(a, b, rtol=1e-4, atol=1e-6)
