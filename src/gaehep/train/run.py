@@ -87,6 +87,12 @@ class Data:
             )
         return self._pools[key]
 
+    def release(
+        self, split: str, max_events: int | None = None, mjj: tuple[float, float] | None = None
+    ) -> None:
+        """Drop a cached pool (scoring touches every split once; keeping them all costs ~1.4 GB at N = 100)."""
+        self._pools.pop(f"{split}:{max_events}:{mjj}", None)
+
     def table(self, split: str) -> dict[str, np.ndarray]:
         st = self.store(SPLIT_SAMPLE[split])
         ev = self.events(split)
@@ -161,6 +167,7 @@ def run(
             if "z" in out:
                 latents[split] = out["z"].reshape(-1, 2, out["z"].shape[-1]).astype(np.float32)
             log(f"[{name}] scored {split}: {len(out['score'])} jets")
+            data.release(split, cap)
         np.savez(run_dir / "scores.npz", **scores)
         if latents:
             np.savez(run_dir / "latents.npz", **latents)
