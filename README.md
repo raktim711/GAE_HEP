@@ -35,7 +35,10 @@ chosen on the 2-prong *validation* split and applied unchanged to both signals (
 | set autoencoder, Chamfer on constituents | 0.488 | 0.532 | 0.004 |
 | energy-flow graph VAE (latent 4, 5 epochs; 3 seeds) | 0.829 ± 0.006 | **0.805 ± 0.002** | **0.008** |
 | **energy-flow graph VAE after the hyper-parameter study** (2 epochs, k = 8; 5 seeds) | **0.853 ± 0.005** | 0.799 ± 0.002 | 0.012 |
-| same, GPU grid winner (2 epochs, kernels 0.02–0.05; 5 seeds) | **0.855 ± 0.002** | 0.801 ± 0.004 | 0.018 |
+| same, GPU grid winner (2 epochs, kernels 0.02–0.05; 5 seeds) | 0.855 ± 0.002 | 0.801 ± 0.004 | 0.018 |
+| IRC-safe radius-graph encoder (50 constituents; 3 seeds) | 0.857 ± 0.002 | 0.817 ± 0.005 | **0.009** |
+| EdgeConv, 100 constituents (3 seeds) | 0.866 ± 0.003 | 0.805 ± 0.006 | 0.016 |
+| **IRC-safe encoder, 100 constituents** (<!--N-->1<!--/N--> seed) | **0.871** | **0.834** | 0.011 |
 
 * Constituent-level graph autoencoders are *inverted* detectors here (signal jets are simpler than QCD);
   reconstructing the IRC-safe energy flow instead fixes this and reaches the level of an oracle (histogram)
@@ -48,7 +51,15 @@ chosen on the 2-prong *validation* split and applied unchanged to both signals (
   background rejection on the 2-prong signal (test), but not on the never-tuned 3-prong signal: the
   training length tunes the detector toward the signal it was tuned on.  A 72-point GPU grid (Kaggle T4)
   reached the same recipe independently and found one more lever on the dev split: 100 instead of 50
-  constituents per jet (+0.016, two seeds; not yet on the test splits).  Latent-space flows added nothing.
+  constituents per jet (confirmed on the test splits: +0.011 2-prong AUC, +31 % background rejection at
+  ε_S = 0.3).  Latent-space flows added nothing.
+* Literature-informed follow-up (`docs/literature.md`, RESULTS.md §11): likelihood losses, energy-exponent
+  remapping, principal-axis frames, signal-region-local training, random-network distillation, training-free
+  kernel-embedding scores and error-profile densities did not beat the model above.  Two structural changes
+  did: an **infrared- and collinear-safe encoder** (radius graph, pT only as a message weight; exactly
+  invariant under collinear splittings, unit-tested) keeps the 2-prong AUC and improves the never-tuned
+  3-prong AUC by 0.018 and the m_jj sculpting by 30 %, and **100 constituents per jet** adds 0.011 AUC and 31 %
+  background rejection; the two together are the best model on both signals.
 * Unsupervised max SIC is only ≈ 1.6–1.8.  In the signal region, supervised classifiers on the GNN's
   permutation-invariant jet latents plus jet masses reach AUC 0.974–0.980 vs 0.970 for the standard
   (m_J1, Δm_J, τ21_J1, τ21_J2) features; in an idealised weakly supervised search those standard features
@@ -76,7 +87,7 @@ supervised reference and is the injection pool of the weak-supervision study.
 | M1 | `node_gae` — EdgeConv node-level GAE, 2-d node bottleneck | mean node MSE |
 | M2 | `set_ae` — EdgeConv encoder → jet latent → set decoder, masked Chamfer loss (+ multiplicity) | Chamfer distance |
 | M2c | `set_ae` with `cond_dim: 2` — decoder conditioned on (log m, log pT): mass-decorrelated | Chamfer distance |
-| M2e | `ef_ae` — energy-flow graph AE: same encoder, decoder emits points **with pT fractions**, IRC-safe multi-scale energy MMD loss (optionally a VAE latent / mass-conditioned decoder) | energy MMD (or KL) |
+| M2e | `ef_ae` — energy-flow graph AE: same encoder, decoder emits points **with pT fractions**, IRC-safe multi-scale energy MMD loss (optionally a VAE latent / mass-conditioned decoder, or the IRC-safe radius-graph encoder `encoder: ewmp`) | energy MMD (or KL) |
 | M3 | normalising flow (zuko NSF) on a model's jet latents, optionally conditioned on (log m, log pT) | −log p(z), −log p(z \| m) |
 | M4 | `deep_svdd` — one-class Deep SVDD, same encoder | distance to centre |
 | ref | `classifier` — supervised EdgeConv (idealised upper bound) | logit |

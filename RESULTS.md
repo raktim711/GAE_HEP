@@ -9,7 +9,8 @@
 > were seen during development; the training-budget choice was taken after the long run's test numbers were
 > available (on its dev result, and against its better 3-prong number, §5).  The hyper-parameter study of §6
 > made all of its choices on the same 2-prong validation split; its final model was scored on the test splits
-> only after the choice.
+> only after the choice.  §11 repeats the dev protocol for literature-informed variants; its 3-prong test
+> numbers (IRC-safe encoder, 100 constituents) were looked at, so no further choice may use them.
 
 ## 1. Setup in one paragraph
 
@@ -500,6 +501,19 @@ would be the tool for that.
    toward that signal.  An independent 72-point GPU grid lands on the same recipe (2 epochs, latent 4,
    β = 10⁻³, narrow kernels; test 0.855 ± 0.002 / 0.801 ± 0.004) and finds one further direction: 100
    instead of 50 constituents per jet (+0.016 on the 2-prong dev split, two seeds).
+
+<!-- C7 -->
+7. **A literature-informed follow-up (§11): most variants did not help, two structural changes did.**
+   Likelihood losses, energy-exponent remapping, principal-axis frames, signal-region-local training,
+   random-network distillation, training-free kernel-embedding scores and error-profile densities all land at
+   or below the final model on the dev split — the ≈ 0.85–0.86 plateau is shared by unrelated methods.  An
+   **IRC-safe radius-graph encoder** (pT only as a weight) is level on the tuning signal and better on the
+   never-tuned one (3-prong AUC 0.817 ± 0.005 vs 0.799 ± 0.002; m_jj sculpting −30 %), and the
+   collinear/soft sensitivity of the EdgeConv model is measurable (ΔAUC −0.027 when all constituents are split).
+   **100 constituents per jet** gives +0.011 2-prong AUC and +31 % background rejection at ε_S = 0.3.  Both
+   together (1 seed) reach 2-prong AUC 0.871, max SIC 1.92, rejection 36 and 3-prong AUC 0.834 (max SIC
+   1.56) on the test splits, against 0.853 / 1.74 / 20.4 and 0.799 (1.44) for the final model of §6.
+<!-- /C7 -->
 
 **Limitations.**  CPU-only training (2 cores): small models (48-wide EdgeConv, top-50 constituents — 96-wide
 encoders did not help, 100 constituents did on the dev split, §6), short budgets and three to five seeds;
