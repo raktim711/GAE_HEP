@@ -43,7 +43,7 @@ Label-free single observables already give AUC ≈ 0.8, so they are mandatory ba
 
 Read through the fetch tool (abstract + body text; summaries below are of what the text says).  The fetch
 tool became unavailable (rate limit) part-way through the sweep, so the second group was **not read** and is
-listed from search hits only.
+listed from search hits only (those that the fetch tool could read later are in the second table).
 
 **Read**
 
@@ -57,12 +57,18 @@ listed from search hits only.
 | Araz et al., arXiv:2506.19920 | (details of the table above) subjets from exclusive k_T clustering as nodes, pT as the only node feature, **edge features θ_ij, k_T,ij, z_ij reconstructed from pairs of latents**, 2-d bottleneck, trained on signal-contaminated data (S/B = 3 %); performance peaks at 25–30 subjets; relative geometry beats absolute positions. Their node feature is the absolute pT in GeV and no SR-restricted metric is given, so AUC 0.925 is not comparable to our signal-region numbers (jet pT alone separates signal from the bulk of a pT > 1.2 TeV QCD sample). |
 | Tsan et al., arXiv:2111.12849; Dillon et al., arXiv:2205.10380 | abstracts only (learned EMD for particle graph AEs; contrastive transformer + latent density/bump hunt). |
 
-**Not read** (title/search hit only; do not quote numbers): Atkinson et al., *IRC-safe Graph Autoencoder for
-unsupervised anomaly detection*, arXiv:2204.12231; Atkinson et al., *Anomaly detection with Convolutional
-Graph Neural Networks*, arXiv:2105.07988; *Anomalous Jet Identification via Sequence Modeling*,
-arXiv:2105.09274; Dillon et al., *Anomalies, representations, and self-supervision*, arXiv:2301.04660;
-Dillon et al., *Better Latent Spaces for Better Autoencoders*, arXiv:2104.08291; *Symmetries, safety, and
-self-supervision* (SciPost Phys. 12, 188); HEP-JEPA, arXiv:2502.03933.  From memory (not re-checked):
+**Read after the fetch tool came back** (26 Oct):
+
+| Paper | What it says that matters here |
+|---|---|
+| Atkinson et al., *IRC-safe Graph Autoencoder for unsupervised anomaly detection*, arXiv:2204.12231 | Nodes carry only directions (Δη, Δφ, ΔR); **radius graph** (R₀ = 0.3) instead of k-NN (neighbourhoods of a k-NN graph change under soft/collinear splittings); messages **weighted by the neighbours' pT fractions**; edge-convolution encoder 128-64-2 (2-d latent), loss Σ z_i·MSE(node features), shown to be collinear- and soft-safe. Top vs QCD (R = 0.8, 550–650 GeV): AUC 0.902; no IRC-unsafe graph baseline and no mass study. The 2-d latent is almost perfectly (anti-)correlated across its two dimensions and with the loss; it correlates with two-point energy correlators. |
+| Atkinson et al., *Anomaly detection with Convolutional Graph Neural Networks*, arXiv:2105.07988 | Micro-jets (anti-k_T, R = 0.1) as nodes of a complete graph with C/A, k_T and log m_ij edge features, 6-d latent per node; node *and* edge reconstruction ("crucial" — a node-only graph AE did not respond to the n-prong structure); loss correlates with jet mass; latent-space scores (mean readout of the latent) were better than the loss for some signals (best AUC 0.84 for a 700 GeV scalar → 4 jets, 0.74 top, 0.78 W). |
+| Dillon et al., *Anomalies, representations, and self-supervision*, arXiv:2301.04660 | Contrastive (AnomalyCLR) permutation-invariant transformer representation of CMS ADC2021 events, scored with an autoencoder trained on the background representation; improves on the raw-data baseline for all signals (no numbers in the abstract). |
+
+**Not read** (title/search hit only; do not quote numbers): *Anomalous Jet Identification via Sequence
+Modeling*, arXiv:2105.09274; Dillon et al., *Better Latent Spaces for Better Autoencoders*,
+arXiv:2104.08291; *Symmetries, safety, and self-supervision* (SciPost Phys. 12, 188); HEP-JEPA,
+arXiv:2502.03933.  From memory (not re-checked):
 likelihood regret (Xiao et al., NeurIPS 2020) and the input-complexity correction of likelihood scores
 (Serrà et al., ICLR 2020) against complexity bias; random-network distillation (Burda et al. 2018) and Deep
 SVDD (Ruff et al. 2018) as fixed-target scores.
