@@ -38,7 +38,8 @@ chosen on the 2-prong *validation* split and applied unchanged to both signals (
 | same, GPU grid winner (2 epochs, kernels 0.02–0.05; 5 seeds) | 0.855 ± 0.002 | 0.801 ± 0.004 | 0.018 |
 | IRC-safe radius-graph encoder (50 constituents; 3 seeds) | 0.857 ± 0.002 | 0.817 ± 0.005 | **0.009** |
 | EdgeConv, 100 constituents (3 seeds) | 0.866 ± 0.003 | 0.805 ± 0.006 | 0.016 |
-| **IRC-safe encoder, 100 constituents** (<!--N-->1<!--/N--> seed) | **0.871** | **0.834** | 0.011 |
+| IRC-safe encoder, 100 constituents (3 seeds; one under-fits) | 0.859 ± 0.020 | 0.787 ± 0.061 | 0.011 |
+| same, 3-seed ensemble | **0.880** | 0.803 | 0.013 |
 
 * Constituent-level graph autoencoders are *inverted* detectors here (signal jets are simpler than QCD);
   reconstructing the IRC-safe energy flow instead fixes this and reaches the level of an oracle (histogram)
@@ -59,7 +60,8 @@ chosen on the 2-prong *validation* split and applied unchanged to both signals (
   did: an **infrared- and collinear-safe encoder** (radius graph, pT only as a message weight; exactly
   invariant under collinear splittings, unit-tested) keeps the 2-prong AUC and improves the never-tuned
   3-prong AUC by 0.018 and the m_jj sculpting by 30 %, and **100 constituents per jet** adds 0.011 AUC and 31 %
-  background rejection; the two together are the best model on both signals.
+  background rejection; the two together give the best ensemble (2-prong AUC 0.880) but one of three seeds
+  under-fits in two epochs, so single models vary (±0.02 AUC).
 * Unsupervised max SIC is only ≈ 1.6–1.8.  In the signal region, supervised classifiers on the GNN's
   permutation-invariant jet latents plus jet masses reach AUC 0.974–0.980 vs 0.970 for the standard
   (m_J1, Δm_J, τ21_J1, τ21_J2) features; in an idealised weakly supervised search those standard features

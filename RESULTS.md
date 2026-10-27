@@ -507,16 +507,17 @@ would be the tool for that.
    Likelihood losses, energy-exponent remapping, principal-axis frames, signal-region-local training,
    random-network distillation, training-free kernel-embedding scores and error-profile densities all land at
    or below the final model on the dev split — the ≈ 0.85–0.86 plateau is shared by unrelated methods.  An
-   **IRC-safe radius-graph encoder** (pT only as a weight) is level on the tuning signal and better on the
-   never-tuned one (3-prong AUC 0.817 ± 0.005 vs 0.799 ± 0.002; m_jj sculpting −30 %), and the
-   collinear/soft sensitivity of the EdgeConv model is measurable (ΔAUC −0.027 when all constituents are split).
-   **100 constituents per jet** gives +0.011 2-prong AUC and +31 % background rejection at ε_S = 0.3.  Both
-   together (1 seed) reach 2-prong AUC 0.871, max SIC 1.92, rejection 36 and 3-prong AUC 0.834 (max SIC
-   1.56) on the test splits, against 0.853 / 1.74 / 20.4 and 0.799 (1.44) for the final model of §6.
+   **IRC-safe radius-graph encoder** (pT only as a weight; exactly collinear safe) is level on the tuning
+   signal and better on the never-tuned one (3-prong AUC 0.817 ± 0.005 vs 0.799 ± 0.002; m_jj sculpting
+   −30 %), and the collinear/soft sensitivity of the EdgeConv model is measurable (ΔAUC −0.027 when all
+   constituents are split).  **100 constituents per jet** gives +0.011 2-prong AUC and +31 % background
+   rejection at ε_S = 0.3 at a small seed spread (0.866 ± 0.003).  The two together are the best ensemble
+   (2-prong AUC 0.880, max SIC 1.97, rejection 37; decorrelated 0.843) but one of three seeds under-fits in
+   two epochs, so single models are unreliable (2-prong 0.859 ± 0.020, 3-prong 0.787 ± 0.061).
 <!-- /C7 -->
 
 **Limitations.**  CPU-only training (2 cores): small models (48-wide EdgeConv, top-50 constituents — 96-wide
-encoders did not help, 100 constituents did on the dev split, §6), short budgets and three to five seeds;
+encoders did not help; 100 constituents did, §6 and §11.3), short budgets and three to five seeds;
 one GPU run (Kaggle T4) repeated the study on a 72-point grid with scale variants.  Design choices — the whole hyper-parameter study included — were
 tuned on the 2-prong signal validation split, and earlier test results (including 3-prong) were seen during
 development.  The initial weights of the CPU study's runs were drawn from the process's random state (not
@@ -524,7 +525,7 @@ from `train.seed`; fixed since, so new runs are exactly reproducible); seeds of 
 therefore independent but not bit-reproducible.  One signal model per topology; the 3-prong signal shares the colour-singlet
 resonance structure.  Weak supervision is idealised (perfect background template, data and template drawn
 from the autoencoder's training background, samples three times smaller than in the literature).
-Significances in the bump hunt ignore fit and efficiency uncertainties.
+Significances in the bump hunt ignore fit and efficiency uncertainties.  Seed counts are small (three to five); the combined model of §11.3 has a seed that under-fits in the 2-epoch budget, which the three seeds only just reveal.
 
 ## 11. Literature-informed variants (follow-up study)
 
@@ -629,16 +630,16 @@ weighted pooling), so this is the best-supported explanation, not a proof.
 
 The GPU study of §6 found one direction of scale that helped on the dev split — 100 instead of 50
 constituents per jet — and it was never run on the test splits.  `configs/ef_vae_gpu_n100.yaml` is that
-recipe (EdgeConv k = 16, latent 4, β = 10⁻³, narrow kernels 0.02–0.05, 2 epochs, 32 decoder points) and was
-trained on the CPU with three seeds; combined with the IRC-safe encoder (radius 0.3, same decoder, loss and
-kernels; `ewmp_checkpoint` keeps the pairwise messages of 100 constituents at about 4 GB of memory at the cost
-of about 30 % more training time) it gives the last row.
+recipe (EdgeConv k = 16, latent 4, β = 10⁻³, narrow kernels 0.02–0.05, 2 epochs, 32 decoder points), trained
+on the CPU with three seeds.  The same recipe with the IRC-safe encoder of §11.2 (radius 0.3; same decoder, loss
+and kernels; `ewmp_checkpoint` keeps the pairwise messages of 100 constituents at about 4 GB of memory for
+about 30 % more training time) was run with three seeds as well.
 
-*dev*: EdgeConv 100 constituents **0.866 ± 0.003** (0.863 / 0.866 / 0.870; max SIC 1.84 ± 0.02) against
-0.853 ± 0.004; IRC-safe 100 constituents 0.871 (max SIC 1.91, one seed; training takes 90 min on one core).
+*dev*, SR AUC (prod): EdgeConv 100 constituents **0.866 ± 0.003** (0.863 / 0.866 / 0.870; max SIC 1.84 ± 0.02)
+against 0.853 ± 0.004 for the final model of §6; IRC-safe 100 constituents 0.871 / 0.870 / **0.833**
+(0.858 ± 0.022).
 
-*test*, SR, prod aggregation, mean ± standard deviation over seeds (the first two rows repeat the baselines of
-§6 and §11.2; the kernel set is what separates the GPU winner from the final model of §6):
+*test*, SR, prod aggregation, mean ± standard deviation over seeds:
 
 | model | seeds | 2-prong AUC | max SIC | 1/ε_B at ε_S = 0.3 | 3-prong AUC | max SIC | 1/ε_B at ε_S = 0.3 | JSD @ ε_B = 1 % |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -646,39 +647,55 @@ of about 30 % more training time) it gives the last row.
 | EdgeConv + k-NN, 50 constituents, narrow kernels 0.02–0.05 (GPU winner of §6) | 5 | 0.855 ± 0.002 | 1.74 ± 0.01 | 25.5 | 0.801 ± 0.004 | 1.43 ± 0.01 | 11.0 | 0.0175 |
 | IRC-safe radius-graph encoder, 50 constituents | 3 | 0.857 ± 0.002 | 1.75 ± 0.02 | 19.8 | 0.817 ± 0.005 | 1.52 ± 0.01 | 11.0 | 0.0087 |
 | EdgeConv + k-NN, 100 constituents | 3 | 0.866 ± 0.003 | 1.86 ± 0.02 | 33.3 | 0.805 ± 0.006 | 1.44 ± 0.02 | 11.6 | 0.0158 |
-| **IRC-safe encoder, 100 constituents** | 1 | 0.871 | 1.92 | 36.1 | 0.834 | 1.56 | 15.6 | 0.0113 |
+| **IRC-safe encoder, 100 constituents** | 3 | 0.859 ± 0.020 | 1.78 ± 0.18 | 27.0 | 0.787 ± 0.061 | 1.43 ± 0.14 | 10.6 | 0.0111 |
 
-Reading the table row by row:
+and the individual seeds and the seed ensembles (rank average) of the two 100-constituent models:
 
-* **100 constituents** (third row against the GPU winner of the second): +0.011 in 2-prong AUC, +7 % in max
-  SIC and **+31 % in background rejection at ε_S = 0.3** (25.5 → 33.3, 20.4 → 33.3 against the final model of
-  §6); on the 3-prong signal +0.004 in AUC and +5 % in rejection, i.e. not hurting where the training length
-  of §6 did.  m_jj sculpting is slightly lower than the GPU winner's but above the final model's.  The more
-  constituents the energy-flow target resolves, the closer the 50-constituent truncation (not an IRC-safe
-  operation: the cut is on pT) comes to the exact energy flow.
-* **IRC-safe encoder at 100 constituents** (fourth row): the 2-prong figures improve again and the 3-prong
-  AUC jumps from 0.805 to 0.834 — more than the two changes give separately — and the combined model is
-  the best in every column of the table except the sculpting of the 50-constituent IRC-safe model, including the never-tuned 3-prong signal (AUC 0.834 against 0.799 for the model
-  that was the headline of §6; max SIC 1.56 against 1.44; background rejection 15.6 against 10.1) and the
-  m_jj sculpting (0.0113 against 0.0124 and 0.0158).  The other aggregations tell the same story (3-prong AUC
-  of the combined model with max / sum / min: 0.805 / 0.838 / 0.804, against 0.814 / 0.825 / 0.754 for the final model of §6).
-* The m_J-decorrelated scores (quantile normalisation in m_J, single seeds; `+qn` runs): final model 2-prong
-  AUC 0.773 / 3-prong 0.750 / JSD 0.0113, EdgeConv at 100 constituents 0.802 / 0.759 / 0.0065, IRC-safe at 50
-  constituents 0.753 / 0.788 / 0.0146, **IRC-safe at 100 constituents 0.789 / 0.792 / 0.0048** — the decorrelated
-  combined score is the only one at 0.79 on both signals and sculpts the spectrum close to the
-  statistical floor (0.003).
-* Bump hunt (§9; prod, injected-signal response Z(1200) − Z(0), one seed each): the combined model gives
-  +7.3 at the 10 % cut and +6.0 at the 2 % cut (zero-signal bias −3.3 and −4.2), against +6.6 and +2.5 for the final
-  model of §6 (the weakly supervised classifiers remain the tool for a real search).
-* Weakly supervised search (§8, one seed each): the anomaly score + masses gains most — max SIC 1.6 / 6.9 / 9.0 / 9.1 / 9.4 at S/B = 0.41 … 8.3 %
-  against 1.7 / 6.2 / 8.0 / 8.2 / 8.2 for the final model of §6 (HL4 in the same run: 2.4 / 7.9 / 9.3 / 10.1 / 10.7) —
-  while the latents + masses are unchanged (1.3 / 3.9 / 8.6 / 9.0 / 9.4 against 1.3 / 2.2 / 9.2 / 9.1 / 9.6).
+| | 2-prong AUC | max SIC | 1/ε_B at ε_S = 0.3 | 3-prong AUC | max SIC | 1/ε_B at ε_S = 0.3 | JSD @ ε_B = 1 % |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| IRC-safe 100 constituents, seed 1 (validation loss 0.147) | 0.871 | 1.92 | 36.1 | 0.834 | 1.56 | 15.6 | 0.0113 |
+| IRC-safe 100 constituents, seed 2 (0.183) | 0.870 | 1.84 | 29.7 | 0.809 | 1.46 | 10.7 | 0.0109 |
+| IRC-safe 100 constituents, seed 3 (0.266) | 0.835 | 1.58 | 15.2 | 0.718 | 1.28 | 5.5 | 0.0112 |
+| EdgeConv 100 constituents, 3-seed ensemble | 0.870 | 1.91 | 36.1 | 0.809 | 1.45 | 12.0 | 0.0165 |
+| **IRC-safe 100 constituents, 3-seed ensemble** | **0.880** | **1.97** | **37.4** | 0.803 | 1.43 | 10.6 | 0.0127 |
 
-**What this does and does not show.**  The 100-constituent choice came from a grid that was scored on the
-2-prong dev split, so the 2-prong columns are signal-tuned in the way every earlier row is; the 3-prong
-numbers and the IRC-safe encoder were never tuned on (the encoder was added on a physics argument and its dev
-result was only checked to be level), but the 3-prong test numbers of both were seen, so any further choice
-that uses them would not be clean.  The two changes were compared with the earlier models seed by seed, not
-by a joint hyper-parameter search; the narrow kernels of the 100-constituent recipe were not re-tuned for the
-IRC-safe encoder.  The unsupervised max SIC remains ≈ 1.9 at best.
+* **100 constituents with the EdgeConv encoder is a robust gain** (third row of the first table against the GPU
+  winner of the second): +0.011 in 2-prong AUC, +7 % in max SIC and **+31 % in background rejection at
+  ε_S = 0.3** (25.5 → 33.3; 20.4 → 33.3 against the final model of §6) at a seed spread of 0.003; on the 3-prong
+  signal +0.004 in AUC and +5 % in rejection, i.e. it does not hurt where the shorter training of §6 did.  The
+  m_jj sculpting is a little lower than the GPU winner's and above the final model's.  A plausible reason is
+  that the 50-constituent truncation (a cut on pT, hence not IRC safe) is closer to the exact energy flow at 100.
+* **The IRC-safe encoder at 100 constituents is not reliably better.**  Two seeds are as good as the best
+  EdgeConv seeds on the 2-prong signal (AUC 0.871 / 0.870 against 0.863–0.869; rejection 36 / 30 against 32–35)
+  and seed 1 is the best single model on the never-tuned 3-prong signal (0.834 against 0.799 for the final model
+  of §6).  The third seed is under-fitted — after the same two epochs its
+  background validation loss is 0.266, against 0.147 and 0.183 (0.175–0.195 for the EdgeConv seeds) — and
+  falls to 0.835 / 0.718.  The mean over the three seeds (2-prong 0.859 ± 0.020, 3-prong 0.787 ± 0.061) is no
+  better than the plain 100-constituent model, with a spread seven to ten times larger.  The inverted U of §6 makes the
+  AUC depend on how far a seed has fitted the background, and for this encoder at this size two epochs sit on
+  an edge: the 50-constituent IRC-safe model of §11.2 had no such seeds (0.854–0.858 on dev).  Whether more
+  epochs, a warm-up or a fit check before scoring removes the instability was not tried.
+* **The ensemble hides the problem and keeps the benefit.**  Averaging the ranks of the three seeds, including
+  the bad one, gives the best 2-prong figures of the project (AUC 0.880, max SIC 1.97, rejection 37) and
+  3-prong figures at the level of the plain models (0.803).  Mass-decorrelated (ensemble + qn): 2-prong AUC
+  **0.843** / max SIC 1.90 and 3-prong 0.776, JSD 0.0054, against 0.818 / 1.73, 0.764, 0.0058 for the
+  100-constituent EdgeConv ensemble and 0.767 / 1.38, 0.767, 0.011 for the final model of §6.  Bump hunt
+  (§9, prod, ensembles, response Z(1200) − Z(0)): +7.6 at the 10 % cut and +6.3 at the 2 % cut for the combined
+  ensemble, +7.0 / +6.3 for the EdgeConv 100-constituent ensemble, +6.6 / +2.5 for the final model of §6.
+* The other aggregations: 3-prong AUC of the 3-seed mean with max / sum / min is 0.742 / 0.778 / 0.760 for
+  the combined model, against 0.771 / 0.804 / 0.775 for the 100-constituent EdgeConv model and 0.814 / 0.825 /
+  0.754 for the final model of §6 — on the 3-prong signal the mean of the combined model is below the plain
+  models for the same reason (seed 3).
+* Weak supervision (§8) with the seed-1 model (the best seed, so an upper estimate): the anomaly score + masses
+  reach max SIC 1.6 / 6.9 / 9.0 / 9.1 / 9.4 at S/B = 0.41 … 8.3 % against 1.7 / 6.2 / 8.0 / 8.2 / 8.2 for the final
+  model of §6 (HL4 in the same run: 2.4 / 7.9 / 9.3 / 10.1 / 10.7); the latents + masses are unchanged.
+
+**What this does and does not show.**  The 100-constituent choice came from a grid scored on the 2-prong dev
+split, so the 2-prong columns are signal-tuned like every earlier row; the IRC-safe encoder was added on a
+physics argument (its dev result was only checked to be level), but the 3-prong test numbers of both changes
+were seen, so any further choice that uses them would not be clean.  The robust findings are (i) the IRC-safe
+encoder at 50 constituents improves the never-tuned signal and the sculpting (§11.2), (ii) 100 constituents
+improve the rejection and the AUC on the tuned signal without hurting the other, and (iii) the combination
+has the best ensemble performance and the largest seed variance.  The narrow kernels of the 100-constituent
+recipe were not re-tuned for the IRC-safe encoder.  The unsupervised max SIC remains ≈ 1.9–2.0 at best.
 <!-- /S11.3 -->
