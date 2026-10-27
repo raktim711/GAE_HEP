@@ -1,0 +1,124 @@
+{
+  "name": "lt_n100ewmp_s2+kl",
+  "metrics": {
+    "full/max": {
+      "auc": 0.5452547695,
+      "max_sic": 1.0000100001500025,
+      "rej@0.3": 8.264462809917356
+    },
+    "full/sum": {
+      "auc": 0.4851966965,
+      "max_sic": 1.00002000060002,
+      "rej@0.3": 5.73855158957879
+    },
+    "full/min": {
+      "auc": 0.2909905385,
+      "max_sic": 1.00002000060002,
+      "rej@0.3": 1.5556212373411322
+    },
+    "full/prod": {
+      "auc": 0.33271513399999997,
+      "max_sic": 1.0,
+      "rej@0.3": 1.8000504014112395
+    },
+    "full/jet": {
+      "auc": 0.41909020825
+    },
+    "full/heavy_jet": {
+      "auc": 0.578830411
+    },
+    "full/light_jet": {
+      "auc": 0.2183620785
+    },
+    "SR/max": {
+      "auc": 0.5424075689730317,
+      "max_sic": 1.0001415070409723,
+      "rej@0.3": 8.220578345662407
+    },
+    "SR/sum": {
+      "auc": 0.4833335519359535,
+      "max_sic": 1.0000818163224934,
+      "rej@0.3": 5.7068160597572355
+    },
+    "SR/min": {
+      "auc": 0.2833578310596909,
+      "max_sic": 1.0000818163224934,
+      "rej@0.3": 1.528
+    },
+    "SR/prod": {
+      "auc": 0.32400562886784307,
+      "max_sic": 1.0,
+      "rej@0.3": 1.762145019460862
+    },
+    "SR/jet": {
+      "auc": 0.4138139978147913
+    },
+    "SR/heavy_jet": {
+      "auc": 0.582169396637499
+    },
+    "SR/light_jet": {
+      "auc": 0.20110742737108592
+    },
+    "bkg_spearman": {
+      "m": 0.08735947824766584,
+      "n_const": -0.019496474145411235,
+      "tau21": 0.09985393223603276
+    }
+  },
+  "source_run": "lt_n100ewmp_s2",
+  "train_minutes": 0,
+  "config": {
+    "model": "ef_ae",
+    "model_args": {
+      "hidden": [
+        48,
+        48,
+        48
+      ],
+      "k": 16,
+      "latent_dim": 4,
+      "n_out": 32,
+      "dec_hidden": [
+        256,
+        256
+      ],
+      "sigmas": [
+        0.02,
+        0.05
+      ],
+      "variational": true,
+      "beta": 0.001,
+      "encoder": "ewmp",
+      "radii": [
+        0.3
+      ],
+      "ewmp_checkpoint": true
+    },
+    "extra_scores": [
+      "kl"
+    ],
+    "data": {
+      "n_const": 100
+    },
+    "train": {
+      "epochs": 2,
+      "jets_per_epoch": 120000,
+      "batch_size": 256,
+      "lr": 0.001,
+      "weight_decay": 0.0001,
+      "patience": 3,
+      "val_jets": 20000,
+      "time_budget_min": 100,
+      "threads": 1,
+      "device": "cpu",
+      "seed": 2
+    }
+  },
+  "time": "2026-10-27 02:51:09 CET",
+  "git": "747a377",
+  "python": "3.13.16",
+  "numpy": "2.5.4",
+  "host": "vm",
+  "torch": "2.14.1+cu130",
+  "torch_threads": 1
+}
