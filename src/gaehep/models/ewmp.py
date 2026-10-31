@@ -21,6 +21,8 @@ import torch
 from torch import nn
 from torch.utils.checkpoint import checkpoint
 
+from gaehep.graphs.ops import masked_radius_mask
+
 
 class EWMPBlock(nn.Module):
     def __init__(self, in_dim: int, out_dim: int, radii: Sequence[float]):
@@ -33,11 +35,10 @@ class EWMPBlock(nn.Module):
     def forward(
         self, h: torch.Tensor, mask: torch.Tensor, coords: torch.Tensor, z: torch.Tensor
     ) -> torch.Tensor:
-        d = torch.cdist(coords, coords, compute_mode="donot_use_mm_for_euclid_dist")  # (B, N, N)
-        real = mask[:, :, None] & mask[:, None, :]
+        adj = masked_radius_mask(coords, mask, self.radii)  # (R, B, N, N) bool; one cdist for all radii
         parts = [h]
-        for r, ti, tj in zip(self.radii, self.theta_i, self.theta_j, strict=True):
-            wgt = ((d < r) & real).to(h.dtype) * z[:, None, :]  # A_ij z_j  (self included: d_ii = 0)
+        for a, ti, tj in zip(adj, self.theta_i, self.theta_j, strict=True):
+            wgt = a.to(h.dtype) * z[:, None, :]  # A_ij z_j  (self included: d_ii = 0 < r)
             msg = torch.relu(ti(h)[:, :, None, :] + tj(h)[:, None, :, :])  # (B, N, N, out)
             agg = (wgt[..., None] * msg).sum(2) / wgt.sum(-1, keepdim=True).clamp(min=1e-12)
             parts.append(agg)

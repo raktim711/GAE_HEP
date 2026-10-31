@@ -10,6 +10,8 @@ avoid PyG's compiled extensions (torch-cluster / torch-scatter).
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 import torch
 
 
@@ -44,6 +46,46 @@ def masked_knn(
     self_idx = torch.arange(n, device=coords.device).view(1, n, 1).expand(b, n, kk)
     idx = torch.where(valid, idx, self_idx)
     return idx, valid
+
+
+def masked_radius_mask(
+    coords: torch.Tensor,
+    mask: torch.Tensor,
+    radius: float | Sequence[float],
+    include_self: bool = True,
+) -> torch.Tensor:
+    """Adjacency of the fixed-radius (open) balls among the *real* nodes of each graph.
+
+    ``A[b, i, j]`` is True iff nodes i and j are both real and ``||coords[b, i] - coords[b, j]|| < radius``:
+    strict ``<`` on the Euclidean distance of :func:`torch.cdist` with
+    ``compute_mode="donot_use_mm_for_euclid_dist"`` (the exact difference-based distance, not the
+    matrix-multiply expansion, so ``d_ii`` is exactly 0 and ``d_ij == d_ji``).  Rows and columns of padded
+    nodes are all False whatever their coordinates.  The mask is symmetric and permutation-equivariant, and
+    has no tie-breaking (unlike k-NN).
+
+    Self pairs: with ``include_self=True`` the diagonal obeys the same rule, so every real node is its own
+    neighbour for ``radius > 0``, while for ``radius <= 0`` the open ball is empty (no pairs at all, self
+    included).  ``include_self=False`` sets the diagonal to False for every radius.
+
+    Parameters
+    ----------
+    coords : (B, N, D) positions (e.g. (deta, dphi)).
+    mask : (B, N) bool, real nodes.
+    radius : a float, or a sequence (list / tuple) of R floats; the distances are computed once either way.
+
+    Returns
+    -------
+    (B, N, N) bool for a float ``radius``; (R, B, N, N) bool for a sequence, one slice per radius.
+    """
+    d = torch.cdist(coords, coords, compute_mode="donot_use_mm_for_euclid_dist")  # (B, N, N)
+    real = mask[:, :, None] & mask[:, None, :]
+    if not include_self:
+        real = real & ~torch.eye(coords.shape[1], dtype=torch.bool, device=coords.device)
+    if not isinstance(radius, Sequence):
+        return (d < float(radius)) & real
+    if len(radius) == 0:
+        return real.new_zeros((0, *real.shape))
+    return torch.stack([(d < float(r)) & real for r in radius])
 
 
 def gather_neighbors(x: torch.Tensor, idx: torch.Tensor) -> torch.Tensor:
