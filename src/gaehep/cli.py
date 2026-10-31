@@ -1,4 +1,15 @@
-"""Command-line entry point: ``gaehep <command> ...`` (see ``gaehep -h``)."""
+"""Command-line entry point: ``gaehep <command> ...`` (see ``gaehep -h``).
+
+``gaehep eval-scores FILE --out DIR`` evaluates any per-event scores, without the LHCO tables of a run:
+FILE is a ``.npz`` or a ``.csv`` with a header line holding a score column (``--score-key``, default
+``score``), a 0/1 label column (``--label-key``, 1 = signal, default ``label``) and optionally an m_jj
+column in GeV (``--mjj-key``, default ``mjj``; if the file has no such column, or ``--mjj-key ''``, only
+full-range metrics are computed).  With m_jj, metrics are also given inside the SR (``--sr``, default
+3300,3700) together with the m_jj sculpting JSD.  Larger scores must be more signal-like.  DIR receives
+``metrics.json`` (``gaehep.eval.score_file.evaluate_score_arrays``) and ``rejection.png``, ``sic.png``,
+``score_hist.png``; ``--name`` (default: FILE's stem) labels the figures and ``metrics.json``, and
+``--n-boot`` sets the bootstrap resamples (0 = none).
+"""
 
 from __future__ import annotations
 
@@ -23,6 +34,43 @@ def _set(cfg: dict[str, Any], dotted: str) -> None:
 
 def _log(*args: object) -> None:
     print(*args, flush=True)
+
+
+def _eval_scores(a: argparse.Namespace) -> int:
+    from gaehep.config import SR_MJJ
+    from gaehep.eval.score_file import evaluate_score_arrays, load_score_file
+
+    try:
+        lo, hi = SR_MJJ if a.sr is None else (float(x) for x in a.sr.split(","))
+    except ValueError:
+        raise SystemExit(f"--sr expects lo,hi in GeV, got {a.sr!r}") from None
+    if not lo < hi:
+        raise SystemExit(f"--sr expects lo < hi, got {a.sr!r}")
+    name = a.name or a.file.stem
+    try:
+        cols = load_score_file(a.file, (a.score_key, a.label_key), optional=(a.mjj_key,) if a.mjj_key else ())
+        if a.mjj_key and a.mjj_key not in cols:
+            _log(f"[{name}] no {a.mjj_key!r} column in {a.file}: full-range metrics only")
+        res = evaluate_score_arrays(
+            cols[a.score_key],
+            cols[a.label_key],
+            cols.get(a.mjj_key),
+            sr=(lo, hi),
+            n_boot=a.n_boot,
+            name=name,
+            out_dir=a.out,
+        )
+    except (OSError, ValueError) as err:
+        raise SystemExit(f"eval-scores: {err}") from None
+    for region in ("full", "SR"):
+        if region in res:
+            r = res[region]
+            _log(
+                f"[{name}] {region}: {r['n_sig']} sig / {r['n_bkg']} bkg  AUC {r['auc']:.4f}  "
+                f"max SIC {r['max_sic']:.2f} (eps_S {r['eff_s_at_max_sic']:.2f})  1/eps_B@0.3 {r['rej@0.3']:.3g}"
+            )
+    print(a.out / "metrics.json")
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -115,6 +163,15 @@ def main(argv: list[str] | None = None) -> int:
     cmp_.add_argument("--agg", default="max")
     cmp_.add_argument("--region", default="SR")
     sub.add_parser("report")
+    es = sub.add_parser("eval-scores", help="metrics + figures of per-event scores in a .npz / .csv file")
+    es.add_argument("file", type=Path)
+    es.add_argument("--out", type=Path, required=True)
+    es.add_argument("--score-key", default="score")
+    es.add_argument("--label-key", default="label", help="0 = background, 1 = signal")
+    es.add_argument("--mjj-key", default="mjj", help="m_jj [GeV]; skipped if absent from the file")
+    es.add_argument("--name", default=None, help="figure titles and metrics name (default: file stem)")
+    es.add_argument("--sr", default=None, help="SR m_jj window lo,hi [GeV] (default: 3300,3700)")
+    es.add_argument("--n-boot", type=int, default=30)
 
     if argv and argv[0] in ("download", "preprocess", "tables", "splits"):
         mod = {
@@ -128,6 +185,8 @@ def main(argv: list[str] | None = None) -> int:
         return importlib.import_module(mod).main(argv[1:])
 
     a = p.parse_args(argv)
+    if a.cmd == "eval-scores":  # before importing the training code (torch): this needs only numpy
+        return _eval_scores(a)
     from gaehep.train import run as R
 
     if a.cmd == "train":
