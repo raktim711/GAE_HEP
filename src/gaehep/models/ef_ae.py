@@ -23,6 +23,16 @@ Variants studied in RESULTS.md §11 (all off by default, which reproduces the ea
   messages in the backward pass: ~30 % more time for a several-fold smaller training memory, needed at 100
   constituents per jet.
 
+The encoder study (docs/STUDY_PROTOCOL.md, section 3) adds encoders that differ from these only in the
+interaction step (:mod:`gaehep.models.set_encoders`): ``"deepsets"`` (no interaction), ``"transformer"``
+(self-attention) and ``"gcn_complete"`` (mean over the complete graph, the collapse control) on the 7
+standard node features with EdgeConv's masked mean + max pooling, and the IRC-safe ``"efn"`` (no interaction)
+and ``"ew_attention"`` (attention weighted by z_j), which read only (deta, dphi, dR) and pool with EWMP's
+pT-fraction weights, like ``"ewmp"`` (``IRC_SAFE``; ``self.irc``).  Encoders without a k-NN graph ignore
+``k``, ``dynamic`` and ``aggr``.  ``pool`` (``deepsets`` and ``edgeconv`` only) is the pooling ablation:
+``"meanmax"`` (default), ``"weighted"`` (EWMP's pT-fraction weighted moments) or ``"pma"`` (one learned seed
+attending over the nodes, 4 heads; :class:`~gaehep.models.set_encoders.PMAPool`).
+
 ``variational=True`` turns the bottleneck into a Gaussian VAE latent (loss = MMD + beta * KL); the KL term
 of a jet is a density-like anomaly score that does not reward "simple" jets the way reconstruction does.
 ``score`` selects the anomaly score: ``"recon"`` (MMD at z = mu), ``"kl"`` or ``"total"``.  All of them
@@ -38,8 +48,14 @@ import torch
 from gaehep.data.dataset import JetBatch
 from gaehep.losses.mmd import DEFAULT_SIGMAS, energy_mmd, energy_nll
 from gaehep.models.base import JetModel, mlp
-from gaehep.models.edgeconv import EdgeConvEncoder
+from gaehep.models.edgeconv import EdgeConvEncoder, batch_tie_order
 from gaehep.models.ewmp import EWMPEncoder
+from gaehep.models.set_encoders import AttentionEncoder, CompleteGraphEncoder, DeepSetsEncoder, PMAPool
+
+ENCODERS = ("deepsets", "edgeconv", "transformer", "gcn_complete", "efn", "ewmp", "ew_attention")
+IRC_SAFE = ("efn", "ewmp", "ew_attention")  # direction-only node inputs, pT-fraction weighted pooling
+POOLS = ("meanmax", "weighted", "pma")
+POOL_ABLATION = ("deepsets", "edgeconv")  # the encoders whose pooling can be changed
 
 
 def principal_axis_frame(coords: torch.Tensor, z: torch.Tensor) -> torch.Tensor:
@@ -85,29 +101,46 @@ class EnergyFlowAE(JetModel):
         radii: Sequence[float] = (0.3,),
         min_sigma: float = 0.01,
         ewmp_checkpoint: bool = False,
+        pool: str | None = None,
     ):
         super().__init__()
         if loss not in ("mmd", "nll", "mmd+nll"):
             raise ValueError(f"loss={loss!r}: choose mmd, nll or mmd+nll")
-        if encoder not in ("edgeconv", "ewmp"):
-            raise ValueError(f"encoder={encoder!r}: choose edgeconv or ewmp")
+        if encoder not in ENCODERS:
+            raise ValueError(f"encoder={encoder!r}: choose one of {', '.join(ENCODERS)}")
+        native_pool = "weighted" if encoder in IRC_SAFE else "meanmax"
+        pool = native_pool if pool is None else pool
+        if pool not in POOLS or (pool != native_pool and encoder not in POOL_ABLATION):
+            raise ValueError(
+                f"pool={pool!r} with encoder={encoder!r}: {encoder} pools with {native_pool!r}; "
+                f"only {' and '.join(POOL_ABLATION)} take pool = one of {', '.join(POOLS)}"
+            )
         if score not in ("recon", "kl", "total") or (score != "recon" and not variational):
             raise ValueError(f"score={score!r} needs variational=True (or use 'recon')")
         self.n_out, self.cond_dim, self.sigmas = n_out, cond_dim, tuple(sigmas)
         self.variational, self.beta, self.score_kind = variational, beta, score
         self.loss_kind, self.energy_power, self.align = loss, float(energy_power), bool(align)
-        self.coord_scale, self.min_sigma, self.irc = float(coord_scale), float(min_sigma), encoder == "ewmp"
+        self.coord_scale, self.min_sigma, self.irc = float(coord_scale), float(min_sigma), encoder in IRC_SAFE
+        self.encoder_kind, self.pool_kind = encoder, pool
         self.use_nll = "nll" in loss
-        if self.irc:
+        enc_in = 3 if self.irc else in_dim  # IRC-safe encoders read only (deta, dphi, dR)
+        if encoder == "ewmp":
             self.eval_batch_size = 256  # dense (B, N, N, C) pairwise messages: keep the scoring batches small
-            self.encoder = EWMPEncoder(
-                3, hidden, radii, checkpoint=ewmp_checkpoint
-            )  # inputs: (deta, dphi, dR)
+            self.encoder = EWMPEncoder(enc_in, hidden, radii, checkpoint=ewmp_checkpoint)
+        elif encoder == "edgeconv":
+            self.encoder = EdgeConvEncoder(enc_in, hidden, k=k, dynamic=dynamic, aggr=aggr)
+        elif encoder in ("deepsets", "efn"):
+            self.encoder = DeepSetsEncoder(enc_in, hidden)
+        elif encoder in ("transformer", "ew_attention"):
+            self.encoder = AttentionEncoder(enc_in, hidden, energy_weighted=encoder == "ew_attention")
         else:
-            self.encoder = EdgeConvEncoder(in_dim, hidden, k=k, dynamic=dynamic, aggr=aggr)
-        self.to_latent = mlp(2 * self.encoder.out_dim, [128], latent_dim * (2 if variational else 1))
+            self.encoder = CompleteGraphEncoder(enc_in, hidden)
+        pool_dim = self.encoder.out_dim * (1 if pool == "pma" else 2)
+        self.to_latent = mlp(pool_dim, [128], latent_dim * (2 if variational else 1))
         self.n_chan = 4 if self.use_nll else 3  # (x, y, weight logit[, log sigma])
         self.decoder = mlp(latent_dim + cond_dim, dec_hidden, n_out * self.n_chan)
+        if pool == "pma":  # created last: the other modules get the same initial weights as with meanmax
+            self.pool_attn = PMAPool(self.encoder.out_dim)
 
     def _frame(self, b: JetBatch) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Node features, (deta, dphi) and pT fractions in the frame used by the encoder and the loss."""
@@ -122,9 +155,22 @@ class EnergyFlowAE(JetModel):
     def _encode(self, b: JetBatch) -> tuple[torch.Tensor, torch.Tensor | None]:
         x, coords, z = self._frame(b)
         if self.irc:
-            pooled = self.encoder.pool(self.encoder(x[..., [0, 1, 6]], b.mask, coords, z), z)
+            x = x[..., [0, 1, 6]]
+        kind = self.encoder_kind
+        if kind == "edgeconv":
+            nodes = self.encoder(x, b.mask, coords, batch_tie_order(b))
+        elif kind == "ewmp":
+            nodes = self.encoder(x, b.mask, coords, z)
+        elif kind == "ew_attention":
+            nodes = self.encoder(x, b.mask, z)
         else:
-            pooled = self.encoder.pool(self.encoder(x, b.mask, coords), b.mask)
+            nodes = self.encoder(x, b.mask)
+        if self.pool_kind == "meanmax":
+            pooled = EdgeConvEncoder.pool(nodes, b.mask)
+        elif self.pool_kind == "weighted":
+            pooled = EWMPEncoder.pool(nodes, z)
+        else:
+            pooled = self.pool_attn(nodes, b.mask)
         h = self.to_latent(pooled)
         if not self.variational:
             return h, None

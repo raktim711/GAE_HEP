@@ -17,8 +17,8 @@ from tests.conftest import permute_nodes
 from tests.test_invariance import MODELS, _model
 
 NEEDS_PREPARE = ("deep_svdd", "rnd")
-# the only encoder that does not build a k-NN graph: radius balls have no tie-breaking
-KNN_FREE = ("ef_ae_ewmp",)
+# the IRC-safe encoders: they read only (deta, dphi, dR) and the pT fractions
+DIRECTION_ONLY = ("ef_ae_ewmp", "ef_ae_efn", "ef_ae_ew_attention")
 
 
 def _replace(pool: JetPool, **kw) -> JetPool:
@@ -74,8 +74,8 @@ def test_score_independent_of_padding_to_longest_jet(name, pool, scaler):
 
 # --------------------------------------------------------------------------- 2. neighbour-slot order
 def _shuffled_knn(seed: int):
-    def knn(coords, mask, k, exclude_self=True):
-        idx, valid = masked_knn(coords, mask, k, exclude_self)
+    def knn(coords, mask, k, exclude_self=True, tie_order=None):
+        idx, valid = masked_knn(coords, mask, k, exclude_self, tie_order)
         g = torch.Generator().manual_seed(seed)
         perm = torch.rand(idx.shape, generator=g).argsort(-1)  # an independent slot order per node
         # invalid slots are masked, so where they point must not matter either
@@ -132,24 +132,10 @@ def test_degenerate_jets_finite_and_permutation_invariant(name, pool, scaler):
         assert torch.allclose(s0, s1, rtol=1e-4, atol=1e-5), (seed, pad, (s0 - s1).abs().max())
 
 
-@pytest.mark.parametrize(
-    "name",
-    [
-        n
-        if n in KNN_FREE
-        else pytest.param(
-            n,
-            marks=pytest.mark.xfail(
-                strict=True,
-                reason="masked_knn breaks distance ties by storage index: constituents at identical "
-                "(eta, phi) but different pT give an order-dependent k-NN graph and score",
-            ),
-        )
-        for n in MODELS
-    ],
-)
+@pytest.mark.parametrize("name", list(MODELS))
 def test_coincident_constituents_with_distinct_pt(name, pool, scaler):
-    """Catches k-NN tie-breaking by node index when more than k constituents share one (eta, phi)."""
+    """Catches k-NN tie-breaking by node index when more than k constituents share one (eta, phi)
+    (masked_knn breaks distance ties by larger pT, then (deta, dphi), in every k-NN graph)."""
     m = _prepared(name, pool, scaler)
     const = pool.const[:4].copy()
     const[0] = 0.0
@@ -158,8 +144,9 @@ def test_coincident_constituents_with_distinct_pt(name, pool, scaler):
     deg = _with_jets(pool.subset(np.arange(4)), const)
     s0 = _score(m, deg, scaler)
     assert torch.isfinite(s0).all()
-    diff = max(float((s0 - _score(m, permute_nodes(deg, seed=s), scaler)).abs().max()) for s in range(6))
-    assert diff < 1e-5, diff
+    for s in range(6):  # the same tolerance as the other tests (the Sinkhorn loss amplifies float noise)
+        s1 = _score(m, permute_nodes(deg, seed=s), scaler)
+        assert torch.allclose(s0, s1, rtol=1e-4, atol=1e-5), (s, (s0 - s1).abs().max())
 
 
 # --------------------------------------------------------------------------------------- 4. phi / eta
@@ -209,7 +196,7 @@ def test_node_features_invariant_to_rigid_shift(pool):
     np.testing.assert_allclose(f0[..., boost_inv], f2[..., boost_inv], atol=2e-5)
 
 
-@pytest.mark.parametrize("name", KNN_FREE)
+@pytest.mark.parametrize("name", DIRECTION_ONLY)
 def test_direction_only_encoder_invariant_to_eta_shift(name, pool, scaler):
     """Catches an absolute eta (or energy) leaking into the IRC-safe model, which only sees (deta, dphi, dR, z)."""
     m = _prepared(name, pool, scaler)
@@ -245,7 +232,17 @@ def test_prod_aggregate_invariant_to_monotone_rescaling():
 
 
 # --------------------------------------------------------------------------------------- 6. gradients
-GRAD_MODELS = ("set_ae", "ef_ae", "ef_ae_vae_recon", "ef_ae_ewmp")
+GRAD_MODELS = (
+    "set_ae",
+    "ef_ae",
+    "ef_ae_vae_recon",
+    "ef_ae_ewmp",
+    *(n for n in MODELS if n.startswith(("ef_ae_deepsets", "ef_ae_edgeconv"))),
+    "ef_ae_efn",
+    "ef_ae_transformer",
+    "ef_ae_ew_attention",
+    "ef_ae_gcn_complete",
+)
 
 
 def _grads(m, b) -> dict[str, torch.Tensor]:
