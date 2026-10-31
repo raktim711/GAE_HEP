@@ -355,6 +355,10 @@ def test_cli_train_end_to_end(cli_run, runs):
 def _cases(cfg: str):
     """(argv, patched target, expected positional args, expected keyword args) for every subcommand."""
     tr, dv, rp = "gaehep.train.run", "gaehep.train.dev", "gaehep.eval.report"
+    scores = Path(cfg).with_name(
+        "scores.csv"
+    )  # a real file: eval-scores loads it before the (patched) evaluation
+    scores.write_text("score,label,mjj\n0.1,0,3000\n0.9,1,3500\n")
     return [
         (["download", "--out", "x"], "gaehep.data.download.main", (["--out", "x"],), {}),
         (["preprocess", "--sample", "rnd"], "gaehep.data.preprocess.main", (["--sample", "rnd"],), {}),
@@ -427,6 +431,12 @@ def _cases(cfg: str):
             {"agg": "max", "region": "SR"},
         ),
         (["report"], f"{rp}.main", (), {}),
+        (
+            ["eval-scores", str(scores), "--out", "o", "--sr", "3000,4000", "--n-boot", "5"],
+            "gaehep.eval.score_file.evaluate_score_arrays",
+            (None, None, None),  # the loaded score, label and mjj arrays
+            {"sr": (3000.0, 4000.0), "n_boot": 5, "name": "scores", "out_dir": Path("o")},
+        ),
     ]
 
 
