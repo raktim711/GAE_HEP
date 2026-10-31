@@ -52,11 +52,17 @@ def aggregate(jet_scores: np.ndarray, how: str, ref: np.ndarray | None = None) -
     raise ValueError(how)
 
 
-def region_mask(mjj: np.ndarray, region: str) -> np.ndarray:
+def region_mask(mjj: np.ndarray, region: str, window: tuple[float, float] | None = None) -> np.ndarray:
+    """``full``: every event; ``SR``: the R&D signal region (3.3-3.7 TeV); ``window``: the given ``window``
+    (lo, hi) in GeV, e.g. a black box's signal window (``gaehep.config.BLACKBOX_WINDOWS``)."""
     if region == "full":
         return np.ones(len(mjj), dtype=bool)
     if region == "SR":
         return (mjj >= SR_MJJ[0]) & (mjj <= SR_MJJ[1])
+    if region == "window":
+        if window is None:
+            raise ValueError("region 'window' needs the window (lo, hi)")
+        return (mjj >= window[0]) & (mjj <= window[1])
     raise ValueError(region)
 
 

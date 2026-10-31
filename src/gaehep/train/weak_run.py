@@ -61,7 +61,7 @@ def weak_run(
 ) -> dict[str, Any]:
     src = _run_dir(name)
     cfg = yaml.safe_load((src / "config.yaml").read_text())
-    data = Data(n_const=int(cfg.get("data", {}).get("n_const", 50)))
+    data = Data.from_config(cfg.get("data"))
     splits = ("bkg_train", "sig_train", "bkg_test", "sig_test")
     tabs = {}
     for s in splits:

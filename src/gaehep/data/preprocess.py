@@ -1,7 +1,9 @@
 """Cluster LHC Olympics R&D events into anti-kT R=1.0 jets and store the two leading jets.
 
 Input: a pandas HDF5 file whose rows are events and whose columns are 700 x (pT, eta, phi) zero-padded
-particles (+ a truth-label column in the 2-prong R&D file).  The official LHCO examples cluster with
+particles (+ a truth-label column in the 2-prong R&D file).  The black-box files (samples ``bb1``-``bb3``) have
+no label column; their labels come from the master key (one label per line, in file order; BB2 has none and is
+background only).  The official LHCO examples cluster with
 anti-kT, R = 1.0 and keep inclusive jets with pT > 20 GeV; we do the same with scikit-hep ``fastjet``.
 
 Outputs, written to ``processed/<sample>/`` (``.npy`` files are memory-mappable):
@@ -11,7 +13,8 @@ Outputs, written to ``processed/<sample>/`` (``.npy`` files are memory-mappable)
 ``n_const.npy``       int32   (n, 2)            untruncated constituent multiplicity (0 if no jet)
 ``jets_p4.npy``       float64 (n, 2, 4)         (px, py, pz, E) of the two leading jets (NaN if missing)
 ``n_jets.npy``        int16   (n,)              number of inclusive jets with pT > ptmin
-``labels.npy``        int8    (n,)              truth label (1 = signal); 1 for the 3-prong-only file
+``labels.npy``        int8    (n,)              truth label (1 = signal); 1 for the 3-prong-only file;
+                                                  black boxes: 0 / 1 (/ 2, the second signal of BB3)
 ``meta.json``                                   settings, timings, provenance
 
 Processing is chunked (the raw file is 17 GB in memory) and parallelised over chunks; finished chunks
@@ -28,7 +31,7 @@ from pathlib import Path
 
 import numpy as np
 
-from gaehep.config import processed_dir, raw_dir, run_metadata, save_json
+from gaehep.config import load_json, processed_dir, raw_dir, run_metadata, save_json
 
 N_PARTICLES = 700
 N_MAX = 100
@@ -38,7 +41,16 @@ JET_PTMIN = 20.0
 RAW_FILES = {
     "rnd": "events_anomalydetection_v2.h5",
     "qqq": "events_anomalydetection_Z_XY_qqq.h5",
+    "bb1": "events_LHCO2020_BlackBox1.h5",
+    "bb2": "events_LHCO2020_BlackBox2.h5",
+    "bb3": "events_LHCO2020_BlackBox3.h5",
 }
+# black-box master keys (BB2 has none: all its events are background)
+MASTER_KEYS = {
+    "bb1": "events_LHCO2020_BlackBox1.masterkey",
+    "bb3": "events_LHCO2020_BlackBox3.masterkey",
+}
+MASTER_KEY_LABELS = (0, 1, 2)  # 0 background, 1 signal, 2 the second signal of BB3
 
 
 # ----------------------------------------------------------------------------------------------- reading
@@ -83,6 +95,16 @@ def read_events(path: str | Path, start: int, stop: int) -> tuple[np.ndarray, np
     else:
         raise ValueError(f"unexpected number of columns {ncol} in {path}")
     return np.ascontiguousarray(parts).reshape(len(arr), N_PARTICLES, 3), labels
+
+
+def read_master_key(path: str | Path) -> np.ndarray:
+    """Labels of a black box: one per line in event order (the files hold floats such as ``0.0``).
+    Returns int8 (n,); raises if a value is not 0, 1 or 2."""
+    vals = np.loadtxt(path, dtype=np.float64, ndmin=1)
+    lab = vals.astype(np.int8)
+    if not np.array_equal(lab, vals) or not np.isin(lab, MASTER_KEY_LABELS).all():
+        raise ValueError(f"{path}: master key labels must be 0, 1 or 2")
+    return lab
 
 
 # -------------------------------------------------------------------------------------------- clustering
@@ -201,13 +223,21 @@ def _allocate(out_dir: Path, n: int, n_max: int) -> None:
         del mm
 
 
-def _work(job: tuple[str, str, int, int, int, int]) -> tuple[int, int, float]:
-    src, out_dir, start, stop, n_max, default_label = job
+def _work(job: tuple) -> tuple[int, int, float]:
+    """Cluster events ``[start, stop)``.  ``label_source`` is an int (the label of every event, used when the
+    file has no label column) or an int8 array with the labels of the chunk (the master key)."""
+    src, out_dir, start, stop, n_max, label_source = job
     out = Path(out_dir)
     t0 = time.time()
     parts, labels = read_events(src, start, stop)
     res = cluster_events(parts, n_max=n_max)
-    res["labels"] = labels if labels is not None else np.full(len(parts), default_label, dtype=np.int8)
+    if labels is None:
+        labels = (
+            np.full(len(parts), label_source, dtype=np.int8)
+            if np.isscalar(label_source)
+            else np.asarray(label_source, dtype=np.int8)
+        )
+    res["labels"] = labels
     for name, arr in res.items():
         mm = np.load(out / f"{name}.npy", mmap_mode="r+")
         mm[start:stop] = arr
@@ -218,6 +248,33 @@ def _work(job: tuple[str, str, int, int, int, int]) -> tuple[int, int, float]:
     return start, stop, time.time() - t0
 
 
+def verify_processed(out_dir: Path, n: int, n_max: int, labels: np.ndarray | None, chunk: int) -> list[str]:
+    """Problems with a finished run (empty list = verified): every chunk marked done, the arrays complete
+    (the two leading jets of every event with >= 2 jets are finite, the rest is NaN-free where defined),
+    and the labels equal to the master key."""
+    problems = []
+    for s in range(0, n, chunk):
+        e = min(n, s + chunk)
+        if not (out_dir / "chunks" / f"{s:08d}_{e:08d}.ok").exists():
+            problems.append(f"chunk {s}-{e} is not marked done")
+    if problems:
+        return problems
+    n_jets = np.load(out_dir / "n_jets.npy")
+    p4 = np.load(out_dir / "jets_p4.npy", mmap_mode="r")
+    const = np.load(out_dir / "constituents.npy", mmap_mode="r")
+    if len(n_jets) != n or p4.shape[0] != n or const.shape != (n, 2, n_max, 3):
+        problems.append("array shapes do not match the number of events")
+        return problems
+    two = np.flatnonzero(n_jets >= 2)
+    for lo in range(0, len(two), 100_000):
+        if not np.isfinite(p4[two[lo : lo + 100_000]]).all():
+            problems.append("an event with two jets has a non-finite jet four-vector")
+            break
+    if labels is not None and not np.array_equal(np.load(out_dir / "labels.npy"), labels):
+        problems.append("labels.npy differs from the master key")
+    return problems
+
+
 def preprocess(
     sample: str,
     src: Path | None = None,
@@ -226,21 +283,41 @@ def preprocess(
     workers: int = 2,
     limit: int | None = None,
     n_max: int = N_MAX,
+    delete_raw: bool = False,
+    master_key: Path | None = None,
 ) -> Path:
+    """Cluster ``sample``.  ``delete_raw`` removes the raw events file once the run is verified
+    (:func:`verify_processed`); it is refused for a ``limit``-ed run.  ``master_key`` overrides the black
+    box's key file (default: next to the raw file)."""
     src = Path(src) if src else raw_dir() / RAW_FILES[sample]
     out_dir = (Path(out_root) if out_root else processed_dir()) / sample
+    meta_path = out_dir / "meta.json"
+    if not src.exists() and meta_path.exists() and load_json(meta_path).get("raw_deleted"):
+        print(f"[{sample}] already processed (raw file deleted after verification): {out_dir}", flush=True)
+        return out_dir
+    if delete_raw and limit:
+        raise ValueError("--delete-raw is refused for a --limit-ed (partial) run")
     out_dir.mkdir(parents=True, exist_ok=True)
     n = n_rows(src)
     if limit:
         n = min(n, limit)
     _allocate(out_dir, n, n_max)
+    key = None
+    if sample in MASTER_KEYS:
+        key_path = Path(master_key) if master_key else src.with_name(MASTER_KEYS[sample])
+        key = read_master_key(key_path)
+        if len(key) < n:
+            raise ValueError(f"{key_path}: {len(key)} labels for {n} events")
+        if not limit and len(key) != n:
+            raise ValueError(f"{key_path}: {len(key)} labels for {n} events")
+        key = key[:n]
     default_label = 1 if sample == "qqq" else 0
     jobs = []
     for s in range(0, n, chunk):
         e = min(n, s + chunk)
         if (out_dir / "chunks" / f"{s:08d}_{e:08d}.ok").exists():
             continue
-        jobs.append((str(src), str(out_dir), s, e, n_max, default_label))
+        jobs.append((str(src), str(out_dir), s, e, n_max, default_label if key is None else key[s:e]))
     print(f"[{sample}] {n} events, {len(jobs)} chunk(s) to process with {workers} worker(s)", flush=True)
     t0 = time.time()
     done = 0
@@ -264,11 +341,20 @@ def preprocess(
         "R": JET_R,
         "ptmin": JET_PTMIN,
         "chunk": chunk,
+        "master_key": None if key is None else str(key_path),
         "seconds": time.time() - t0,
+        "raw_deleted": False,
         **run_metadata(),
     }
-    save_json(meta, out_dir / "meta.json")
+    save_json(meta, meta_path)
     print(f"[{sample}] finished in {(time.time() - t0) / 60:.1f} min -> {out_dir}", flush=True)
+    if delete_raw:
+        problems = verify_processed(out_dir, n, n_max, key, chunk)
+        if problems:
+            raise RuntimeError(f"[{sample}] not deleting {src}: " + "; ".join(problems))
+        src.unlink()
+        save_json({**meta, "raw_deleted": True}, meta_path)
+        print(f"[{sample}] verified; deleted {src}", flush=True)
     return out_dir
 
 
@@ -281,8 +367,14 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--workers", type=int, default=2)
     p.add_argument("--limit", type=int, default=None, help="only the first N events (smoke tests)")
     p.add_argument("--n-max", type=int, default=N_MAX)
+    p.add_argument(
+        "--master-key", type=Path, default=None, help="black box labels (default: next to the raw file)"
+    )
+    p.add_argument(
+        "--delete-raw", action="store_true", help="delete the raw events file after a verified full run"
+    )
     a = p.parse_args(argv)
-    preprocess(a.sample, a.src, a.out_root, a.chunk, a.workers, a.limit, a.n_max)
+    preprocess(a.sample, a.src, a.out_root, a.chunk, a.workers, a.limit, a.n_max, a.delete_raw, a.master_key)
     return 0
 
 
