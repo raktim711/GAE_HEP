@@ -108,6 +108,7 @@ def cli_run(env, runs):
     cfg_path.write_text(yaml.safe_dump(CFG))
     argv = ["train", str(cfg_path), "--name", "cli", "--set", "train.seed=2"]
     argv += ["--set", "model_args.latent_dim=3", "--set", "data.latent_train_events=50"]
+    argv += ["--set", "train.lr=1e-3"]  # the default lr; used to reach AdamW as the string '1e-3'
     out = io.StringIO()
     with contextlib.redirect_stdout(out):
         rc = cli.main(argv)
@@ -340,12 +341,51 @@ def test_set_dotted_keys_and_yaml_typing():
         cli._set(cfg, "train.epochs")
 
 
+def test_set_scientific_notation_is_a_float():
+    """--set bug: YAML 1.1 loaded 1e-3, 1.0e3, -.5 as strings (AdamW TypeError); they must be floats."""
+    floats = {"1e-3": 1e-3, "1E5": 1e5, "-2e+4": -2e4, "5e-1": 0.5, "1.0e3": 1e3, ".5e3": 500.0, "-.5": -0.5}
+    nested = {"[1e-3, 2, x]": [1e-3, 2, "x"], "{a: [1e-4, '1e-4'], b: +.5}": {"a": [1e-4, "1e-4"], "b": 0.5}}
+    for raw, want in {**floats, **nested}.items():
+        cfg: dict = {}
+        cli._set(cfg, f"train.v={raw}")
+        assert cfg["train"]["v"] == want and type(cfg["train"]["v"]) is type(want), raw
+    # everything else, quoted values included, is typed exactly as by yaml.safe_load, which is itself untouched
+    same = "5 -3 0x10 1_000 2.5 .5 1.0e-3 .inf true off null 09 1e e5 1.2.3 1e-3x cpu '1e-3' \"5\" 2001-12-14"
+    for raw in [*same.split(), "", "[1, 2.0, x]"]:
+        assert repr(cli._yaml(raw)) == repr(yaml.safe_load(raw)), raw
+    assert yaml.safe_load("lr: 1e-3") == {"lr": "1e-3"}  # config files keep PyYAML's YAML 1.1 typing
+
+
+def test_set_without_equals_exits_in_train_dev_and_sweep(tmp_path, monkeypatch):
+    """--set bug: `sweep --set key` silently set key: None; train, dev and sweep must exit with one message."""
+    cfg = tmp_path / "tiny.yaml"
+    cfg.write_text(yaml.safe_dump(CFG))
+    for target in ("gaehep.train.run.run", "gaehep.train.dev.dev_run", "gaehep.train.sweep.sweep"):
+        monkeypatch.setattr(target, lambda *a, _t=target, **k: pytest.fail(f"{_t} was called"))
+    for cmd in ("train", "dev", "sweep"):
+        for bad in ("data.n_const", "=30"):
+            with pytest.raises(SystemExit, match=re.escape(f"--set expects key=value, got {bad!r}")):
+                cli.main([cmd, str(cfg), "--set", "train.seed=1", "--set", bad])
+
+
+def test_sweep_set_and_grid_values_typed_like_train(tmp_path, monkeypatch):
+    """--set bug: sweep --set / --grid must type 1e-3 as a float and `key=` as None, like train's --set."""
+    calls: list = []
+    monkeypatch.setattr("gaehep.train.sweep.sweep", lambda *a, **k: calls.append(k) or {})
+    sets = ["--set", "train.lr=1e-3", "--set", "data.tag="]
+    assert cli.main(["sweep", "c.yaml", "--grid", "{beta: [0.0, 1e-3]}", *sets]) == 0
+    assert calls[0]["grid"] == {"beta": [0.0, 1e-3]}
+    fixed = {"train.device": "auto", "train.threads": 1}
+    assert calls[0]["overrides"] == {**fixed, "train.lr": 1e-3, "data.tag": None}
+
+
 def test_cli_train_end_to_end(cli_run, runs):
     """`gaehep train --name --set` must apply the overrides and run train, score and evaluate."""
     rc, out = cli_run
     assert rc == 0 and "[cli] status: done" in out
     cfg = yaml.safe_load((runs / "cli" / "config.yaml").read_text())
     assert cfg["train"]["seed"] == 2 and cfg["model_args"]["latent_dim"] == 3
+    assert isinstance(cfg["train"]["lr"], float) and cfg["train"]["lr"] == 1e-3
     assert cfg["train"]["epochs"] == 1 and cfg["model_args"]["hidden"] == [8, 8]  # untouched keys kept
     assert load_npz(runs / "cli" / "latents.npz")["bkg_train"].shape == (50, 2, 3)
     assert set(load_npz(runs / "cli" / "scores.npz")) == set(SCORE_SPLITS)

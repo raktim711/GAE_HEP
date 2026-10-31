@@ -14,6 +14,7 @@ full-range metrics are computed).  With m_jj, metrics are also given inside the 
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -21,15 +22,44 @@ from typing import Any
 import yaml
 
 
+class _CliLoader(yaml.SafeLoader):
+    """PyYAML's safe YAML 1.1 typing plus YAML 1.2 floats, for values typed on the command line.
+
+    YAML 1.1 floats need a '.' and a signed exponent, so ``1e-3``, ``1.0e3`` and ``-.5`` would load as
+    strings.  The added resolver accepts a YAML 1.2 float containing a '.' or an exponent ('09' stays a
+    string).  It runs after PyYAML's own resolvers, so everything they type keeps its type, and like
+    them it only sees plain scalars: a quoted ``'1e-3'`` is still a string.
+    """
+
+
+_CliLoader.add_implicit_resolver(
+    "tag:yaml.org,2002:float",
+    re.compile(r"^(?=.*[.eE])[-+]?(?:\.[0-9]+|[0-9]+(?:\.[0-9]*)?)(?:[eE][-+]?[0-9]+)?$"),
+    list("-+.0123456789"),
+)
+
+
+def _yaml(text: str) -> Any:
+    """A YAML value given on the command line (``--set`` values, ``--grid``)."""
+    return yaml.load(text, Loader=_CliLoader)
+
+
+def _parse_set(item: str) -> tuple[str, Any]:
+    """One ``--set key=value`` -> (dotted key, YAML-typed value); ``key=`` gives None."""
+    key, eq, raw = item.partition("=")
+    if not eq or not key:
+        raise SystemExit(f"--set expects key=value, got {item!r}")
+    return key, _yaml(raw)
+
+
 def _set(cfg: dict[str, Any], dotted: str) -> None:
-    key, _, raw = dotted.partition("=")
-    if not _:
-        raise SystemExit(f"--set expects key=value, got {dotted!r}")
+    """Apply one ``--set a.b.c=value`` to a config, creating the nested dicts that are missing."""
+    key, val = _parse_set(dotted)
     node = cfg
     parts = key.split(".")
     for p in parts[:-1]:
         node = node.setdefault(p, {})
-    node[parts[-1]] = yaml.safe_load(raw)
+    node[parts[-1]] = val
 
 
 def _log(*args: object) -> None:
@@ -258,13 +288,11 @@ def main(argv: list[str] | None = None) -> int:
         from gaehep.train.sweep import sweep
 
         fixed = {"train.device": a.device, "train.threads": a.threads}
-        for item in a.set:
-            k, _, v = item.partition("=")
-            fixed[k] = yaml.safe_load(v)
+        fixed.update(_parse_set(item) for item in a.set)
         sweep(
             str(a.config),
             prefix=a.prefix,
-            grid=yaml.safe_load(a.grid) if a.grid else None,
+            grid=_yaml(a.grid) if a.grid else None,
             overrides=fixed,
             budget_hours=a.budget_hours,
             top_k=a.top_k,
