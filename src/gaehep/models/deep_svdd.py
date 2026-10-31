@@ -14,7 +14,7 @@ from torch import nn
 
 from gaehep.data.dataset import JetBatch
 from gaehep.models.base import JetModel, mlp
-from gaehep.models.edgeconv import EdgeConvEncoder
+from gaehep.models.edgeconv import EdgeConvEncoder, batch_tie_order
 
 
 class DeepSVDD(JetModel):
@@ -36,7 +36,7 @@ class DeepSVDD(JetModel):
         self.register_buffer("center_ready", torch.tensor(False))
 
     def embed(self, b: JetBatch) -> torch.Tensor:
-        h = self.encoder(b.x, b.mask, b.coords)
+        h = self.encoder(b.x, b.mask, b.coords, batch_tie_order(b))
         return self.head(self.encoder.pool(h, b.mask))
 
     @torch.no_grad()

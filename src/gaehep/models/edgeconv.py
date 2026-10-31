@@ -8,6 +8,11 @@ AGG is a masked mean or max, so the block is permutation-equivariant; the encode
 pooling is permutation-invariant.  The first block builds its k-NN graph in (deta, dphi); later blocks can
 rebuild it in feature space ("dynamic" graph, as in DGCNN).
 
+Distance ties (e.g. constituents at one (eta, phi), or equal hidden features) are broken by a node priority,
+``tie_order`` = :func:`batch_tie_order` (larger pT first, then (deta, dphi)), the same for every block of the
+encoder, static or dynamic.  It is a property of the nodes themselves, so every k-NN graph, and the slot order
+of its neighbours, is exactly permutation-equivariant.  Without ties the graphs do not depend on it.
+
 CPU efficiency: the first (widest) layer of the edge MLP is linear in [h_i, h_j - h_i], so it is computed
 per *node* and only gathered per edge:  W [h_i, h_j - h_i] + b = (W_a - W_b) h_i + W_b h_j + b.  This is an
 exact reparametrisation (``edge_mlp_equivalent`` rebuilds the plain edge MLP for cross-checks) and cuts the
@@ -21,7 +26,13 @@ from collections.abc import Sequence
 import torch
 from torch import nn
 
-from gaehep.graphs.ops import gather_neighbors, masked_knn, masked_max, masked_mean
+from gaehep.data.dataset import JetBatch
+from gaehep.graphs.ops import gather_neighbors, knn_tie_order, masked_knn, masked_max, masked_mean
+
+
+def batch_tie_order(b: JetBatch) -> torch.Tensor:
+    """k-NN tie-break priority of a batch's nodes: larger pT first, then (deta, dphi) (:func:`knn_tie_order`)."""
+    return knn_tie_order(b.raw[..., 0], b.coords)
 
 
 class EdgeConvBlock(nn.Module):
@@ -50,8 +61,14 @@ class EdgeConvBlock(nn.Module):
         self.shortcut = nn.Linear(in_dim, out_dim, bias=bias)
         self.act = act()
 
-    def forward(self, x: torch.Tensor, mask: torch.Tensor, knn_coords: torch.Tensor) -> torch.Tensor:
-        idx, valid = masked_knn(knn_coords, mask, self.k)
+    def forward(
+        self,
+        x: torch.Tensor,
+        mask: torch.Tensor,
+        knn_coords: torch.Tensor,
+        tie_order: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        idx, valid = masked_knn(knn_coords, mask, self.k, tie_order=tie_order)
         if idx.shape[-1] == 0:
             agg = torch.zeros(*x.shape[:2], self.shortcut.out_features, dtype=x.dtype, device=x.device)
         else:
@@ -102,11 +119,18 @@ class EdgeConvEncoder(nn.Module):
         )
         self.out_dim = dims[-1]
 
-    def forward(self, x: torch.Tensor, mask: torch.Tensor, coords: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self,
+        x: torch.Tensor,
+        mask: torch.Tensor,
+        coords: torch.Tensor,
+        tie_order: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        """``tie_order`` (B, N): k-NN tie-break priority (:func:`batch_tie_order`), used by every block."""
         h = x
         for i, blk in enumerate(self.blocks):
             knn_c = coords if (i == 0 or not self.dynamic) else h
-            h = blk(h, mask, knn_c)
+            h = blk(h, mask, knn_c, tie_order)
         return h
 
     @staticmethod

@@ -22,7 +22,7 @@ from gaehep.data.dataset import RECON_IDX, JetBatch
 from gaehep.losses.chamfer import masked_chamfer
 from gaehep.losses.sinkhorn import masked_sinkhorn
 from gaehep.models.base import JetModel, mlp
-from gaehep.models.edgeconv import EdgeConvEncoder
+from gaehep.models.edgeconv import EdgeConvEncoder, batch_tie_order
 
 
 class SetAE(JetModel):
@@ -51,7 +51,7 @@ class SetAE(JetModel):
         self.decoder = mlp(latent_dim + cond_dim, dec_hidden, n_out * len(self.recon_idx))
 
     def embed(self, b: JetBatch) -> torch.Tensor:
-        h = self.encoder(b.x, b.mask, b.coords)
+        h = self.encoder(b.x, b.mask, b.coords, batch_tie_order(b))
         return self.to_latent(self.encoder.pool(h, b.mask))
 
     def _cond(self, b: JetBatch, z: torch.Tensor) -> torch.Tensor:

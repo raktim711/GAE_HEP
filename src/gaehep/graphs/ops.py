@@ -15,16 +15,48 @@ from collections.abc import Sequence
 import torch
 
 
+def knn_tie_order(pt: torch.Tensor, coords: torch.Tensor) -> torch.Tensor:
+    """The node priority used to break k-NN distance ties: larger pT first, then smaller deta, then dphi.
+
+    Parameters
+    ----------
+    pt : (B, N) transverse momenta (0 on padding; padded nodes are excluded by ``masked_knn``'s mask anyway).
+    coords : (B, N, 2) (deta, dphi).
+
+    Returns
+    -------
+    order : (B, N) long, a permutation of the nodes of each graph, highest priority first.  It depends only
+    on the nodes' own (pT, deta, dphi), so it is permutation-equivariant; only exact duplicates (identical
+    pT, deta and dphi, hence identical features) keep their storage order, and those are interchangeable.
+    """
+    # stable sorts from the least to the most significant key (LSD radix order)
+    order = torch.sort(coords[..., 1], dim=-1, stable=True).indices
+    order = order.gather(-1, torch.sort(coords[..., 0].gather(-1, order), dim=-1, stable=True).indices)
+    by_pt = torch.sort(pt.gather(-1, order), dim=-1, descending=True, stable=True).indices
+    return order.gather(-1, by_pt)
+
+
 def masked_knn(
-    coords: torch.Tensor, mask: torch.Tensor, k: int, exclude_self: bool = True
+    coords: torch.Tensor,
+    mask: torch.Tensor,
+    k: int,
+    exclude_self: bool = True,
+    tie_order: torch.Tensor | None = None,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """k nearest neighbours of every node among the *real* nodes of its graph.
+
+    The neighbours are listed by increasing distance.  Equal distances are ordered by ``tie_order`` (a
+    node priority, e.g. :func:`knn_tie_order`: larger pT first, then (deta, dphi)), which makes both the
+    neighbour sets and the slot order exactly permutation-equivariant.  Without ``tie_order`` ties fall back
+    to the storage index (not permutation-invariant when ties occur).  Where no distance ties occur the
+    result is identical with and without ``tie_order``, and identical to ``torch.topk(sorted=True)``.
 
     Parameters
     ----------
     coords : (B, N, D) positions used for the distance (e.g. (deta, dphi) or hidden features).
     mask : (B, N) bool, real nodes.
     k : number of neighbours; reduced to N-1 if the padded size is smaller.
+    tie_order : optional (B, N) long, a permutation of the nodes of each graph, highest priority first.
 
     Returns
     -------
@@ -41,8 +73,23 @@ def masked_knn(
     if exclude_self:
         eye = torch.eye(n, dtype=torch.bool, device=coords.device)
         d = d.masked_fill(eye, float("inf"))
-    vals, idx = torch.topk(d, kk, dim=-1, largest=False, sorted=True)
-    valid = torch.isfinite(vals) & mask[:, :, None]
+    # one more than needed: a tie at the k-th place shows up as an equal (k+1)-th distance
+    vals, idx = torch.topk(d, min(kk + 1, n), dim=-1, largest=False, sorted=True)
+    fin = torch.isfinite(vals)
+    # rows whose k nearest are ambiguous: equal finite distances among the k + 1 nearest.  Only these rows
+    # are re-sorted with the tie-break; the others keep topk's order, which is then the unique ascending one.
+    tied = ((vals[..., 1:] == vals[..., :-1]) & fin[..., 1:]).any(-1)
+    vals, idx, fin = vals[..., :kk], idx[..., :kk], fin[..., :kk]
+    if bool(tied.any()):
+        gi, ni = tied.nonzero(as_tuple=True)
+        if tie_order is None:
+            cols = torch.arange(n, device=coords.device).expand(len(gi), n)
+        else:
+            cols = tie_order[gi]  # (M, N) candidates in priority order
+        # a stable sort by distance of the candidates in priority order: equal distances keep that order
+        pos = torch.sort(d[gi, ni].gather(-1, cols), dim=-1, stable=True).indices[:, :kk]
+        idx = idx.index_put((gi, ni), cols.gather(-1, pos))
+    valid = fin & mask[:, :, None]
     self_idx = torch.arange(n, device=coords.device).view(1, n, 1).expand(b, n, kk)
     idx = torch.where(valid, idx, self_idx)
     return idx, valid

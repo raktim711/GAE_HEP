@@ -2,6 +2,7 @@
 
 from gaehep.graphs.ops import (
     gather_neighbors,
+    knn_tie_order,
     masked_knn,
     masked_max,
     masked_mean,
@@ -11,6 +12,7 @@ from gaehep.graphs.ops import (
 
 __all__ = [
     "gather_neighbors",
+    "knn_tie_order",
     "masked_knn",
     "masked_max",
     "masked_mean",
