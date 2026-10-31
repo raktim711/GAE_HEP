@@ -28,3 +28,6 @@ results/dev/*/checkpoint*
 results/dev/*/*.npz
 .project_upload/
 results/runs/*/_partial/
+# black-box score files and their resumable partial chunks (docs/STUDY_PROTOCOL.md, section 8: never commit scores)
+results/runs/*/bb*_scores*.npz
+results/runs/*/_partial*/
