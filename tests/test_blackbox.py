@@ -671,6 +671,33 @@ def test_baseline_runs_dispatch_to_scorers(env, runs, monkeypatch):
         blackbox.score_sample("obs_stub", "bb1", subsample=True, rescore=True, log=quiet)
 
 
+def test_real_baselines_score_the_black_boxes(env):
+    """The P3 baselines (gaehep.baselines.SCORERS) through `gaehep score-sample`, on the fake boxes.  The boxes
+    have no tau values (NaN): tau-based observables are constant there and hl_density imputes the missing taus."""
+    from gaehep import baselines
+
+    assert set(blackbox.baseline_scorers()) == set(baselines.SCORERS) == set(blackbox.BASELINE_MODELS)
+    data = Data(N_MAX)
+    baselines.run_obs_baselines(data=data, n_boot=0, log=quiet)
+    baselines.run_hl_density(1, data=data, epochs=1, n_boot=0, log=quiet)
+    baselines.run_efp_knn(data=data, k=3, n_ref=100, n_boot=0, log=quiet)
+    for run in ("study_obs_nconst", "study_obs_tau21", "study_hldensity_s1", "study_efpknn"):
+        for sample, sub in (("bb1", True), ("bb3", False), ("bb2", True)):
+            blackbox.score_sample(run, sample, subsample=sub, n_boot=0, log=quiet)
+            _, m = _check_files(run, sample, sub, env)
+            if sample != "bb2":
+                assert m["event"]["prod"][f"{sample}/full"]["n_sig"] > 0
+    # the 12-constituent signal jets of bb1 are far from the 5-constituent background in n_const (judged on the
+    # raw 'max' score: the fake boxes lie entirely below the fake R&D reference, so the CDF behind 'prod'
+    # saturates; the direction of the EFP k-NN score on these toy jets means nothing and is not asserted)
+    nconst = load_json(_run_dir("study_obs_nconst") / "bb1_metrics.json")["metrics"]["event"]["max"]
+    assert nconst["bb1/full"]["auc"] > 0.95
+    # a baseline's scores are those of its scorer on the whole split
+    split_scores = baselines.SCORERS["efp_knn"](_run_dir("study_efpknn"), data, "bb1_test_sub")
+    with np.load(_run_dir("study_efpknn") / "bb1_scores.npz") as f:
+        assert np.array_equal(f["jet_scores"], split_scores.astype(np.float32))
+
+
 def test_baseline_without_the_module_is_an_error(env, runs, monkeypatch):
     rd = _run_dir("hl_stub")
     rd.mkdir(parents=True)
