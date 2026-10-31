@@ -203,6 +203,30 @@ def test_prime_efp_set_is_the_protocols():
     assert efp.prime_efps(synthetic_pool(5).const).shape == (5, 20)
 
 
+def test_efps_match_the_energyflow_package():
+    """Graph list and values equal energyflow 1.4.0's (the package is not a dependency: it does not import with
+    numpy 2 on Python 3.11 / 3.12, see gaehep.eval.efp)."""
+    try:
+        ef = pytest.importorskip("energyflow")
+    except (
+        Exception
+    ) as err:  # a wasserstein build for numpy 1.x raises ImportError subclasses, others may differ
+        pytest.skip(f"energyflow is not importable here: {err}")
+    pool = synthetic_pool(60, 40, seed=11)
+    const = pool.const.copy()
+    const[:3, 1:] = 0.0  # single-constituent jets: every EFP is 0
+    const[3, :, 1:] = const[3, 0, 1:]  # all constituents at one point: every EFP is 0
+    efpset = ef.EFPSet(*efp.PRIME_SET, measure="hadr", beta=1, normed=True)
+    assert [[tuple(map(int, e)) for e in g] for g in efpset.graphs() if len(g)] == efp.prime_graphs()
+    ref = efpset.batch_compute(const.astype(np.float64), n_jobs=1)[:, 1:]
+    assert np.allclose(efp.prime_efps(const), ref, rtol=1e-9, atol=1e-15)
+    for name, graph in efp.PROBE_GRAPHS.items():
+        want = ef.EFP(graph, measure="hadr", beta=1, normed=True).batch_compute(
+            const.astype(np.float64), n_jobs=1
+        )
+        assert np.allclose(efp.probe_efps(const)[name], want, rtol=1e-9, atol=1e-15)
+
+
 def test_probe_efps_match_the_definitions():
     pool = synthetic_pool(12, 20, seed=3)
     const = pool.const.astype(np.float64)

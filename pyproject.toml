@@ -25,7 +25,6 @@ dependencies = [
     "fastjet>=3.4",
     "awkward>=2.6",
     "vector>=1.4",
-    "energyflow>=1.4",
 ]
 
 [project.optional-dependencies]
