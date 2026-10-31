@@ -135,7 +135,9 @@ def plot_curves(pts: list[dict], out: Path) -> None:
         if any(p["encoder"] == e for p in pts)
     ]
     ep_h = [
-        plt.Line2D([], [], marker=m, ls="", color="0.4", mec="k", mew=0.4, label=f"{e} epoch{'s' if e > 1 else ''}")
+        plt.Line2D(
+            [], [], marker=m, ls="", color="0.4", mec="k", mew=0.4, label=f"{e} epoch{'s' if e > 1 else ''}"
+        )
         for e, m in MARKERS.items()
         if any(p["epochs"] == e for p in pts)
     ]
