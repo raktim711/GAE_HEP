@@ -187,6 +187,39 @@ def main(argv: list[str] | None = None) -> int:
     e.add_argument("runs", nargs="+")
     e.add_argument("--out", required=True)
     sub.add_parser("baselines")
+    sub.add_parser(
+        "obs-baselines", help="single-observable baselines as runs study_obs_{mj,nconst,tau21,tau32}"
+    )
+    hd = sub.add_parser(
+        "hl-density", help="flow on (log m_J, log pT_J, tau21, tau32, log n_const) -> study_hldensity_s<seed>"
+    )
+    hd.add_argument("--seed", type=int, required=True)
+    hd.add_argument("--epochs", type=int, default=60, help="maximum epochs (early stopping on bkg_val)")
+    hd.add_argument("--threads", type=int, default=1)
+    ek = sub.add_parser(
+        "efp-knn", help="training-free EFP k-NN distance to background-training jets -> study_efpknn"
+    )
+    ek.add_argument("-k", type=int, default=10)
+    ek.add_argument("--n-ref", type=int, default=100_000, help="reference jets drawn from bkg_train")
+    ek.add_argument("--threads", type=int, default=1)
+    pb = sub.add_parser(
+        "probes", help="ridge / MLP regressions of jet observables on a run's latents -> probes.json"
+    )
+    pb.add_argument("run")
+    ip = sub.add_parser(
+        "irc-probe", help="score stability under splittings, soft emissions and re-ordering -> irc_probe.json"
+    )
+    ip.add_argument("runs", nargs="+", metavar="RUN")
+    ip.add_argument(
+        "-k", type=int, default=None, help="k of the k-NN tie count (default: the model's k, else 8)"
+    )
+    st = sub.add_parser(
+        "study-table", help="table, csv and significance contrasts of the runs named <prefix>*"
+    )
+    st.add_argument("prefix")
+    st.add_argument(
+        "--n-boot", type=int, default=200, help="paired-bootstrap resamples (the protocol uses 200)"
+    )
     cmp_ = sub.add_parser("compare", help="overlay ROC/SIC curves of several runs")
     cmp_.add_argument("runs", nargs="+")
     cmp_.add_argument("--out", type=Path, required=True)
@@ -217,6 +250,15 @@ def main(argv: list[str] | None = None) -> int:
     a = p.parse_args(argv)
     if a.cmd == "eval-scores":  # before importing the training code (torch): this needs only numpy
         return _eval_scores(a)
+    if a.cmd == "study-table":
+        from gaehep.eval.study import study_table
+
+        try:
+            for path in study_table(a.prefix, n_boot=a.n_boot, log=_log).values():
+                print(path)
+        except FileNotFoundError as err:
+            raise SystemExit(f"study-table: {err}") from None
+        return 0
     from gaehep.train import run as R
 
     if a.cmd == "train":
@@ -321,6 +363,26 @@ def main(argv: list[str] | None = None) -> int:
         R.ensemble_variant(a.runs, a.out)
     elif a.cmd == "baselines":
         R.baselines()
+    elif a.cmd == "obs-baselines":
+        from gaehep.baselines import run_obs_baselines
+
+        run_obs_baselines(log=_log)
+    elif a.cmd == "hl-density":
+        from gaehep.baselines import run_hl_density
+
+        run_hl_density(a.seed, epochs=a.epochs, threads=a.threads, log=_log)
+    elif a.cmd == "efp-knn":
+        from gaehep.baselines import run_efp_knn
+
+        run_efp_knn(k=a.k, n_ref=a.n_ref, threads=a.threads, log=_log)
+    elif a.cmd == "probes":
+        from gaehep.eval.probes import probe
+
+        probe(a.run, log=_log)
+    elif a.cmd == "irc-probe":
+        from gaehep.eval.irc_probe import main as irc_probe
+
+        irc_probe(a.runs, k=a.k)
     elif a.cmd == "compare":
         from gaehep.eval.report import compare
 

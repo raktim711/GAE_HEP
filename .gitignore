@@ -17,6 +17,7 @@ dist/
 results/runs/*/checkpoint*
 results/runs/*/scores*.npz
 results/runs/*/latents*.npz
+results/runs/*/reference*.npz
 
 # Notebooks
 .ipynb_checkpoints/

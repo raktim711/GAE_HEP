@@ -464,6 +464,27 @@ def _cases(cfg: str):
         ),
         (["ensemble", "a", "b", "--out", "o"], f"{tr}.ensemble_variant", (["a", "b"], "o"), {}),
         (["baselines"], f"{tr}.baselines", (), {}),
+        (["obs-baselines"], "gaehep.baselines.run_obs_baselines", (), {}),
+        (
+            ["hl-density", "--seed", "3", "--epochs", "5", "--threads", "2"],
+            "gaehep.baselines.run_hl_density",
+            (3,),
+            {"epochs": 5, "threads": 2},
+        ),
+        (
+            ["efp-knn", "-k", "5", "--n-ref", "1000", "--threads", "2"],
+            "gaehep.baselines.run_efp_knn",
+            (),
+            {"k": 5, "n_ref": 1000, "threads": 2},
+        ),
+        (["probes", "r"], "gaehep.eval.probes.probe", ("r",), {}),
+        (["irc-probe", "a", "b", "-k", "6"], "gaehep.eval.irc_probe.main", (["a", "b"],), {"k": 6}),
+        (
+            ["study-table", "study", "--n-boot", "20"],
+            "gaehep.eval.study.study_table",
+            ("study",),
+            {"n_boot": 20},
+        ),
         (
             ["compare", "a", "b:prod", "--out", "d"],
             f"{rp}.compare",
