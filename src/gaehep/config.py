@@ -24,7 +24,21 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 SR_MJJ = (3300.0, 3700.0)
 
 # Sample identifiers used in processed files and split tables.
-SAMPLES = ("rnd", "qqq")  # rnd: QCD background + 2-prong W' signal; qqq: 3-prong W' signal only
+# bb1-bb3: the LHC Olympics 2020 black boxes (test only; bb1 can also be the training sample of E3)
+SAMPLES = (
+    "rnd",
+    "qqq",
+    "bb1",
+    "bb2",
+    "bb3",
+)  # rnd: QCD background + 2-prong W' signal; qqq: 3-prong W' signal only
+BLACKBOX_SAMPLES = ("bb1", "bb2", "bb3")
+
+# m_jj windows (GeV) of the black-box signals: 400 GeV around the resonance mass, aligned with the 100 GeV
+# bins of the bump hunt (docs/STUDY_PROTOCOL.md, section 5).  BB2 is background only; its null test searches
+# the R&D signal region and the two black-box windows.
+BLACKBOX_WINDOWS: dict[str, tuple[float, float]] = {"bb1": (3600.0, 4000.0), "bb3": (4000.0, 4400.0)}
+BB2_WINDOWS: tuple[tuple[float, float], ...] = ((3300.0, 3700.0), (3600.0, 4000.0), (4000.0, 4400.0))
 
 
 def data_dir() -> Path:
@@ -97,11 +111,22 @@ def git_revision() -> str:
         return "unknown"
 
 
+def splits_sha256() -> str | None:
+    """Content hash of the R&D ``splits.npz`` (``gaehep.data.splits.content_hash``); None if it does not exist."""
+    from gaehep.data.splits import content_hash  # local import: gaehep.data.splits imports this module
+
+    try:
+        return content_hash()
+    except FileNotFoundError:
+        return None
+
+
 def run_metadata() -> dict[str, Any]:
     """Provenance stamped into every results file."""
     meta: dict[str, Any] = {
         "time": time.strftime("%Y-%m-%d %H:%M:%S %Z"),
         "git": git_revision(),
+        "splits_sha256": splits_sha256(),
         "python": platform.python_version(),
         "numpy": np.__version__,
         "host": platform.node(),

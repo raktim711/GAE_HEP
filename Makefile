@@ -6,12 +6,22 @@ CLI := $(PY) -m gaehep.cli
 # `make smoke` writes its synthetic dataset and results here (the directory is deleted first)
 SCRATCH ?= /tmp/gaehep_smoke
 
-.PHONY: setup data download preprocess tables splits test lint smoke baselines report train-% flow-% qn-%
+.PHONY: setup data data-blackbox download preprocess tables splits test lint smoke baselines report train-% flow-% qn-%
 
 setup:
 	$(PY) -m pip install -e ".[dev]"
 
 data: download preprocess tables splits
+
+# the three LHC Olympics black boxes (test data; ~2.5 GB download and ~2.4 GB processed each): download, cluster,
+# build the tables, delete each raw file once its run is verified, then make the test splits.  Rerunnable.
+data-blackbox:
+	for s in bb1 bb2 bb3; do \
+	  $(CLI) download --sample $$s && \
+	  $(CLI) preprocess --sample $$s --delete-raw && \
+	  $(CLI) tables --sample $$s || exit 1; \
+	done
+	$(CLI) splits --sample bb1 bb2 bb3
 
 download:
 	$(CLI) download
@@ -31,8 +41,8 @@ test:
 	$(PY) -m pytest -q -p no:warnings
 
 lint:
-	$(PY) -m ruff check src tests
-	$(PY) -m ruff format --check src tests
+	$(PY) -m ruff check src tests scripts
+	$(PY) -m ruff format --check src tests scripts
 
 # end-to-end run on a small synthetic dataset (no LHCO files needed)
 smoke:

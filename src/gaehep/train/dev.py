@@ -42,13 +42,17 @@ def dev_dir(name: str) -> Path:
 
 
 def _tab(data: Data, split: str, max_events: int | None) -> dict[str, np.ndarray]:
-    st = data.store("rnd")
+    st = data.store(data.sample_of(split))
     ev = data.events(split, max_events)
-    return {k: st[k][ev] for k in ("mjj", "m", "n_const", "tau1", "tau2", "label")}
+    # with a black box as the training sample 'bkg_val' is its validation part: no labels are read from it
+    keys = ("mjj", "m", "n_const", "tau1", "tau2") + (("label",) if data.train_sample == "rnd" else ())
+    return {k: st[k][ev] for k in keys}
 
 
 def _spearman(a: np.ndarray, b: np.ndarray) -> float:
     ok = np.isfinite(a) & np.isfinite(b)
+    if ok.sum() < 2:  # e.g. tau21 of a black box, which has no N-subjettiness
+        return float("nan")
     return float(spearmanr(a[ok], b[ok]).statistic)
 
 
@@ -102,8 +106,9 @@ def dev_run(
     (out_dir / "config.yaml").write_text(yaml.safe_dump(cfg, sort_keys=False))
     dcfg = cfg.get("data", {})
     n_const = int(dcfg.get("n_const", 50))
-    if data is None or data.n_const != n_const:
-        data = Data(n_const=n_const)
+    train_sample = str(dcfg.get("train_sample", "rnd"))
+    if data is None or data.n_const != n_const or data.train_sample != train_sample:
+        data = Data.from_config(dcfg)
     scaler = data.scaler()
     tcfg = TrainConfig.from_dict(cfg.get("train"))
     seed_everything(tcfg.seed)  # the initial weights are part of the seed's randomness
@@ -271,7 +276,7 @@ def dev_profile(
 
     out_name = out_name or name
     cfg = yaml.safe_load((dev_dir(name) / "config.yaml").read_text())
-    data = Data(n_const=int(cfg.get("data", {}).get("n_const", 50)))
+    data = Data.from_config(cfg.get("data"))
     scaler = data.scaler()
     model = build_model(cfg["model"], **cfg.get("model_args", {}))
     model.load_state_dict(torch.load(dev_dir(name) / "model.pt", weights_only=True, map_location="cpu"))
@@ -367,7 +372,7 @@ def dev_eval_run(run: str, log=print) -> dict[str, Any]:
 
     src = _run_dir(run)
     cfg = yaml.safe_load((src / "config.yaml").read_text())
-    data = Data(n_const=int(cfg.get("data", {}).get("n_const", 50)))
+    data = Data.from_config(cfg.get("data"))
     scaler = data.scaler()
     model = build_model(cfg["model"], **cfg.get("model_args", {}))
     model.load_state_dict(torch.load(src / "model.pt", weights_only=True, map_location="cpu"))
@@ -445,7 +450,7 @@ def dev_flow(
     from gaehep.models.latent_flow import LatentFlow
 
     cfg = yaml.safe_load((dev_dir(name) / "config.yaml").read_text())
-    data = Data(n_const=int(cfg.get("data", {}).get("n_const", 50)))
+    data = Data.from_config(cfg.get("data"))
     L = _dev_latents(name, data, cfg, train_events)
     lat = {s: L[f"z_{s}"] for s in ("bkg_train", "bkg_val", "sig_val")}
     ctx = {s: L[f"c_{s}"] for s in ("bkg_train", "bkg_val", "sig_val")}
