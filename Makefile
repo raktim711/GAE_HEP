@@ -1,6 +1,9 @@
-# Convenience targets.  Override the interpreter with `make PY=python ...` (e.g. on Kaggle/Colab).
-PY ?= /home/claude/.venvs/gaehep/bin/python
+# Convenience targets.  Override the interpreter with `make PY=python ...` (e.g. on Kaggle/Colab); by default
+# the project venv below is used where it exists, python3 otherwise.
+VENV_PY := /home/claude/.venvs/gaehep/bin/python
+PY ?= $(if $(wildcard $(VENV_PY)),$(VENV_PY),python3)
 CLI := $(PY) -m gaehep.cli
+# `make smoke` writes its synthetic dataset and results here (the directory is deleted first)
 SCRATCH ?= /tmp/gaehep_smoke
 
 .PHONY: setup data download preprocess tables splits test lint smoke baselines report train-% flow-% qn-%
