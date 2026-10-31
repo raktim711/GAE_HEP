@@ -1,0 +1,27 @@
+# Tested versions of gaehep's direct dependencies (pyproject.toml, including the [dev] extra).
+# Recorded with `pip list` from a Python 3.13.18 environment; local version labels (+cpu, +cu132) are
+# dropped, so `torch==2.15.0` is satisfied by both the CPU and the CUDA wheels (PEP 440).
+# Valid for Python 3.11-3.13 (CI: 3.11 and 3.12).  numpy 2.5 and scipy 1.18 have no Python 3.11
+# wheels, so 3.11 gets the newest releases that do; on Python 3.10, install without `-c`.
+#
+#   pip install -e ".[dev]" -c constraints.txt
+numpy==2.5.4 ; python_version >= "3.12"
+numpy==2.4.6 ; python_version < "3.12"
+scipy==1.18.1 ; python_version >= "3.12"
+scipy==1.17.1 ; python_version < "3.12"
+pandas==3.1.0
+tables==3.11.1
+h5py==3.16.0
+scikit-learn==1.9.1
+matplotlib==3.11.2
+pyyaml==6.0.3
+tqdm==4.70.1
+torch==2.15.0
+zuko==1.6.0
+fastjet==3.5.2.0
+awkward==2.14.0
+vector==1.9.0
+# [dev]
+pytest==9.2.0
+ruff==0.17.3
+torch_geometric==2.8.1

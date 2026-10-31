@@ -108,10 +108,41 @@ models: `gaehep dev` → `gaehep promote <dev run> <name>` (scores the same weig
 "Back To The Roots") in the signal region on the run's permutation-invariant jet latents and on the standard
 (m_J1, Δm_J, τ21_J1, τ21_J2) features, for several injected signal fractions.
 
+## Quick start without the LHCO data (CPU-only)
+
+Python >= 3.10 (`pyproject.toml`; CI tests 3.11 and 3.12).  Everything below runs on synthetic jets
+(`gaehep.data.fake`) on a CPU:
+
+```bash
+python3 -m venv .venv && . .venv/bin/activate
+pip install torch -c constraints.txt --index-url https://download.pytorch.org/whl/cpu   # optional: CPU-only torch
+pip install -e ".[dev]" -c constraints.txt   # tested versions (Python 3.11-3.13); drop -c for the newest
+make test                                    # unit tests, ~2 min
+make smoke                                   # train -> score -> flow / qn / bump hunt / weak / report, ~3 min
+```
+
+`make` uses `/home/claude/.venvs/gaehep/bin/python` if it exists and `python3` otherwise; choose another
+interpreter with `make PY=/path/to/python test`.  Paths: `GAEHEP_DATA` is the data root (`raw/`,
+`processed/`; default `/home/claude/data/lhco`), `GAEHEP_RESULTS` the results root (`runs/`, `dev/`,
+`summary.md`; default `results/` in the repo).  `make smoke` sets both to the make variable `SCRATCH`
+(default `/tmp/gaehep_smoke`, deleted first; results in `$SCRATCH/results`), so it never touches `results/`:
+`make smoke SCRATCH=/some/dir`.
+
+**Reproducing a run.**  A run is fixed by its config: `train.seed` (default 1) is passed to
+`gaehep.config.seed_everything`, which seeds Python's `random`, NumPy's global RNG and torch before the model
+is built and again when training starts, so it determines the initial weights and any sampling in the loss
+(VAE); the per-epoch training jets are drawn with `default_rng([seed, epoch])`.  The splits, the feature
+scaler, the validation subset and the latent-training subset use fixed seeds of their own.  On CPU, with the
+same `train.threads`, data, package versions and machine, the same config gives bit-identical `scores.npz`
+(`tests/test_reproducibility.py`).  Not covered: a different thread count changes the floating-point
+summation order (scores differ in the last bits, and the difference can grow with training), GPU runs
+(deterministic algorithms are not enforced), and a run paused by `train.time_budget_min` and resumed, which
+re-seeds torch at the restart (identical for deterministic losses, not for a VAE).
+
 ## Usage
 
 ```bash
-pip install -e ".[dev]"            # Python >= 3.11; torch CPU is fine
+pip install -e ".[dev]"            # Python >= 3.10; torch CPU is fine
 make test                          # unit tests (no data needed)
 make smoke                         # end-to-end run on a synthetic dataset
 
