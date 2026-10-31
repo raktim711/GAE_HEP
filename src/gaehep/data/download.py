@@ -1,6 +1,9 @@
-"""Download the LHC Olympics 2020 R&D dataset from Zenodo with resume support and md5 verification.
+"""Download the LHC Olympics 2020 datasets from Zenodo with resume support and md5 verification.
 
 Record 6466204 (R&D dataset v5) contains the v2 raw events file that matches the v2 high-level features file.
+A plain ``gaehep download`` fetches only this R&D record.  The three black boxes (record 4536624) are fetched
+per box with ``gaehep download --sample bb1`` (``bb2``, ``bb3``): the events file and, for ``bb1`` and ``bb3``,
+the master key (one label per line, in file order).
 """
 
 from __future__ import annotations
@@ -16,6 +19,7 @@ from pathlib import Path
 from gaehep.config import raw_dir
 
 ZENODO_RECORD = "6466204"
+BLACKBOX_RECORD = "4536624"
 
 # filename -> md5 (from the Zenodo record page)
 FILES: dict[str, str] = {
@@ -28,6 +32,30 @@ FILES: dict[str, str] = {
     "pythia_RnD_Z_XY_qq.cmnd": "1e9b731c2bf90f4ba549b85996cd7424",
     "pythia_RnD_Z_XY_qqq.cmnd": "21472daafd7d54cd10e7548869a41d03",
 }
+
+# Black-box files (record 4536624), md5 from the record page (docs/STUDY_PROTOCOL.md, section 5)
+BLACKBOX_FILES: dict[str, str] = {
+    "events_LHCO2020_BlackBox1.h5": "847be306afd923a4ba30543070113627",
+    "events_LHCO2020_BlackBox1.masterkey": "c5d9b1e75ce26fd820c1c99dfc874e92",
+    "events_LHCO2020_BlackBox2.h5": "2e5dce598238789938cb31e9cd3e7a46",
+    "events_LHCO2020_BlackBox3.h5": "ffc53e0c0b42e0f2c752ce48db74ce27",
+    "events_LHCO2020_BlackBox3.masterkey": "51e275f122eb48b10ccc2c858dda358e",
+}
+
+# --sample -> the record files of that sample (BB2 has no master key: it is background only)
+SAMPLE_FILES: dict[str, tuple[str, ...]] = {
+    "rnd": tuple(FILES),
+    "bb1": ("events_LHCO2020_BlackBox1.masterkey", "events_LHCO2020_BlackBox1.h5"),
+    "bb2": ("events_LHCO2020_BlackBox2.h5",),
+    "bb3": ("events_LHCO2020_BlackBox3.masterkey", "events_LHCO2020_BlackBox3.h5"),
+}
+
+ALL_FILES: dict[str, str] = {**FILES, **BLACKBOX_FILES}
+
+
+def record_of(name: str) -> str:
+    return BLACKBOX_RECORD if name in BLACKBOX_FILES else ZENODO_RECORD
+
 
 URL_TEMPLATES = (
     "https://zenodo.org/records/{record}/files/{name}?download=1",
@@ -74,7 +102,7 @@ def _stream(url: str, dest: Path, log_every: float = 30.0) -> None:
 
 def download_file(name: str, out_dir: Path, retries: int = 5) -> Path:
     """Download one record file into ``out_dir`` and verify its md5. Returns the final path."""
-    expected = FILES[name]
+    expected = ALL_FILES[name]
     dest = out_dir / name
     if dest.exists() and md5sum(dest) == expected:
         print(f"[ok] {name} already present (md5 verified)")
@@ -83,7 +111,7 @@ def download_file(name: str, out_dir: Path, retries: int = 5) -> Path:
     last_err: Exception | None = None
     for attempt in range(1, retries + 1):
         for tmpl in URL_TEMPLATES:
-            url = tmpl.format(record=ZENODO_RECORD, name=name)
+            url = tmpl.format(record=record_of(name), name=name)
             try:
                 print(f"[get] {name} (attempt {attempt}) from {url}", flush=True)
                 _stream(url, part)
@@ -101,17 +129,48 @@ def download_file(name: str, out_dir: Path, retries: int = 5) -> Path:
     raise RuntimeError(f"could not download {name}: {last_err}")
 
 
+def raw_deleted(sample: str) -> bool:
+    """True if ``sample`` was preprocessed and its raw events file was deleted after the verified run."""
+    from gaehep.config import load_json, processed_dir
+
+    meta = processed_dir() / sample / "meta.json"
+    return meta.exists() and bool(load_json(meta).get("raw_deleted", False))
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--out", type=Path, default=raw_dir())
-    p.add_argument("--files", nargs="*", default=list(FILES), help="subset of record files to fetch")
+    p.add_argument("--files", nargs="*", default=None, help="subset of record files to fetch")
+    p.add_argument(
+        "--sample",
+        nargs="+",
+        choices=list(SAMPLE_FILES),
+        default=None,
+        help="fetch the files of these samples (rnd, bb1, bb2, bb3); default: the R&D record only",
+    )
+    p.add_argument(
+        "--force",
+        action="store_true",
+        help="fetch an events file even if its raw copy was deleted after processing",
+    )
     args = p.parse_args(argv)
     args.out.mkdir(parents=True, exist_ok=True)
-    unknown = [f for f in args.files if f not in FILES]
+    names: list[str] = []
+    for s_ in args.sample or []:
+        if s_ != "rnd" and not args.force and raw_deleted(s_):
+            print(f"[skip] {s_}: already processed and the raw file deleted (use --force to fetch it again)")
+            continue
+        names += [n for n in SAMPLE_FILES[s_] if n not in names]
+    if args.files is not None:
+        names += [n for n in args.files if n not in names]
+    if args.files is None and args.sample is None:
+        names = list(FILES)
+    unknown = [f for f in names if f not in ALL_FILES]
     if unknown:
         p.error(f"unknown file(s): {unknown}")
     # small files first so that problems surface early
-    for name in sorted(args.files, key=lambda n: (n == "events_anomalydetection_v2.h5", n)):
+    big = {"events_anomalydetection_v2.h5", *(n for n in BLACKBOX_FILES if n.endswith(".h5"))}
+    for name in sorted(names, key=lambda n: (n in big, n)):
         download_file(name, args.out)
     return 0
 

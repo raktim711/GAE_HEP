@@ -238,7 +238,7 @@ def draw_reference_jets(data: Data, n_ref: int, seed: int) -> np.ndarray:
         raise ValueError(f"reference set of {n_ref} jets, but bkg_train has {n_jets}")
     flat = np.sort(np.random.default_rng(seed).choice(n_jets, n_ref, replace=False))
     ev, jt = events[flat // 2], flat % 2
-    const = data.store("rnd").const
+    const = data.store(data.sample_of("bkg_train")).const
     out = np.empty((n_ref, data.n_const, 3), dtype=np.float32)
     for s in range(0, n_ref, 50_000):
         out[s : s + 50_000] = const[ev[s : s + 50_000], jt[s : s + 50_000], : data.n_const, :]

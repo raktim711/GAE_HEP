@@ -9,7 +9,7 @@ import torch.nn.functional as F
 
 from gaehep.data.dataset import JetBatch
 from gaehep.models.base import JetModel, mlp
-from gaehep.models.edgeconv import EdgeConvEncoder
+from gaehep.models.edgeconv import EdgeConvEncoder, batch_tie_order
 
 
 class EdgeConvClassifier(JetModel):
@@ -31,7 +31,7 @@ class EdgeConvClassifier(JetModel):
         self.pos_weight = pos_weight
 
     def embed(self, b: JetBatch) -> torch.Tensor:
-        h = self.encoder(b.x, b.mask, b.coords)
+        h = self.encoder(b.x, b.mask, b.coords, batch_tie_order(b))
         return self.encoder.pool(h, b.mask)
 
     def score_and_embed(self, b: JetBatch) -> tuple[torch.Tensor, torch.Tensor]:

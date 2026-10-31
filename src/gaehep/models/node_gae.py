@@ -21,7 +21,7 @@ from torch import nn
 
 from gaehep.data.dataset import JetBatch
 from gaehep.models.base import JetModel
-from gaehep.models.edgeconv import EdgeConvEncoder
+from gaehep.models.edgeconv import EdgeConvEncoder, batch_tie_order
 
 
 class NodeGAE(JetModel):
@@ -43,8 +43,9 @@ class NodeGAE(JetModel):
 
     def forward(self, b: JetBatch) -> dict[str, torch.Tensor]:
         m = b.mask[..., None].to(b.x.dtype)
-        z = self.to_latent(self.encoder(b.x, b.mask, b.coords)) * m
-        xhat = self.out(self.decoder(z, b.mask, b.coords)) * m
+        tie = batch_tie_order(b)
+        z = self.to_latent(self.encoder(b.x, b.mask, b.coords, tie)) * m
+        xhat = self.out(self.decoder(z, b.mask, b.coords, tie)) * m
         return {"z_nodes": z, "xhat": xhat}
 
     def embed(self, b: JetBatch) -> torch.Tensor:

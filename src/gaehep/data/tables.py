@@ -4,6 +4,7 @@ The official ``*.features.h5`` files contain, for the two leading anti-kT R=1.0 
 ``px, py, pz, m, tau1, tau2, tau3`` (columns ``pxj1 ... tau3j2``) plus ``label`` for the 2-prong file.
 We do **not** assume their jet ordering: for every event the official (j1, j2) pair is matched to our
 pT-ordered jets either directly or swapped, whichever agrees.  Only matched events receive tau values.
+The black boxes (``bb1``-``bb3``) have no feature files: their tau columns are NaN and ``matched`` is False.
 
 Output: ``processed/<sample>/events.npz`` with per-event arrays
 
@@ -25,6 +26,7 @@ FEATURE_FILES = {
     "rnd": "events_anomalydetection_v2.features.h5",
     "qqq": "events_anomalydetection_Z_XY_qqq.features.h5",
 }
+TABLE_SAMPLES = ("rnd", "qqq", "bb1", "bb2", "bb3")
 
 
 def jet_observables(p4: np.ndarray) -> dict[str, np.ndarray]:
@@ -95,10 +97,12 @@ def build_tables(
     out["label"] = np.load(root / "labels.npy")
     out["mjj"] = dijet_mass(p4).astype(np.float32)
 
-    feat_path = Path(feat_path) if feat_path else raw_dir() / FEATURE_FILES[sample]
+    if feat_path is None and sample in FEATURE_FILES:
+        feat_path = raw_dir() / FEATURE_FILES[sample]
+    feat_path = Path(feat_path) if feat_path else None
     summary: dict = {"sample": sample, "n_events": n}
     taus = {f"tau{i}": np.full((n, 2), np.nan, dtype=np.float32) for i in (1, 2, 3)}
-    if feat_path.exists():
+    if feat_path is not None and feat_path.exists():
         feat = read_features(feat_path)
         nf = len(next(iter(feat.values())))
         if nf < n:
@@ -141,6 +145,9 @@ def build_tables(
             "frac_two_jets": float(np.mean(out["n_jets"] >= 2)),
             "n_signal": int(np.sum(out["label"] == 1)),
             "n_background": int(np.sum(out["label"] == 0)),
+            "label_counts": {
+                int(k): int(c) for k, c in zip(*np.unique(out["label"], return_counts=True), strict=True)
+            },
             "mjj_quantiles": {q: float(np.nanquantile(out["mjj"], q)) for q in (0.01, 0.5, 0.99)},
             **run_metadata(),
         }
@@ -152,7 +159,7 @@ def build_tables(
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--sample", choices=list(FEATURE_FILES), required=True)
+    p.add_argument("--sample", choices=TABLE_SAMPLES, required=True)
     p.add_argument("--proc-root", type=Path, default=None)
     p.add_argument("--features", type=Path, default=None)
     p.add_argument("--tol", type=float, default=1e-3)

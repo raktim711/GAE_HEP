@@ -77,8 +77,11 @@ class JetStore:
     def __getitem__(self, key: str) -> np.ndarray:
         return self.table[key]
 
-    def pool(self, events: np.ndarray, n_const: int, jets: tuple[int, ...] = (0, 1)) -> JetPool:
-        """Load the constituents of ``events`` x ``jets`` into RAM (truncated to ``n_const`` nodes)."""
+    def pool(
+        self, events: np.ndarray, n_const: int, jets: tuple[int, ...] = (0, 1), with_labels: bool = True
+    ) -> JetPool:
+        """Load the constituents of ``events`` x ``jets`` into RAM (truncated to ``n_const`` nodes).  With
+        ``with_labels=False`` the label column of the table is not read (the pool's labels are all 0)."""
         events = np.asarray(events, dtype=np.int64)
         ev = np.repeat(events, len(jets))
         jt = np.tile(np.asarray(jets, dtype=np.int64), len(events))
@@ -99,7 +102,7 @@ class JetStore:
             m=t["m"][ev, jt].astype(np.float32),
             e=t["e"][ev, jt].astype(np.float32),
             n_const=t["n_const"][ev, jt].astype(np.int32),
-            label=t["label"][ev].astype(np.int8),
+            label=t["label"][ev].astype(np.int8) if with_labels else np.zeros(len(ev), dtype=np.int8),
         )
 
 

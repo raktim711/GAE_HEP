@@ -220,6 +220,19 @@ def main(argv: list[str] | None = None) -> int:
     st.add_argument(
         "--n-boot", type=int, default=200, help="paired-bootstrap resamples (the protocol uses 200)"
     )
+    ss = sub.add_parser(
+        "score-sample", help="score a trained run on a black box -> bb<i>_scores.npz, bb<i>_metrics.json"
+    )
+    ss.add_argument("run")
+    ss.add_argument("--sample", required=True, choices=["bb1", "bb2", "bb3"])
+    ss.add_argument(
+        "--subsample", action="store_true", help="the box's _test_sub split (200k background + all signal)"
+    )
+    ss.add_argument("--chunk", type=int, default=50_000, help="events per resumable scoring chunk")
+    ss.add_argument("--n-boot", type=int, default=30, help="bootstrap resamples of AUC / max SIC (0 = none)")
+    ss.add_argument(
+        "--rescore", action="store_true", help="score again even if bb<i>_scores.npz is up to date"
+    )
     cmp_ = sub.add_parser("compare", help="overlay ROC/SIC curves of several runs")
     cmp_.add_argument("runs", nargs="+")
     cmp_.add_argument("--out", type=Path, required=True)
@@ -383,6 +396,18 @@ def main(argv: list[str] | None = None) -> int:
         from gaehep.eval.irc_probe import main as irc_probe
 
         irc_probe(a.runs, k=a.k)
+    elif a.cmd == "score-sample":
+        from gaehep.eval.blackbox import score_sample
+
+        score_sample(
+            a.run,
+            a.sample,
+            subsample=a.subsample,
+            chunk=a.chunk,
+            n_boot=a.n_boot,
+            rescore=a.rescore,
+            log=_log,
+        )
     elif a.cmd == "compare":
         from gaehep.eval.report import compare
 

@@ -16,9 +16,17 @@ import numpy as np
 import torch
 import yaml
 
-from gaehep.config import load_json, processed_dir, results_dir, run_metadata, save_json, seed_everything
+from gaehep.config import (
+    BLACKBOX_SAMPLES,
+    load_json,
+    processed_dir,
+    results_dir,
+    run_metadata,
+    save_json,
+    seed_everything,
+)
 from gaehep.data.dataset import JetPool, JetStore, Scaler, fit_scaler
-from gaehep.data.splits import load_splits
+from gaehep.data.splits import load_splits, train_val_split
 from gaehep.eval.evaluate import TEST_KEYS, evaluate_scores, make_figures, write_metrics
 from gaehep.models import build_model
 from gaehep.models.latent_flow import LatentFlow
@@ -32,7 +40,10 @@ SPLIT_SAMPLE = {
     "sig_val": "rnd",
     "sig_test": "rnd",
     "sig3_test": "qqq",
+    **{f"{box}_{kind}": box for box in BLACKBOX_SAMPLES for kind in ("test", "test_sub")},
 }
+# with data.train_sample = <box>, these two splits are the box's seeded 90/10 training / validation parts
+TRAIN_ROLES = ("bkg_train", "bkg_val")
 SCORE_SPLITS = ("bkg_val", "bkg_test", "sig_test", "sig3_test")
 TABLE_KEYS = ("mjj", "m", "pt", "n_const", "tau1", "tau2", "tau3", "label")
 
@@ -44,14 +55,48 @@ def concat_pools(pools: list[JetPool]) -> JetPool:
 
 
 class Data:
-    """Lazy access to split pools / tables / scaler for a given number of nodes per jet."""
+    """Lazy access to split pools / tables / scaler for a given number of nodes per jet.
 
-    def __init__(self, n_const: int, root: Path | None = None):
+    ``train_sample`` is the sample the model trains on: ``'rnd'`` (the R&D background, default) or a black box
+    (``'bb1'``): then ``bkg_train`` / ``bkg_val`` are the seeded 90/10 parts of all that box's events with at
+    least two jets, whatever their labels.  Their pools do not read the labels, so labels cannot reach
+    training, early stopping or F_B (the background CDF of the ``prod`` score is built from ``bkg_val``).  The
+    test splits (R&D and black boxes) are unchanged.
+    """
+
+    def __init__(self, n_const: int, root: Path | None = None, train_sample: str = "rnd"):
         self.n_const = n_const
         self.root = Path(root) if root else processed_dir()
+        self.train_sample = train_sample
         self.splits = load_splits(self.root)
+        self.split_sample = dict(SPLIT_SAMPLE)
         self.stores: dict[str, JetStore] = {}
         self._pools: dict[str, JetPool] = {}
+        if train_sample != "rnd":
+            if train_sample not in BLACKBOX_SAMPLES:
+                raise ValueError(
+                    f"data.train_sample must be 'rnd' or one of {BLACKBOX_SAMPLES}, not {train_sample!r}"
+                )
+            if f"{train_sample}_test" not in self.splits:
+                raise FileNotFoundError(
+                    f"no {train_sample} splits in {self.root} (gaehep splits --sample {train_sample})"
+                )
+            train, val = train_val_split(self.splits[f"{train_sample}_test"])
+            self.splits = {**self.splits, "bkg_train": train, "bkg_val": val}
+            self.split_sample.update({k: train_sample for k in TRAIN_ROLES})
+
+    @classmethod
+    def from_config(cls, dcfg: dict[str, Any] | None, root: Path | None = None) -> Data:
+        """``Data`` for a run config's ``data`` section (``n_const``, ``train_sample``)."""
+        dcfg = dcfg or {}
+        return cls(int(dcfg.get("n_const", 50)), root, str(dcfg.get("train_sample", "rnd")))
+
+    def sample_of(self, split: str) -> str:
+        """The processed sample (``rnd``, ``qqq``, ``bb1`` ...) the events of ``split`` index."""
+        return self.split_sample[split]
+
+    def _labelled(self, split: str) -> bool:
+        return not (self.train_sample != "rnd" and split in TRAIN_ROLES)
 
     def store(self, sample: str) -> JetStore:
         if sample not in self.stores:
@@ -59,7 +104,7 @@ class Data:
         return self.stores[sample]
 
     def has(self, split: str) -> bool:
-        return split in self.splits and (self.root / SPLIT_SAMPLE[split] / "events.npz").exists()
+        return split in self.splits and (self.root / self.sample_of(split) / "events.npz").exists()
 
     def events(
         self,
@@ -72,7 +117,7 @@ class Data:
         GeV) *before* the random cap, so that ``mjj`` pools are subsets of the window's events."""
         ev = self.splits[split]
         if mjj is not None:
-            m = self.store(SPLIT_SAMPLE[split])["mjj"][ev]
+            m = self.store(self.sample_of(split))["mjj"][ev]
             ev = ev[(m >= mjj[0]) & (m <= mjj[1])]
         if max_events is not None and len(ev) > max_events:
             ev = np.sort(np.random.default_rng(seed).choice(ev, max_events, replace=False))
@@ -83,8 +128,8 @@ class Data:
     ) -> JetPool:
         key = f"{split}:{max_events}:{mjj}"
         if key not in self._pools:
-            self._pools[key] = self.store(SPLIT_SAMPLE[split]).pool(
-                self.events(split, max_events, mjj=mjj), self.n_const
+            self._pools[key] = self.store(self.sample_of(split)).pool(
+                self.events(split, max_events, mjj=mjj), self.n_const, with_labels=self._labelled(split)
             )
         return self._pools[key]
 
@@ -95,12 +140,14 @@ class Data:
         self._pools.pop(f"{split}:{max_events}:{mjj}", None)
 
     def table(self, split: str) -> dict[str, np.ndarray]:
-        st = self.store(SPLIT_SAMPLE[split])
+        st = self.store(self.sample_of(split))
         ev = self.events(split)
-        return {k: st[k][ev] for k in TABLE_KEYS if k in st.table}
+        keys = [k for k in TABLE_KEYS if k in st.table and (k != "label" or self._labelled(split))]
+        return {k: st[k][ev] for k in keys}
 
     def scaler(self) -> Scaler:
-        path = self.root / f"scaler_n{self.n_const}.json"
+        tag = "" if self.train_sample == "rnd" else f"_{self.train_sample}"
+        path = self.root / f"scaler{tag}_n{self.n_const}.json"
         if path.exists():
             return Scaler.from_json(path)
         sc = fit_scaler(self.pool("bkg_train"))
@@ -123,7 +170,7 @@ def run(
     run_dir.mkdir(parents=True, exist_ok=True)
     (run_dir / "config.yaml").write_text(yaml.safe_dump(cfg, sort_keys=False))
     dcfg = cfg.get("data", {})
-    data = data or Data(n_const=int(dcfg.get("n_const", 50)))
+    data = data or Data.from_config(dcfg)
     scaler = data.scaler()
     tcfg = TrainConfig.from_dict(cfg.get("train"))
     seed_everything(tcfg.seed)  # the initial weights are part of the seed's randomness
@@ -223,7 +270,7 @@ def evaluate_run(
             scores = {k: f[k] for k in f.files}
     if cfg is None and (run_dir / "config.yaml").exists():
         cfg = yaml.safe_load((run_dir / "config.yaml").read_text())
-    data = data or Data(n_const=int((cfg or {}).get("data", {}).get("n_const", 50)))
+    data = data or Data.from_config((cfg or {}).get("data"))
     tables = _tables(data)
     keep = (*TEST_KEYS, "bkg_val")  # bkg_val: background reference of the 'prod' aggregation
     metrics = evaluate_scores({k: scores[k] for k in keep if k in scores}, tables, n_boot=n_boot)
@@ -235,7 +282,7 @@ def evaluate_run(
 # ------------------------------------------------------------------------------- post-hoc variants
 def _latent_context(data: Data, split: str, n_events: int) -> np.ndarray:
     """(log m, log pT) of both jets of the first ``n_events`` events of a split (latents.npz row order)."""
-    st = data.store(SPLIT_SAMPLE[split])
+    st = data.store(data.sample_of(split))
     ev = data.events(split, None if split != "bkg_train" else n_events)
     if len(ev) != n_events:
         raise ValueError(f"{split}: {len(ev)} events in the split but {n_events} latents")
@@ -255,7 +302,7 @@ def latent_flow_variant(
     ctx: dict[str, np.ndarray | None] = {k: None for k in lat}
     if conditional:
         cfg = yaml.safe_load((src / "config.yaml").read_text()) if (src / "config.yaml").exists() else {}
-        data = data or Data(n_const=int(cfg.get("data", {}).get("n_const", 50)))
+        data = data or Data.from_config(cfg.get("data"))
         # bkg_train latents are a random event subset: Data.events(split, cap) reproduces it (seed 0)
         ctx = {k: _latent_context(data, k, len(v)) for k, v in lat.items()}
     flow = LatentFlow(d, seed=seed, context_dim=2 if conditional else 0).fit(
@@ -295,7 +342,7 @@ def quantile_normalised_variant(name: str, data: Data | None = None, n_bins: int
     with np.load(src / "scores.npz") as f:
         raw = {k: f[k] for k in f.files}
     cfg = yaml.safe_load((src / "config.yaml").read_text()) if (src / "config.yaml").exists() else {}
-    data = data or Data(n_const=int(cfg.get("data", {}).get("n_const", 50)))
+    data = data or Data.from_config(cfg.get("data"))
     m_val = data.table("bkg_val")["m"].ravel()
     s_val = raw["bkg_val"].ravel()
     edges = np.quantile(m_val, np.linspace(0, 1, n_bins + 1))

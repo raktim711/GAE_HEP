@@ -18,7 +18,7 @@ import torch
 
 from gaehep.data.dataset import JetBatch
 from gaehep.models.base import JetModel, mlp
-from gaehep.models.edgeconv import EdgeConvEncoder
+from gaehep.models.edgeconv import EdgeConvEncoder, batch_tie_order
 
 
 class RandomDistillation(JetModel):
@@ -48,7 +48,7 @@ class RandomDistillation(JetModel):
         self.register_buffer("ready", torch.tensor(False))
 
     def _teacher(self, b: JetBatch) -> torch.Tensor:
-        h = self.teacher(b.x, b.mask, b.coords)
+        h = self.teacher(b.x, b.mask, b.coords, batch_tie_order(b))
         return self.teacher_head(self.teacher.pool(h, b.mask))
 
     def _target(self, b: JetBatch) -> torch.Tensor:
@@ -56,7 +56,9 @@ class RandomDistillation(JetModel):
             return (self._teacher(b) - self.t_mean) / self.t_std
 
     def embed(self, b: JetBatch) -> torch.Tensor:
-        return self.student_head(self.student.pool(self.student(b.x, b.mask, b.coords), b.mask))
+        return self.student_head(
+            self.student.pool(self.student(b.x, b.mask, b.coords, batch_tie_order(b)), b.mask)
+        )
 
     @torch.no_grad()
     def prepare(self, batches: Iterable[JetBatch]) -> None:

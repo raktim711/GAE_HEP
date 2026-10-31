@@ -91,7 +91,7 @@ def recon_figure(run_dir: Path, n_per_class: int = 4, seed: int = 0) -> Path:
 
     run_dir = Path(run_dir)
     cfg = yaml.safe_load((run_dir / "config.yaml").read_text())
-    data = Data(n_const=int(cfg.get("data", {}).get("n_const", 50)))
+    data = Data.from_config(cfg.get("data"))
     scaler = data.scaler()
     model = build_model(cfg["model"], **cfg.get("model_args", {}))
     model.load_state_dict(torch.load(run_dir / "model.pt", weights_only=True, map_location="cpu"))

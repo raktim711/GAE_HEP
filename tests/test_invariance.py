@@ -41,6 +41,20 @@ MODELS = {
     "ef_ae_vae_kl": dict(
         hidden=(16, 16), k=4, latent_dim=4, n_out=8, dec_hidden=(32,), variational=True, score="kl"
     ),
+    # the encoders of the study (docs/STUDY_PROTOCOL.md, section 3) and the pooling ablation
+    **{
+        f"ef_ae_{enc}": dict(
+            hidden=(16, 16), k=4, latent_dim=4, n_out=8, dec_hidden=(32,), variational=True, encoder=enc
+        )
+        for enc in ("deepsets", "efn", "transformer", "ew_attention", "gcn_complete")
+    },
+    **{
+        f"ef_ae_{enc}_{pool}": dict(
+            hidden=(16, 16), k=4, latent_dim=4, n_out=8, dec_hidden=(32,), encoder=enc, pool=pool
+        )
+        for enc in ("deepsets", "edgeconv")
+        for pool in ("weighted", "pma")
+    },
 }
 
 

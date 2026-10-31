@@ -486,6 +486,12 @@ def _cases(cfg: str):
             {"n_boot": 20},
         ),
         (
+            ["score-sample", "r", "--sample", "bb3", "--subsample", "--chunk", "1000", "--n-boot", "0"],
+            "gaehep.eval.blackbox.score_sample",
+            ("r", "bb3"),
+            {"subsample": True, "chunk": 1000, "n_boot": 0, "rescore": False},
+        ),
+        (
             ["compare", "a", "b:prod", "--out", "d"],
             f"{rp}.compare",
             (["a", "b:prod"], Path("d")),

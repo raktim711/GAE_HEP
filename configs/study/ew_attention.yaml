@@ -1,0 +1,30 @@
+# Encoder study (docs/STUDY_PROTOCOL.md, section 3), encoder `ew_attention`:
+# attention with log z_j added to the logits, IRC safe; pT-fraction weighted pooling.
+# Identical to configs/ef_vae_k8_e2.yaml except model_args.encoder (and radii for ewmp); encoders
+# without a k-NN graph ignore k.  Development run: `gaehep dev configs/study/ew_attention.yaml --name <run>
+# --set train.epochs=2 --set train.seed=<s> --set train.threads=1`.
+model: ef_ae
+model_args:
+  hidden: [48, 48, 48]
+  k: 8
+  latent_dim: 4
+  n_out: 32
+  dec_hidden: [256, 256]
+  sigmas: [0.02, 0.05, 0.1, 0.2, 0.4]
+  variational: true
+  beta: 0.001
+  encoder: ew_attention
+extra_scores: [kl]
+data:
+  n_const: 50
+train:                      # 2 epochs; `gaehep dev` applies the rest of the dev budget (120k jets per epoch)
+  epochs: 2
+  jets_per_epoch: 120000
+  batch_size: 256
+  lr: 1.0e-3
+  weight_decay: 1.0e-4
+  patience: 3
+  val_jets: 20000
+  time_budget_min: 100
+  threads: 1
+  seed: 1
