@@ -8,7 +8,7 @@ Each cell is the mean ± the sample standard deviation over the seeds, with the 
 |---|--:|--:|---|---|---|---|
 | edgeconv | 3 | 0 | 0.855 ± 0.004 | 0.801 ± 0.002 | 0.912 ± 0.002 | 0.474 ± 0.001 |
 | ewmp | 3 | 0 | 0.863 ± 0.005 | 0.820 ± 0.008 | 0.910 ± 0.002 | 0.474 ± 0.000 |
-| transformer | 3 | 0 | 0.849 ± 0.001 | 0.817 ± 0.002 | 0.902 ± 0.002 | 0.472 ± 0.001 |
+| transformer | 3 | 0 | 0.849 ± 0.001 | 0.817 ± 0.002 | 0.904 ± 0.004 | 0.472 ± 0.001 |
 
 ## max SIC in the signal window
 
@@ -16,7 +16,7 @@ Each cell is the mean ± the sample standard deviation over the seeds, with the 
 |---|--:|--:|---|---|---|---|
 | edgeconv | 3 | 0 | 1.75 ± 0.04 | 1.44 ± 0.01 | 3.09 ± 0.01 | 1.00 ± 0.00 |
 | ewmp | 3 | 0 | 1.80 ± 0.05 | 1.52 ± 0.02 | 2.87 ± 0.20 | 1.00 ± 0.00 |
-| transformer | 3 | 0 | 1.68 ± 0.00 | 1.48 ± 0.01 | 2.67 ± 0.13 | 1.00 ± 0.00 |
+| transformer | 3 | 0 | 1.68 ± 0.00 | 1.48 ± 0.01 | 2.71 ± 0.12 | 1.00 ± 0.00 |
 
 ## 1/ε_B at ε_S = 0.3 in the signal window
 
@@ -24,7 +24,7 @@ Each cell is the mean ± the sample standard deviation over the seeds, with the 
 |---|--:|--:|---|---|---|---|
 | edgeconv | 3 | 0 | 22.0 ± 0.7 | 10.5 ± 0.2 | 99.2 ± 4.1 | 3.2 ± 0.1 |
 | ewmp | 3 | 0 | 22.0 ± 3.3 | 11.3 ± 1.0 | 80.4 ± 15.3 | 3.2 ± 0.1 |
-| transformer | 3 | 0 | 21.1 ± 0.9 | 12.8 ± 0.3 | 70.8 ± 0.7 | 3.3 ± 0.1 |
+| transformer | 3 | 0 | 21.1 ± 0.9 | 12.8 ± 0.3 | 72.4 ± 2.8 | 3.2 ± 0.1 |
 
 ## AUC over the full m_jj range
 
@@ -32,7 +32,7 @@ Each cell is the mean ± the sample standard deviation over the seeds, with the 
 |---|--:|--:|---|---|---|---|
 | edgeconv | 3 | 0 | 0.849 ± 0.004 | 0.805 ± 0.001 | 0.852 ± 0.001 | 0.575 ± 0.001 |
 | ewmp | 3 | 0 | 0.855 ± 0.005 | 0.822 ± 0.007 | 0.848 ± 0.002 | 0.573 ± 0.001 |
-| transformer | 3 | 0 | 0.841 ± 0.001 | 0.819 ± 0.002 | 0.841 ± 0.001 | 0.579 ± 0.001 |
+| transformer | 3 | 0 | 0.841 ± 0.001 | 0.819 ± 0.002 | 0.842 ± 0.002 | 0.580 ± 0.002 |
 
 ## max SIC over the full m_jj range
 
@@ -40,7 +40,7 @@ Each cell is the mean ± the sample standard deviation over the seeds, with the 
 |---|--:|--:|---|---|---|---|
 | edgeconv | 3 | 0 | 1.75 ± 0.04 | 1.45 ± 0.01 | 2.76 ± 0.10 | 1.00 ± 0.00 |
 | ewmp | 3 | 0 | 1.78 ± 0.05 | 1.52 ± 0.02 | 2.51 ± 0.26 | 1.00 ± 0.00 |
-| transformer | 3 | 0 | 1.66 ± 0.01 | 1.48 ± 0.01 | 2.23 ± 0.06 | 1.00 ± 0.00 |
+| transformer | 3 | 0 | 1.66 ± 0.01 | 1.48 ± 0.01 | 2.25 ± 0.06 | 1.00 ± 0.00 |
 
 ## 1/ε_B at ε_S = 0.3 over the full m_jj range
 
@@ -48,7 +48,7 @@ Each cell is the mean ± the sample standard deviation over the seeds, with the 
 |---|--:|--:|---|---|---|---|
 | edgeconv | 3 | 0 | 23.5 ± 0.7 | 11.4 ± 0.1 | 72.7 ± 1.1 | 4.6 ± 0.0 |
 | ewmp | 3 | 0 | 22.9 ± 3.2 | 12.1 ± 1.1 | 64.0 ± 7.8 | 4.6 ± 0.1 |
-| transformer | 3 | 0 | 21.7 ± 0.7 | 13.7 ± 0.3 | 53.0 ± 4.8 | 4.7 ± 0.1 |
+| transformer | 3 | 0 | 21.7 ± 0.7 | 13.7 ± 0.3 | 53.9 ± 3.8 | 4.8 ± 0.1 |
 
 ## Sculpting and training loss
 
