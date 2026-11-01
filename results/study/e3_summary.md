@@ -46,6 +46,21 @@ Mean +- standard deviation of Z over seeds:
 
 Largest |Z| over all runs, windows and cuts: 2.57
 
+### BB2 null test of the E1 main-grid runs (50 constituents, R&D-trained; BB2 subsample; local Z)
+
+| encoder | runs | max abs Z, no cut | max abs Z, 10 % cut | max abs Z, 2 % cut | most extreme (run, window, cut) |
+|---|--:|--:|--:|--:|---|
+| deepsets | 5 | 1.67 | 2.49 | 2.14 | -2.49 (study_deepsets_s3, 3300-3700 GeV, 10 %) |
+| edgeconv | 5 | 1.67 | 2.47 | 1.94 | -2.47 (study_edgeconv_s4, 3300-3700 GeV, 10 %) |
+| efn | 5 | 1.67 | 2.55 | 1.50 | -2.55 (study_efn_s1, 3300-3700 GeV, 10 %) |
+| ew_attention | 5 | 1.67 | 3.11 | 2.27 | -3.11 (study_ew_attention_s5, 3300-3700 GeV, 10 %) |
+| ewmp | 5 | 1.67 | 3.06 | 2.75 | -3.06 (study_ewmp_s3, 3300-3700 GeV, 10 %) |
+| gcn_complete | 5 | 1.67 | 1.14 | 3.31 | +3.31 (study_gcn_complete_s1, 4000-4400 GeV, 2 %) |
+| hldensity | 5 | 1.67 | 2.29 | 1.71 | -2.29 (study_hldensity_s5, 3300-3700 GeV, 10 %) |
+| transformer | 5 | 1.67 | 2.90 | 1.84 | -2.90 (study_transformer_s4, 3300-3700 GeV, 10 %) |
+
+Most extreme excess over all E1 runs: +3.31 (study_gcn_complete_s1, 4000-4400 GeV, 2 %)
+
 ### Training wall time and flags
 
 | group | encoder | seeds | training minutes (sum) | best_val_loss per seed | flagged |

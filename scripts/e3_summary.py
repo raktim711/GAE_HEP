@@ -121,6 +121,45 @@ def bb2_null() -> list[str]:
     return [*out, "", f"Largest |Z| over all runs, windows and cuts: {worst:.2f}", ""]
 
 
+def bb2_null_e1() -> list[str]:
+    """BB2 bump hunt of the E1 main-grid runs (50 constituents, R&D-trained): largest |Z| per encoder."""
+    import re
+
+    runs = sorted(
+        d.name
+        for d in (results_dir() / "runs").glob("study_*_s[0-9]")
+        if (d / "bb2_metrics.json").exists() and not re.match(r"study_(n100|bb1data)_", d.name)
+    )
+    by_enc: dict[str, list[str]] = {}
+    for r in runs:
+        by_enc.setdefault(r.rsplit("_s", 1)[0].removeprefix("study_"), []).append(r)
+    out = [
+        "### BB2 null test of the E1 main-grid runs (50 constituents, R&D-trained; BB2 subsample; local Z)",
+        "",
+        "| encoder | runs | max abs Z, no cut | max abs Z, 10 % cut | max abs Z, 2 % cut | most extreme (run, window, cut) |",
+        "|---|--:|--:|--:|--:|---|",
+    ]
+    worst_all = (0.0, "")
+    for enc, rs in by_enc.items():
+        mx = {e: 0.0 for e in EFFS}
+        worst = (0.0, "")
+        for r in rs:
+            for row in load_json(results_dir() / "runs" / r / "bb2_metrics.json")["metrics"]["bumphunt"]:
+                z = row["z"]
+                mx[row["eff"]] = max(mx[row["eff"]], abs(z))
+                if abs(z) > abs(worst[0]):
+                    worst = (
+                        z,
+                        f"{r}, {int(row['window'][0])}-{int(row['window'][1])} GeV, {_eff_label(row['eff'])}",
+                    )
+        if abs(worst[0]) > abs(worst_all[0]):
+            worst_all = worst
+        out.append(
+            f"| {enc} | {len(rs)} | {mx[1.0]:.2f} | {mx[0.1]:.2f} | {mx[0.02]:.2f} | {worst[0]:+.2f} ({worst[1]}) |"
+        )
+    return [*out, "", f"Most extreme excess over all E1 runs: {worst_all[0]:+.2f} ({worst_all[1]})", ""]
+
+
 def walltime() -> list[str]:
     out = [
         "### Training wall time and flags",
@@ -149,7 +188,9 @@ def main() -> None:
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     p.add_argument("--out", type=Path, default=None)
     a = p.parse_args()
-    md = "\n".join(["## E3 summary", "", *bb1_bumphunt(), *bb1_valpart(), *bb2_null(), *walltime()])
+    md = "\n".join(
+        ["## E3 summary", "", *bb1_bumphunt(), *bb1_valpart(), *bb2_null(), *bb2_null_e1(), *walltime()]
+    )
     print(md)
     if a.out:
         a.out.parent.mkdir(parents=True, exist_ok=True)
