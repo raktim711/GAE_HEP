@@ -171,13 +171,13 @@ def ablation_runs(root: Path) -> dict[str, list[dict]]:
 
 
 def default_runs(root: Path) -> dict[str, list[dict]]:
-    """E1's 2-epoch default configuration per encoder (latent 4, mean+max, 50 constituents), if merged."""
+    """E1's 2-epoch default configuration per encoder (latent 4, mean+max, 50 constituents), seeds 1-3."""
     groups: dict[str, list[dict]] = {}
     for d in sorted((root / "dev").glob("std_*")):
         m = E1.match(d.name)
         dev = _json(d / "dev_metrics.json")
-        if not m or "+" in d.name or dev is None or m["enc"] not in ENCODERS:
-            continue
+        if not m or "+" in d.name or dev is None or m["enc"] not in ENCODERS or int(m["seed"]) > 3:
+            continue  # seeds 1-3 only: the ablations have three seeds
         groups.setdefault(m["enc"], []).append(
             {
                 "run": d.name,
@@ -240,7 +240,7 @@ def ablations_md(root: Path) -> str:
         "development protocol: background `bkg_val` against the 2-prong `sig_val`, `prod` event score, SR. The 2-prong",
         "signal is the tuned one, so these numbers are never evidence for a hypothesis. mean ± std over seeds (sample",
         "standard deviation); `flagged` = runs whose `best_val_loss` exceeds 1.5 × the median of their configuration",
-        "(kept in every mean). `default` rows are E1's `std_<enc>_s<seed>` runs (merged by E1; absent if E1 is not merged).",
+        "(kept in every mean). `default` rows are E1's `std_<enc>_s<seed>` runs, seeds 1-3 (E1 ran seeds 1-5).",
         "",
         "| encoder | ablation | setting | seeds | best val loss | AUC (SR) | max SIC (SR) | 1/ε_B @ ε_S=0.3 | AUC (full m_jj) | flagged |",
         "|---|---|---|---|---|---|---|---|---|---|",
