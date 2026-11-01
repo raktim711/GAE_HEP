@@ -37,6 +37,7 @@ UNTUNED = ("rd3", "bb1", "bb3")
 ALL_SIGNALS = ("rd2", "rd3", "bb1", "bb3")
 VARIANTS = ("protocol", "paired", "holm", "fit")
 EPOCHS = (1, 3, 5)
+OTHER_GROUPS = ("n100_", "bb1data_")
 
 # (hypothesis, role, A, B, metric, signals, better): better = +1 if a larger metric favours A
 HYPOTHESES: list[tuple[str, str, str, str, str, tuple[str, ...], int]] = [
@@ -536,7 +537,13 @@ def posthoc(
     prefix: str = "study", curves: str = "stct", root: Path | None = None, log=print
 ) -> dict[str, Path]:
     root = Path(root) if root else results_dir()
-    configs = [c for c in collect(prefix, root) if c.runs and len(c.runs) > 1]
+    # the seven encoders and the baselines of the main grid only: `study_n100_*` and `study_bb1data_*` (E3) share
+    # the prefix but differ in constituents or training sample
+    configs = [
+        c
+        for c in collect(prefix, root)
+        if c.runs and len(c.runs) > 1 and not c.label.startswith(OTHER_GROUPS)
+    ]
     if not configs:
         raise ValueError(f"no seeded runs named {prefix}* under {root / 'runs'}")
     curve_cfgs = [c for c in collect(curves, root) if c.runs] if curves else []

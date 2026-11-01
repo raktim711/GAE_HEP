@@ -160,3 +160,13 @@ def test_fit_adjusted_removes_a_difference_that_is_only_fit_quality(tmp_path):
     row = next(c for c in adj["rd3"]["contrasts"] if (c["a"], c["b"]) == ("edgeconv", "deepsets"))
     assert abs(raw[("edgeconv", "deepsets", "rd3")]["delta"]) > 0.02
     assert abs(row["delta"]) < 0.003 and not row["sig2se"]
+
+
+def test_e3_groups_sharing_the_prefix_are_left_out(tmp_path):
+    build(tmp_path)
+    for s in (1, 2, 3):
+        write_run(tmp_path, f"study_n100_ewmp_s{s}", "ewmp", 0.5, 0.5, 0.5, 0.01, 5.0)
+        write_run(tmp_path, f"study_bb1data_efn_s{s}", "efn", 0.5, 0.5, 0.5, 0.01, 5.0)
+    data = json.loads(P.posthoc("study", "", root=tmp_path, log=lambda *a: None)["json"].read_text())
+    assert not any(k.startswith(("n100_", "bb1data_")) for k in data["fit_quality"])
+    assert all(e["n_runs"] == 35 for e in data["fit_adjusted"].values())
