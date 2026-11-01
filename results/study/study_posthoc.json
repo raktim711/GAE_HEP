@@ -1,0 +1,1396 @@
+{
+  "prefix": "study",
+  "curves": "stct",
+  "low_fit_factor": 1.25,
+  "alpha": 0.05,
+  "verdicts": {
+    "protocol": {
+      "H1": "inconclusive",
+      "H2a": "inconclusive",
+      "H2b": "supported",
+      "H3": "supported"
+    },
+    "paired": {
+      "H1": "inconclusive",
+      "H2a": "inconclusive",
+      "H2b": "inconclusive",
+      "H3": "supported"
+    },
+    "holm": {
+      "H1": "inconclusive",
+      "H2a": "inconclusive",
+      "H2b": "inconclusive",
+      "H3": "supported"
+    },
+    "fit": {
+      "H1": "inconclusive",
+      "H2a": "inconclusive",
+      "H2b": "supported",
+      "H3": "supported"
+    }
+  },
+  "contrasts": [
+    {
+      "hypothesis": "H1",
+      "role": "primary",
+      "a": "edgeconv",
+      "b": "deepsets",
+      "metric": "auc",
+      "signal": "R&D 3-prong",
+      "signal_key": "rd3",
+      "better": 1,
+      "delta": 0.03976818908762925,
+      "favour": 1,
+      "se": 0.017237808370401758,
+      "p": 0.08150494774969777,
+      "paired_delta": 0.03976818908762934,
+      "paired_se": 0.017440952614145383,
+      "fit_delta": 0.01171896408433526,
+      "fit_se": 0.0016217865818197882,
+      "low_fit_removed": [
+        "study_deepsets_s2",
+        "study_deepsets_s4"
+      ],
+      "bootstrap_excludes_zero": null,
+      "needs_bootstrap": false,
+      "sig": {
+        "protocol": true,
+        "paired": true,
+        "fit": true,
+        "holm": false
+      }
+    },
+    {
+      "hypothesis": "H1",
+      "role": "primary",
+      "a": "edgeconv",
+      "b": "deepsets",
+      "metric": "auc",
+      "signal": "BB1",
+      "signal_key": "bb1",
+      "better": 1,
+      "delta": -0.005675520221610997,
+      "favour": -1,
+      "se": 0.002219246755479456,
+      "p": 0.03471972063663522,
+      "paired_delta": -0.005675520221610997,
+      "paired_se": 0.0020945173612284657,
+      "fit_delta": -0.003496573066699704,
+      "fit_se": 0.0018562110707441187,
+      "low_fit_removed": [
+        "study_deepsets_s2",
+        "study_deepsets_s4"
+      ],
+      "bootstrap_excludes_zero": true,
+      "needs_bootstrap": true,
+      "sig": {
+        "protocol": true,
+        "paired": true,
+        "fit": false,
+        "holm": false
+      }
+    },
+    {
+      "hypothesis": "H1",
+      "role": "primary",
+      "a": "edgeconv",
+      "b": "deepsets",
+      "metric": "auc",
+      "signal": "BB3",
+      "signal_key": "bb3",
+      "better": 1,
+      "delta": -0.0026949474261301343,
+      "favour": -1,
+      "se": 0.0016785451001524831,
+      "p": 0.1470582259395334,
+      "paired_delta": -0.002694947426130212,
+      "paired_se": 0.002001846587810806,
+      "fit_delta": -0.001441604989992018,
+      "fit_se": 0.0014808934442068508,
+      "low_fit_removed": [
+        "study_deepsets_s2",
+        "study_deepsets_s4"
+      ],
+      "bootstrap_excludes_zero": false,
+      "needs_bootstrap": true,
+      "sig": {
+        "protocol": false,
+        "paired": false,
+        "fit": false,
+        "holm": false
+      }
+    },
+    {
+      "hypothesis": "H1",
+      "role": "primary",
+      "a": "ewmp",
+      "b": "efn",
+      "metric": "auc",
+      "signal": "R&D 3-prong",
+      "signal_key": "rd3",
+      "better": 1,
+      "delta": 0.0072209066895199125,
+      "favour": 1,
+      "se": 0.0032255060815717784,
+      "p": 0.060258468404248325,
+      "paired_delta": 0.00722090668951989,
+      "paired_se": 0.003426079505662086,
+      "fit_delta": 0.0072209066895199125,
+      "fit_se": 0.0032255060815717784,
+      "low_fit_removed": [],
+      "bootstrap_excludes_zero": null,
+      "needs_bootstrap": false,
+      "sig": {
+        "protocol": true,
+        "paired": true,
+        "fit": true,
+        "holm": false
+      }
+    },
+    {
+      "hypothesis": "H1",
+      "role": "primary",
+      "a": "ewmp",
+      "b": "efn",
+      "metric": "auc",
+      "signal": "BB1",
+      "signal_key": "bb1",
+      "better": 1,
+      "delta": -0.003818500030908112,
+      "favour": -1,
+      "se": 0.0018786302728562158,
+      "p": 0.08344605270949555,
+      "paired_delta": -0.0038185000309080676,
+      "paired_se": 0.001477367840327844,
+      "fit_delta": -0.003818500030908112,
+      "fit_se": 0.0018786302728562158,
+      "low_fit_removed": [],
+      "bootstrap_excludes_zero": true,
+      "needs_bootstrap": true,
+      "sig": {
+        "protocol": true,
+        "paired": true,
+        "fit": true,
+        "holm": false
+      }
+    },
+    {
+      "hypothesis": "H1",
+      "role": "primary",
+      "a": "ewmp",
+      "b": "efn",
+      "metric": "auc",
+      "signal": "BB3",
+      "signal_key": "bb3",
+      "better": 1,
+      "delta": -0.0011748824652051404,
+      "favour": -1,
+      "se": 0.0008113914501174206,
+      "p": 0.1869158276186871,
+      "paired_delta": -0.0011748824652050628,
+      "paired_se": 0.0008448050614307519,
+      "fit_delta": -0.0011748824652051404,
+      "fit_se": 0.0008113914501174206,
+      "low_fit_removed": [],
+      "bootstrap_excludes_zero": false,
+      "needs_bootstrap": true,
+      "sig": {
+        "protocol": false,
+        "paired": false,
+        "fit": false,
+        "holm": false
+      }
+    },
+    {
+      "hypothesis": "H1",
+      "role": "secondary",
+      "a": "transformer",
+      "b": "deepsets",
+      "metric": "auc",
+      "signal": "R&D 3-prong",
+      "signal_key": "rd3",
+      "better": 1,
+      "delta": 0.0537967053664512,
+      "favour": 1,
+      "se": 0.017290820664380334,
+      "p": 0.034667441975308605,
+      "paired_delta": 0.053796705366451134,
+      "paired_se": 0.01735137539584875,
+      "fit_delta": 0.025747480363157216,
+      "fit_se": 0.0021120212001871012,
+      "low_fit_removed": [
+        "study_deepsets_s2",
+        "study_deepsets_s4"
+      ],
+      "bootstrap_excludes_zero": null,
+      "needs_bootstrap": false,
+      "sig": {
+        "protocol": true,
+        "paired": true,
+        "fit": true,
+        "holm": null
+      }
+    },
+    {
+      "hypothesis": "H1",
+      "role": "secondary",
+      "a": "transformer",
+      "b": "deepsets",
+      "metric": "auc",
+      "signal": "BB1",
+      "signal_key": "bb1",
+      "better": 1,
+      "delta": -0.017412573599864034,
+      "favour": -1,
+      "se": 0.0016211494327351779,
+      "p": 2.8714561980766545e-05,
+      "paired_delta": -0.01741257359986399,
+      "paired_se": 0.001799835860612207,
+      "fit_delta": -0.015233626444952741,
+      "fit_se": 0.0010717223804253238,
+      "low_fit_removed": [
+        "study_deepsets_s2",
+        "study_deepsets_s4"
+      ],
+      "bootstrap_excludes_zero": true,
+      "needs_bootstrap": true,
+      "sig": {
+        "protocol": true,
+        "paired": true,
+        "fit": true,
+        "holm": null
+      }
+    },
+    {
+      "hypothesis": "H1",
+      "role": "secondary",
+      "a": "transformer",
+      "b": "deepsets",
+      "metric": "auc",
+      "signal": "BB3",
+      "signal_key": "bb3",
+      "better": 1,
+      "delta": -0.004579486622497353,
+      "favour": -1,
+      "se": 0.0012293200986796527,
+      "p": 0.015045290485097423,
+      "paired_delta": -0.004579486622497353,
+      "paired_se": 0.0014480194554721123,
+      "fit_delta": -0.0033261441863592367,
+      "fit_se": 0.0009416791623831707,
+      "low_fit_removed": [
+        "study_deepsets_s2",
+        "study_deepsets_s4"
+      ],
+      "bootstrap_excludes_zero": false,
+      "needs_bootstrap": true,
+      "sig": {
+        "protocol": false,
+        "paired": false,
+        "fit": false,
+        "holm": null
+      }
+    },
+    {
+      "hypothesis": "H1",
+      "role": "secondary",
+      "a": "ew_attention",
+      "b": "efn",
+      "metric": "auc",
+      "signal": "R&D 3-prong",
+      "signal_key": "rd3",
+      "better": 1,
+      "delta": 0.011704823009801357,
+      "favour": 1,
+      "se": 0.002776108505829025,
+      "p": 0.010107865143338998,
+      "paired_delta": 0.011704823009801201,
+      "paired_se": 0.0027898255703585222,
+      "fit_delta": 0.011704823009801357,
+      "fit_se": 0.002776108505829025,
+      "low_fit_removed": [],
+      "bootstrap_excludes_zero": null,
+      "needs_bootstrap": false,
+      "sig": {
+        "protocol": true,
+        "paired": true,
+        "fit": true,
+        "holm": null
+      }
+    },
+    {
+      "hypothesis": "H1",
+      "role": "secondary",
+      "a": "ew_attention",
+      "b": "efn",
+      "metric": "auc",
+      "signal": "BB1",
+      "signal_key": "bb1",
+      "better": 1,
+      "delta": -0.011046692449156348,
+      "favour": -1,
+      "se": 0.0019881679813132827,
+      "p": 0.0007082948214306067,
+      "paired_delta": -0.011046692449156303,
+      "paired_se": 0.0012515280997274266,
+      "fit_delta": -0.011046692449156348,
+      "fit_se": 0.0019881679813132827,
+      "low_fit_removed": [],
+      "bootstrap_excludes_zero": true,
+      "needs_bootstrap": true,
+      "sig": {
+        "protocol": true,
+        "paired": true,
+        "fit": true,
+        "holm": null
+      }
+    },
+    {
+      "hypothesis": "H1",
+      "role": "secondary",
+      "a": "ew_attention",
+      "b": "efn",
+      "metric": "auc",
+      "signal": "BB3",
+      "signal_key": "bb3",
+      "better": 1,
+      "delta": -0.005941080027101531,
+      "favour": -1,
+      "se": 0.0005390451215269299,
+      "p": 0.00016211164364138126,
+      "paired_delta": -0.0059410800271015194,
+      "paired_se": 0.0005081078885283712,
+      "fit_delta": -0.005941080027101531,
+      "fit_se": 0.0005390451215269299,
+      "low_fit_removed": [],
+      "bootstrap_excludes_zero": false,
+      "needs_bootstrap": true,
+      "sig": {
+        "protocol": false,
+        "paired": false,
+        "fit": false,
+        "holm": null
+      }
+    },
+    {
+      "hypothesis": "H2a",
+      "role": "primary",
+      "a": "ewmp",
+      "b": "edgeconv",
+      "metric": "auc",
+      "signal": "R&D 3-prong",
+      "signal_key": "rd3",
+      "better": 1,
+      "delta": 0.018760061951992313,
+      "favour": 1,
+      "se": 0.002241486372413632,
+      "p": 4.941528261762157e-05,
+      "paired_delta": 0.018760061951992268,
+      "paired_se": 0.001702068652910856,
+      "fit_delta": 0.018760061951992313,
+      "fit_se": 0.002241486372413632,
+      "low_fit_removed": [],
+      "bootstrap_excludes_zero": null,
+      "needs_bootstrap": false,
+      "sig": {
+        "protocol": true,
+        "paired": true,
+        "fit": true,
+        "holm": true
+      }
+    },
+    {
+      "hypothesis": "H2a",
+      "role": "primary",
+      "a": "ewmp",
+      "b": "edgeconv",
+      "metric": "auc",
+      "signal": "BB1",
+      "signal_key": "bb1",
+      "better": 1,
+      "delta": -0.0015564874126846595,
+      "favour": -1,
+      "se": 0.0019762998465030113,
+      "p": 0.45901317500693345,
+      "paired_delta": -0.001556487412684593,
+      "paired_se": 0.002204501092167142,
+      "fit_delta": -0.0015564874126846595,
+      "fit_se": 0.0019762998465030113,
+      "low_fit_removed": [],
+      "bootstrap_excludes_zero": false,
+      "needs_bootstrap": true,
+      "sig": {
+        "protocol": false,
+        "paired": false,
+        "fit": false,
+        "holm": false
+      }
+    },
+    {
+      "hypothesis": "H2a",
+      "role": "primary",
+      "a": "ewmp",
+      "b": "edgeconv",
+      "metric": "auc",
+      "signal": "BB3",
+      "signal_key": "bb3",
+      "better": 1,
+      "delta": 0.0008309412610486566,
+      "favour": 1,
+      "se": 0.0013508808386514023,
+      "p": 0.5609760327505359,
+      "paired_delta": 0.0008309412610487787,
+      "paired_se": 0.0012031336045355634,
+      "fit_delta": 0.0008309412610486566,
+      "fit_se": 0.0013508808386514023,
+      "low_fit_removed": [],
+      "bootstrap_excludes_zero": false,
+      "needs_bootstrap": true,
+      "sig": {
+        "protocol": false,
+        "paired": false,
+        "fit": false,
+        "holm": false
+      }
+    },
+    {
+      "hypothesis": "H2a",
+      "role": "primary",
+      "a": "efn",
+      "b": "deepsets",
+      "metric": "auc",
+      "signal": "R&D 3-prong",
+      "signal_key": "rd3",
+      "better": 1,
+      "delta": 0.05130734435010165,
+      "favour": 1,
+      "se": 0.017393149965984695,
+      "p": 0.0395765063651612,
+      "paired_delta": 0.051307344350101716,
+      "paired_se": 0.015215587215614912,
+      "fit_delta": 0.02325811934680766,
+      "fit_se": 0.0028301625468356434,
+      "low_fit_removed": [
+        "study_deepsets_s2",
+        "study_deepsets_s4"
+      ],
+      "bootstrap_excludes_zero": null,
+      "needs_bootstrap": false,
+      "sig": {
+        "protocol": true,
+        "paired": true,
+        "fit": true,
+        "holm": false
+      }
+    },
+    {
+      "hypothesis": "H2a",
+      "role": "primary",
+      "a": "efn",
+      "b": "deepsets",
+      "metric": "auc",
+      "signal": "BB1",
+      "signal_key": "bb1",
+      "better": 1,
+      "delta": -0.0034135076033875444,
+      "favour": -1,
+      "se": 0.002132732233664153,
+      "p": 0.1486779298199538,
+      "paired_delta": -0.0034135076033875223,
+      "paired_se": 0.0013190781558598459,
+      "fit_delta": -0.0012345604484762518,
+      "fit_se": 0.0017518590576747382,
+      "low_fit_removed": [
+        "study_deepsets_s2",
+        "study_deepsets_s4"
+      ],
+      "bootstrap_excludes_zero": true,
+      "needs_bootstrap": true,
+      "sig": {
+        "protocol": false,
+        "paired": true,
+        "fit": false,
+        "holm": false
+      }
+    },
+    {
+      "hypothesis": "H2a",
+      "role": "primary",
+      "a": "efn",
+      "b": "deepsets",
+      "metric": "auc",
+      "signal": "BB3",
+      "signal_key": "bb3",
+      "better": 1,
+      "delta": -0.0006891236998763373,
+      "favour": -1,
+      "se": 0.0012849088288022792,
+      "p": 0.6127360018981546,
+      "paired_delta": -0.0006891236998763705,
+      "paired_se": 0.0012724318080619072,
+      "fit_delta": 0.000564218736261779,
+      "fit_se": 0.0010131744362067985,
+      "low_fit_removed": [
+        "study_deepsets_s2",
+        "study_deepsets_s4"
+      ],
+      "bootstrap_excludes_zero": false,
+      "needs_bootstrap": true,
+      "sig": {
+        "protocol": false,
+        "paired": false,
+        "fit": false,
+        "holm": false
+      }
+    },
+    {
+      "hypothesis": "H2a",
+      "role": "primary",
+      "a": "ew_attention",
+      "b": "transformer",
+      "metric": "auc",
+      "signal": "R&D 3-prong",
+      "signal_key": "rd3",
+      "better": 1,
+      "delta": 0.009215461993451801,
+      "favour": 1,
+      "se": 0.0020390173968519282,
+      "p": 0.005897773184149224,
+      "paired_delta": 0.009215461993451779,
+      "paired_se": 0.0013128839325422617,
+      "fit_delta": 0.009215461993451801,
+      "fit_se": 0.0020390173968519282,
+      "low_fit_removed": [],
+      "bootstrap_excludes_zero": null,
+      "needs_bootstrap": false,
+      "sig": {
+        "protocol": true,
+        "paired": true,
+        "fit": true,
+        "holm": false
+      }
+    },
+    {
+      "hypothesis": "H2a",
+      "role": "primary",
+      "a": "ew_attention",
+      "b": "transformer",
+      "metric": "auc",
+      "signal": "BB1",
+      "signal_key": "bb1",
+      "better": 1,
+      "delta": 0.002952373547320142,
+      "favour": 1,
+      "se": 0.0014256193828181612,
+      "p": 0.07733644008617317,
+      "paired_delta": 0.002952373547320164,
+      "paired_se": 0.0013014116207738938,
+      "fit_delta": 0.002952373547320142,
+      "fit_se": 0.0014256193828181612,
+      "low_fit_removed": [],
+      "bootstrap_excludes_zero": false,
+      "needs_bootstrap": true,
+      "sig": {
+        "protocol": false,
+        "paired": false,
+        "fit": false,
+        "holm": false
+      }
+    },
+    {
+      "hypothesis": "H2a",
+      "role": "primary",
+      "a": "ew_attention",
+      "b": "transformer",
+      "metric": "auc",
+      "signal": "BB3",
+      "signal_key": "bb3",
+      "better": 1,
+      "delta": -0.002050717104480515,
+      "favour": -1,
+      "se": 0.00038833857614932975,
+      "p": 0.0026360207457119754,
+      "paired_delta": -0.002050717104480537,
+      "paired_se": 0.0004921253174471123,
+      "fit_delta": -0.002050717104480515,
+      "fit_se": 0.00038833857614932975,
+      "low_fit_removed": [],
+      "bootstrap_excludes_zero": false,
+      "needs_bootstrap": true,
+      "sig": {
+        "protocol": false,
+        "paired": false,
+        "fit": false,
+        "holm": false
+      }
+    },
+    {
+      "hypothesis": "H2b",
+      "role": "primary",
+      "a": "ewmp",
+      "b": "edgeconv",
+      "metric": "jsd",
+      "signal": "R&D background",
+      "signal_key": "rd_bkg",
+      "better": -1,
+      "delta": -0.0018882924176870514,
+      "favour": 1,
+      "se": 0.0008338546225969496,
+      "p": 0.06500873755137672,
+      "paired_delta": -0.0018882924176870527,
+      "paired_se": 0.0010411471250068825,
+      "fit_delta": -0.0018882924176870514,
+      "fit_se": 0.0008338546225969496,
+      "low_fit_removed": [],
+      "bootstrap_excludes_zero": null,
+      "needs_bootstrap": false,
+      "sig": {
+        "protocol": true,
+        "paired": false,
+        "fit": true,
+        "holm": false
+      }
+    },
+    {
+      "hypothesis": "H2b",
+      "role": "primary",
+      "a": "efn",
+      "b": "deepsets",
+      "metric": "jsd",
+      "signal": "R&D background",
+      "signal_key": "rd_bkg",
+      "better": -1,
+      "delta": -0.003187902879359869,
+      "favour": 1,
+      "se": 0.0010514552832316863,
+      "p": 0.023025720801989176,
+      "paired_delta": -0.0031879028793598703,
+      "paired_se": 0.001292849872940553,
+      "fit_delta": -0.0017714192137396802,
+      "fit_se": 0.0007570492423273823,
+      "low_fit_removed": [
+        "study_deepsets_s2",
+        "study_deepsets_s4"
+      ],
+      "bootstrap_excludes_zero": null,
+      "needs_bootstrap": false,
+      "sig": {
+        "protocol": true,
+        "paired": true,
+        "fit": true,
+        "holm": false
+      }
+    },
+    {
+      "hypothesis": "H2b",
+      "role": "primary",
+      "a": "ew_attention",
+      "b": "transformer",
+      "metric": "jsd",
+      "signal": "R&D background",
+      "signal_key": "rd_bkg",
+      "better": -1,
+      "delta": 0.00042401665841875803,
+      "favour": -1,
+      "se": 0.0005439473285008539,
+      "p": 0.4589859688586368,
+      "paired_delta": 0.00042401665841875684,
+      "paired_se": 0.0006237210392308001,
+      "fit_delta": 0.00042401665841875803,
+      "fit_se": 0.0005439473285008539,
+      "low_fit_removed": [],
+      "bootstrap_excludes_zero": null,
+      "needs_bootstrap": false,
+      "sig": {
+        "protocol": false,
+        "paired": false,
+        "fit": false,
+        "holm": false
+      }
+    },
+    {
+      "hypothesis": "H3",
+      "role": "primary",
+      "a": "gcn_complete",
+      "b": "deepsets",
+      "metric": "auc",
+      "signal": "R&D 2-prong (tuned)",
+      "signal_key": "rd2",
+      "better": 1,
+      "delta": -0.009444877644271377,
+      "favour": -1,
+      "se": 0.01047948976812056,
+      "p": 0.4082071724401868,
+      "paired_delta": -0.009444877644271554,
+      "paired_se": 0.006436591903655472,
+      "fit_delta": -0.02543491847824053,
+      "fit_se": 0.00395362186514136,
+      "low_fit_removed": [
+        "study_deepsets_s2",
+        "study_deepsets_s4"
+      ],
+      "bootstrap_excludes_zero": null,
+      "needs_bootstrap": false,
+      "sig": {
+        "protocol": false,
+        "paired": false,
+        "fit": true,
+        "holm": false
+      }
+    },
+    {
+      "hypothesis": "H3",
+      "role": "primary",
+      "a": "gcn_complete",
+      "b": "deepsets",
+      "metric": "auc",
+      "signal": "R&D 3-prong",
+      "signal_key": "rd3",
+      "better": 1,
+      "delta": -0.07111998524180274,
+      "favour": -1,
+      "se": 0.01873502567990506,
+      "p": 0.010767709107697915,
+      "paired_delta": -0.07111998524180294,
+      "paired_se": 0.009846621831139393,
+      "fit_delta": -0.09916921024509673,
+      "fit_se": 0.007515939164800352,
+      "low_fit_removed": [
+        "study_deepsets_s2",
+        "study_deepsets_s4"
+      ],
+      "bootstrap_excludes_zero": null,
+      "needs_bootstrap": false,
+      "sig": {
+        "protocol": true,
+        "paired": true,
+        "fit": true,
+        "holm": false
+      }
+    },
+    {
+      "hypothesis": "H3",
+      "role": "primary",
+      "a": "gcn_complete",
+      "b": "deepsets",
+      "metric": "auc",
+      "signal": "BB1",
+      "signal_key": "bb1",
+      "better": 1,
+      "delta": 0.005166840846572263,
+      "favour": 1,
+      "se": 0.0014432025711572144,
+      "p": 0.020411404189994296,
+      "paired_delta": 0.005166840846572307,
+      "paired_se": 0.0015105406333070196,
+      "fit_delta": 0.007345788001483555,
+      "fit_se": 0.000776721982978291,
+      "low_fit_removed": [
+        "study_deepsets_s2",
+        "study_deepsets_s4"
+      ],
+      "bootstrap_excludes_zero": false,
+      "needs_bootstrap": true,
+      "sig": {
+        "protocol": false,
+        "paired": false,
+        "fit": false,
+        "holm": false
+      }
+    },
+    {
+      "hypothesis": "H3",
+      "role": "primary",
+      "a": "gcn_complete",
+      "b": "deepsets",
+      "metric": "auc",
+      "signal": "BB3",
+      "signal_key": "bb3",
+      "better": 1,
+      "delta": -0.01558932903018917,
+      "favour": -1,
+      "se": 0.0019706173436107844,
+      "p": 7.330354785291052e-05,
+      "paired_delta": -0.015589329030189215,
+      "paired_se": 0.0009747860896995829,
+      "fit_delta": -0.014335986594051053,
+      "fit_se": 0.0018052325209757724,
+      "low_fit_removed": [
+        "study_deepsets_s2",
+        "study_deepsets_s4"
+      ],
+      "bootstrap_excludes_zero": true,
+      "needs_bootstrap": true,
+      "sig": {
+        "protocol": true,
+        "paired": true,
+        "fit": true,
+        "holm": true
+      }
+    }
+  ],
+  "h4": [
+    {
+      "hypothesis": "H1",
+      "contrast": "edgeconv - deepsets",
+      "signal": "R&D 3-prong",
+      "metric": "auc",
+      "sign_at_2": 1,
+      "signs": {},
+      "missing_epochs": [
+        1,
+        3,
+        5
+      ],
+      "status": "pending"
+    },
+    {
+      "hypothesis": "H1",
+      "contrast": "edgeconv - deepsets",
+      "signal": "BB1",
+      "metric": "auc",
+      "sign_at_2": -1,
+      "signs": {},
+      "missing_epochs": [
+        1,
+        3,
+        5
+      ],
+      "status": "pending"
+    },
+    {
+      "hypothesis": "H1",
+      "contrast": "ewmp - efn",
+      "signal": "R&D 3-prong",
+      "metric": "auc",
+      "sign_at_2": 1,
+      "signs": {},
+      "missing_epochs": [
+        1,
+        3,
+        5
+      ],
+      "status": "pending"
+    },
+    {
+      "hypothesis": "H1",
+      "contrast": "ewmp - efn",
+      "signal": "BB1",
+      "metric": "auc",
+      "sign_at_2": -1,
+      "signs": {},
+      "missing_epochs": [
+        1,
+        3,
+        5
+      ],
+      "status": "pending"
+    },
+    {
+      "hypothesis": "H1",
+      "contrast": "transformer - deepsets",
+      "signal": "R&D 3-prong",
+      "metric": "auc",
+      "sign_at_2": 1,
+      "signs": {},
+      "missing_epochs": [
+        1,
+        3,
+        5
+      ],
+      "status": "pending"
+    },
+    {
+      "hypothesis": "H1",
+      "contrast": "transformer - deepsets",
+      "signal": "BB1",
+      "metric": "auc",
+      "sign_at_2": -1,
+      "signs": {},
+      "missing_epochs": [
+        1,
+        3,
+        5
+      ],
+      "status": "pending"
+    },
+    {
+      "hypothesis": "H1",
+      "contrast": "ew_attention - efn",
+      "signal": "R&D 3-prong",
+      "metric": "auc",
+      "sign_at_2": 1,
+      "signs": {},
+      "missing_epochs": [
+        1,
+        3,
+        5
+      ],
+      "status": "pending"
+    },
+    {
+      "hypothesis": "H1",
+      "contrast": "ew_attention - efn",
+      "signal": "BB1",
+      "metric": "auc",
+      "sign_at_2": -1,
+      "signs": {},
+      "missing_epochs": [
+        1,
+        3,
+        5
+      ],
+      "status": "pending"
+    },
+    {
+      "hypothesis": "H2a",
+      "contrast": "ewmp - edgeconv",
+      "signal": "R&D 3-prong",
+      "metric": "auc",
+      "sign_at_2": 1,
+      "signs": {},
+      "missing_epochs": [
+        1,
+        3,
+        5
+      ],
+      "status": "pending"
+    },
+    {
+      "hypothesis": "H2a",
+      "contrast": "efn - deepsets",
+      "signal": "R&D 3-prong",
+      "metric": "auc",
+      "sign_at_2": 1,
+      "signs": {},
+      "missing_epochs": [
+        1,
+        3,
+        5
+      ],
+      "status": "pending"
+    },
+    {
+      "hypothesis": "H2a",
+      "contrast": "ew_attention - transformer",
+      "signal": "R&D 3-prong",
+      "metric": "auc",
+      "sign_at_2": 1,
+      "signs": {},
+      "missing_epochs": [
+        1,
+        3,
+        5
+      ],
+      "status": "pending"
+    },
+    {
+      "hypothesis": "H2b",
+      "contrast": "ewmp - edgeconv",
+      "signal": "R&D background",
+      "metric": "jsd",
+      "sign_at_2": -1,
+      "signs": {},
+      "missing_epochs": [
+        1,
+        3,
+        5
+      ],
+      "status": "pending"
+    },
+    {
+      "hypothesis": "H2b",
+      "contrast": "efn - deepsets",
+      "signal": "R&D background",
+      "metric": "jsd",
+      "sign_at_2": -1,
+      "signs": {},
+      "missing_epochs": [
+        1,
+        3,
+        5
+      ],
+      "status": "pending"
+    },
+    {
+      "hypothesis": "H3",
+      "contrast": "gcn_complete - deepsets",
+      "signal": "R&D 3-prong",
+      "metric": "auc",
+      "sign_at_2": -1,
+      "signs": {},
+      "missing_epochs": [
+        1,
+        3,
+        5
+      ],
+      "status": "pending"
+    },
+    {
+      "hypothesis": "H3",
+      "contrast": "gcn_complete - deepsets",
+      "signal": "BB3",
+      "metric": "auc",
+      "sign_at_2": -1,
+      "signs": {},
+      "missing_epochs": [
+        1,
+        3,
+        5
+      ],
+      "status": "pending"
+    }
+  ],
+  "fit_quality": {
+    "deepsets": {
+      "low_fit": [
+        "study_deepsets_s2",
+        "study_deepsets_s4"
+      ],
+      "val_loss": {
+        "1": 0.2901574836730957,
+        "2": 0.41780780181884764,
+        "3": 0.28841982421875,
+        "4": 0.41477487258911133,
+        "5": 0.29879613342285155
+      },
+      "spearman_auc_rd3": -0.9999999999999999,
+      "spearman_auc_bb1": 0.8999999999999998
+    },
+    "edgeconv": {
+      "low_fit": [],
+      "val_loss": {
+        "1": 0.24712841567993163,
+        "2": 0.23451036109924317,
+        "3": 0.24363858871459962,
+        "4": 0.25630541915893557,
+        "5": 0.23847149391174316
+      },
+      "spearman_auc_rd3": 0.6,
+      "spearman_auc_bb1": 0.8999999999999998
+    },
+    "efn": {
+      "low_fit": [],
+      "val_loss": {
+        "1": 0.21681443557739258,
+        "2": 0.2704500343322754,
+        "3": 0.22273358421325684,
+        "4": 0.21409361000061036,
+        "5": 0.2505050567626953
+      },
+      "spearman_auc_rd3": -0.3,
+      "spearman_auc_bb1": 0.7
+    },
+    "ew_attention": {
+      "low_fit": [],
+      "val_loss": {
+        "1": 0.16265526542663575,
+        "2": 0.15984529037475587,
+        "3": 0.15510956382751465,
+        "4": 0.1500346092224121,
+        "5": 0.14987292861938475
+      },
+      "spearman_auc_rd3": 0.49999999999999994,
+      "spearman_auc_bb1": -0.8999999999999998
+    },
+    "ewmp": {
+      "low_fit": [],
+      "val_loss": {
+        "1": 0.22071334176063537,
+        "2": 0.2174607980251312,
+        "3": 0.24170248103141784,
+        "4": 0.2068750998020172,
+        "5": 0.2099618880033493
+      },
+      "spearman_auc_rd3": -0.3,
+      "spearman_auc_bb1": 0.3
+    },
+    "gcn_complete": {
+      "low_fit": [],
+      "val_loss": {
+        "1": 0.5582174499511718,
+        "2": 0.6195704345703125,
+        "3": 0.5542670318603515,
+        "4": 0.6141638626098633,
+        "5": 0.5581358459472656
+      },
+      "spearman_auc_rd3": -0.8999999999999998,
+      "spearman_auc_bb1": -0.6
+    },
+    "hldensity": {
+      "low_fit": [],
+      "val_loss": {
+        "1": 5.806840896606445,
+        "2": 5.809694766998291,
+        "3": 5.806169033050537,
+        "4": 5.806417465209961,
+        "5": 5.80618953704834
+      },
+      "spearman_auc_rd3": -0.7999999999999999,
+      "spearman_auc_bb1": 0.09999999999999999
+    },
+    "transformer": {
+      "low_fit": [],
+      "val_loss": {
+        "1": 0.1761509536743164,
+        "2": 0.18197793159484862,
+        "3": 0.1723643585205078,
+        "4": 0.16586440773010253,
+        "5": 0.17458539886474608
+      },
+      "spearman_auc_rd3": -0.09999999999999999,
+      "spearman_auc_bb1": -0.6
+    }
+  },
+  "fit_adjusted": {
+    "rd3": {
+      "coef": [
+        -0.1277685842318192,
+        -0.23846497523986052,
+        0.867090612578529
+      ],
+      "n_runs": 35,
+      "resid_sd": 0.009890256967446918,
+      "contrasts": [
+        {
+          "hypothesis": "H1",
+          "role": "primary",
+          "a": "edgeconv",
+          "b": "deepsets",
+          "delta": 0.008602530341172131,
+          "se": 0.007490478996969432,
+          "sig2se": false
+        },
+        {
+          "hypothesis": "H1",
+          "role": "primary",
+          "a": "ewmp",
+          "b": "efn",
+          "delta": 0.0025597684156288608,
+          "se": 0.002212346326139021,
+          "sig2se": false
+        },
+        {
+          "hypothesis": "H1",
+          "role": "secondary",
+          "a": "transformer",
+          "b": "deepsets",
+          "delta": 0.002246395193519368,
+          "se": 0.007465843415322096,
+          "sig2se": false
+        },
+        {
+          "hypothesis": "H1",
+          "role": "secondary",
+          "a": "ew_attention",
+          "b": "efn",
+          "delta": -0.011252981268725515,
+          "se": 0.0024208323266096524,
+          "sig2se": true
+        },
+        {
+          "hypothesis": "H2a",
+          "role": "primary",
+          "a": "ewmp",
+          "b": "edgeconv",
+          "delta": 0.011429102446315877,
+          "se": 0.002199417678388342,
+          "sig2se": true
+        },
+        {
+          "hypothesis": "H2a",
+          "role": "primary",
+          "a": "efn",
+          "b": "deepsets",
+          "delta": 0.017471864371859148,
+          "se": 0.007494285406015297,
+          "sig2se": true
+        },
+        {
+          "hypothesis": "H2a",
+          "role": "primary",
+          "a": "ew_attention",
+          "b": "transformer",
+          "delta": 0.003972487909614264,
+          "se": 0.0023312943419595785,
+          "sig2se": false
+        },
+        {
+          "hypothesis": "H3",
+          "role": "primary",
+          "a": "gcn_complete",
+          "b": "deepsets",
+          "delta": 0.013650504361051285,
+          "se": 0.00744703477532391,
+          "sig2se": false
+        }
+      ]
+    },
+    "bb1": {
+      "coef": [
+        -0.19589367034033905,
+        0.19364467767973087,
+        0.8748327817426188
+      ],
+      "n_runs": 35,
+      "resid_sd": 0.0030659277750067298,
+      "contrasts": [
+        {
+          "hypothesis": "H1",
+          "role": "primary",
+          "a": "edgeconv",
+          "b": "deepsets",
+          "delta": 0.0013377800743860524,
+          "se": 0.0014834850361115158,
+          "sig2se": false
+        },
+        {
+          "hypothesis": "H1",
+          "role": "primary",
+          "a": "ewmp",
+          "b": "efn",
+          "delta": -0.00225357984737633,
+          "se": 0.001335068088203232,
+          "sig2se": false
+        },
+        {
+          "hypothesis": "H1",
+          "role": "secondary",
+          "a": "transformer",
+          "b": "deepsets",
+          "delta": -0.002604256366384683,
+          "se": 0.0010607019173599437,
+          "sig2se": true
+        },
+        {
+          "hypothesis": "H1",
+          "role": "secondary",
+          "a": "ew_attention",
+          "b": "efn",
+          "delta": -0.0018315405376047476,
+          "se": 0.0018237716712096925,
+          "sig2se": false
+        },
+        {
+          "hypothesis": "H2a",
+          "role": "primary",
+          "a": "ewmp",
+          "b": "edgeconv",
+          "delta": 0.0009995785345318976,
+          "se": 0.0016123317610213675,
+          "sig2se": false
+        },
+        {
+          "hypothesis": "H2a",
+          "role": "primary",
+          "a": "efn",
+          "b": "deepsets",
+          "delta": 0.00459093845629428,
+          "se": 0.0011762316714436635,
+          "sig2se": true
+        },
+        {
+          "hypothesis": "H2a",
+          "role": "primary",
+          "a": "ew_attention",
+          "b": "transformer",
+          "delta": 0.005363654285074215,
+          "se": 0.0017514881447760079,
+          "sig2se": true
+        },
+        {
+          "hypothesis": "H3",
+          "role": "primary",
+          "a": "gcn_complete",
+          "b": "deepsets",
+          "delta": 0.001541045482089909,
+          "se": 0.0007127721727778888,
+          "sig2se": true
+        }
+      ]
+    },
+    "bb3": {
+      "coef": [
+        -0.18906430461832943,
+        0.11949860487611672,
+        0.4562188936879886
+      ],
+      "n_runs": 35,
+      "resid_sd": 0.0032034953926474426,
+      "contrasts": [
+        {
+          "hypothesis": "H1",
+          "role": "primary",
+          "a": "edgeconv",
+          "b": "deepsets",
+          "delta": -0.002529547042200697,
+          "se": 0.0019182385933014918,
+          "sig2se": false
+        },
+        {
+          "hypothesis": "H1",
+          "role": "primary",
+          "a": "ewmp",
+          "b": "efn",
+          "delta": -0.0007143077204274428,
+          "se": 0.001112449655217265,
+          "sig2se": false
+        },
+        {
+          "hypothesis": "H1",
+          "role": "secondary",
+          "a": "transformer",
+          "b": "deepsets",
+          "delta": -0.0015965021039010098,
+          "se": 0.0015156767742388884,
+          "sig2se": false
+        },
+        {
+          "hypothesis": "H1",
+          "role": "secondary",
+          "a": "ew_attention",
+          "b": "efn",
+          "delta": -0.0023994300717832817,
+          "se": 0.0008303117370723429,
+          "sig2se": true
+        },
+        {
+          "hypothesis": "H2a",
+          "role": "primary",
+          "a": "ewmp",
+          "b": "edgeconv",
+          "delta": 0.001635384389871197,
+          "se": 0.0014365257659179932,
+          "sig2se": false
+        },
+        {
+          "hypothesis": "H2a",
+          "role": "primary",
+          "a": "efn",
+          "b": "deepsets",
+          "delta": -0.00017985493190205717,
+          "se": 0.0016892534623549008,
+          "sig2se": false
+        },
+        {
+          "hypothesis": "H2a",
+          "role": "primary",
+          "a": "ew_attention",
+          "b": "transformer",
+          "delta": -0.000982782899784329,
+          "se": 0.0003648512088636585,
+          "sig2se": true
+        },
+        {
+          "hypothesis": "H3",
+          "role": "primary",
+          "a": "gcn_complete",
+          "b": "deepsets",
+          "delta": -0.0029893952218777,
+          "se": 0.0033740224979398486,
+          "sig2se": false
+        }
+      ]
+    }
+  }
+}

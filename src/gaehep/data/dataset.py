@@ -72,6 +72,9 @@ class JetStore:
         self.const = np.load(d / "constituents.npy", mmap_mode="r")
         with np.load(d / "events.npz") as ev:
             self.table = {k: ev[k] for k in ev.files}
+        if (d / "tau_computed.npz").exists():  # gaehep tau (data/nsubjettiness.py): tau1c-tau3c
+            with np.load(d / "tau_computed.npz") as tc:
+                self.table.update({k: tc[k] for k in tc.files})
         self.n_events = len(self.const)
 
     def __getitem__(self, key: str) -> np.ndarray:
