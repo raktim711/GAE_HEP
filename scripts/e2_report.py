@@ -214,10 +214,10 @@ def _label(cfg: str) -> tuple[str, str, str]:
         if rest.startswith(enc + "_"):
             tail = rest[len(enc) + 1 :]
             if kind == "stw":
-                return enc, "latent width", tail[1:]
+                return enc, "latent width", f"d = {tail[1:]}"
             if kind == "stp":
                 return enc, "pooling", tail
-            return enc, "constituents", tail[1:]
+            return enc, "constituents", f"n = {tail[1:]}"
     return rest, kind, ""
 
 
