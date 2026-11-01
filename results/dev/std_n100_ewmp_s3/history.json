@@ -1,7 +1,7 @@
 {
-  "status": "paused",
-  "epochs_done": 1,
-  "best_val_loss": 0.3300784555912018,
+  "status": "done",
+  "epochs_done": 2,
+  "best_val_loss": 0.2132664648294449,
   "history": [
     {
       "epoch": 0,
@@ -9,6 +9,13 @@
       "val_loss": 0.3300784555912018,
       "lr": 0.0005153640669390546,
       "seconds": 5938.293901920319
+    },
+    {
+      "epoch": 1,
+      "train_loss": 0.24035111418565114,
+      "val_loss": 0.2132664648294449,
+      "lr": 0.0,
+      "seconds": 5559.206688642502
     }
   ],
   "train_config": {
@@ -28,5 +35,5 @@
     "threads": 1,
     "device": "auto"
   },
-  "train_minutes": 99.15757292906443
+  "train_minutes": 93.05846341848374
 }
