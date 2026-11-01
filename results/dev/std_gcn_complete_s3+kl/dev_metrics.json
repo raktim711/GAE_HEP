@@ -1,0 +1,123 @@
+{
+  "name": "std_gcn_complete_s3+kl",
+  "metrics": {
+    "full/max": {
+      "auc": 0.5149439085,
+      "max_sic": 1.0006122891644067,
+      "rej@0.3": 3.382721060821325
+    },
+    "full/sum": {
+      "auc": 0.4994184305,
+      "max_sic": 1.0001222916106978,
+      "rej@0.3": 3.29077267342372
+    },
+    "full/min": {
+      "auc": 0.4731364615,
+      "max_sic": 1.000025000937539,
+      "rej@0.3": 3.2768620768751844
+    },
+    "full/prod": {
+      "auc": 0.47812289799999996,
+      "max_sic": 1.0000300013500674,
+      "rej@0.3": 3.2494963280691493
+    },
+    "full/jet": {
+      "auc": 0.5004327305
+    },
+    "full/heavy_jet": {
+      "auc": 0.43403254199999997
+    },
+    "full/light_jet": {
+      "auc": 0.5675880775
+    },
+    "SR/max": {
+      "auc": 0.4713777859681379,
+      "max_sic": 1.0001005671319498,
+      "rej@0.3": 2.8674642270701383
+    },
+    "SR/sum": {
+      "auc": 0.4510134848110082,
+      "max_sic": 1.0,
+      "rej@0.3": 2.6990505630381985
+    },
+    "SR/min": {
+      "auc": 0.4315290610250345,
+      "max_sic": 1.0000409056511328,
+      "rej@0.3": 2.786414406200137
+    },
+    "SR/prod": {
+      "auc": 0.43082515693843404,
+      "max_sic": 1.0,
+      "rej@0.3": 2.670161642638707
+    },
+    "SR/jet": {
+      "auc": 0.4662704400201415
+    },
+    "SR/heavy_jet": {
+      "auc": 0.38704421791617155
+    },
+    "SR/light_jet": {
+      "auc": 0.5452964901863993
+    },
+    "bkg_spearman": {
+      "m": -0.1882600388184211,
+      "n_const": -0.3396674075764851,
+      "tau21": -0.02249963942339601
+    }
+  },
+  "source_run": "std_gcn_complete_s3",
+  "train_minutes": 0,
+  "config": {
+    "model": "ef_ae",
+    "model_args": {
+      "hidden": [
+        48,
+        48,
+        48
+      ],
+      "k": 8,
+      "latent_dim": 4,
+      "n_out": 32,
+      "dec_hidden": [
+        256,
+        256
+      ],
+      "sigmas": [
+        0.02,
+        0.05,
+        0.1,
+        0.2,
+        0.4
+      ],
+      "variational": true,
+      "beta": 0.001,
+      "encoder": "gcn_complete"
+    },
+    "extra_scores": [
+      "kl"
+    ],
+    "data": {
+      "n_const": 50
+    },
+    "train": {
+      "epochs": 2,
+      "jets_per_epoch": 120000,
+      "batch_size": 256,
+      "lr": 0.001,
+      "weight_decay": 0.0001,
+      "patience": 3,
+      "val_jets": 20000,
+      "time_budget_min": 100,
+      "threads": 1,
+      "seed": 3
+    }
+  },
+  "time": "2026-11-01 00:36:11 UTC",
+  "git": "d3a1063",
+  "splits_sha256": "5217cca54367efda6b33a1626da8cdb21e87ef7b6fd6b2abfa73d8ac510f7af2",
+  "python": "3.13.18",
+  "numpy": "2.5.4",
+  "host": "vm",
+  "torch": "2.15.0+cu132",
+  "torch_threads": 1
+}
