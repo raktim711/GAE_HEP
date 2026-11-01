@@ -478,6 +478,19 @@ def _cases(cfg: str):
             {"k": 5, "n_ref": 1000, "threads": 2},
         ),
         (["probes", "r"], "gaehep.eval.probes.probe", ("r",), {}),
+        (
+            ["posthoc", "--prefix", "study", "--curves", "stct"],
+            "gaehep.eval.posthoc.posthoc",
+            ("study", "stct"),
+            {},
+        ),
+        (
+            ["bb-diagnose", "a", "b", "--sample", "bb3"],
+            "gaehep.eval.bbdiag.diagnose",
+            (["a", "b"], "bb3"),
+            {},
+        ),
+        (["tau", "--sample", "bb3", "--workers", "4"], "gaehep.data.nsubjettiness.main", (None,), {}),
         (["irc-probe", "a", "b", "-k", "6"], "gaehep.eval.irc_probe.main", (["a", "b"],), {"k": 6}),
         (
             ["study-table", "study", "--n-boot", "20"],
