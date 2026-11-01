@@ -1,0 +1,22 @@
+model: hl_density
+seed: 1
+features:
+- log_m
+- log_pt
+- tau21
+- tau32
+- log_n_const
+flow:
+  transforms: 4
+  hidden:
+  - 128
+  - 128
+fit:
+  epochs: 60
+  batch_size: 1024
+  lr: 0.001
+  patience: 8
+  seed: 1
+tau: computed
+data:
+  n_const: 50

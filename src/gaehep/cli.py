@@ -109,7 +109,7 @@ def main(argv: list[str] | None = None) -> int:
         prog="gaehep", description="Graph autoencoders for LHC Olympics anomaly detection"
     )
     sub = p.add_subparsers(dest="cmd", required=True)
-    for name in ("download", "preprocess", "tables", "splits"):
+    for name in ("download", "preprocess", "tables", "splits", "tau"):
         sub.add_parser(name, add_help=False)
     t = sub.add_parser("train", help="train (+score +evaluate) a model from a YAML config")
     t.add_argument("config", type=Path)
@@ -187,21 +187,26 @@ def main(argv: list[str] | None = None) -> int:
     e.add_argument("runs", nargs="+")
     e.add_argument("--out", required=True)
     sub.add_parser("baselines")
-    sub.add_parser(
+    ob = sub.add_parser(
         "obs-baselines", help="single-observable baselines as runs study_obs_{mj,nconst,tau21,tau32}"
     )
+    ob.add_argument("--prefix", default="study", help="run names <prefix>_obs_*")
+    ob.add_argument("--tau", default="official", choices=["official", "computed"])
     hd = sub.add_parser(
         "hl-density", help="flow on (log m_J, log pT_J, tau21, tau32, log n_const) -> study_hldensity_s<seed>"
     )
     hd.add_argument("--seed", type=int, required=True)
     hd.add_argument("--epochs", type=int, default=60, help="maximum epochs (early stopping on bkg_val)")
     hd.add_argument("--threads", type=int, default=1)
+    hd.add_argument("--name", default=None, help="run name (default study_hldensity_s<seed>)")
+    hd.add_argument("--tau", default="official", choices=["official", "computed"])
     ek = sub.add_parser(
         "efp-knn", help="training-free EFP k-NN distance to background-training jets -> study_efpknn"
     )
     ek.add_argument("-k", type=int, default=10)
     ek.add_argument("--n-ref", type=int, default=100_000, help="reference jets drawn from bkg_train")
     ek.add_argument("--threads", type=int, default=1)
+    ek.add_argument("--name", default="study_efpknn")
     pb = sub.add_parser(
         "probes", help="ridge / MLP regressions of jet observables on a run's latents -> probes.json"
     )
@@ -220,6 +225,16 @@ def main(argv: list[str] | None = None) -> int:
     st.add_argument(
         "--n-boot", type=int, default=200, help="paired-bootstrap resamples (the protocol uses 200)"
     )
+    bd = sub.add_parser(
+        "bb-diagnose", help="what drives a black-box result: observables, score shift, mass correlation"
+    )
+    bd.add_argument("runs", nargs="+", metavar="RUN")
+    bd.add_argument("--sample", default="bb3", choices=["bb1", "bb2", "bb3"])
+    ph = sub.add_parser(
+        "posthoc", help="post-hoc robustness of the hypothesis verdicts -> <prefix>_posthoc.{md,json}"
+    )
+    ph.add_argument("--prefix", default="study")
+    ph.add_argument("--curves", default="stct", help="prefix of the training-length runs ('' to skip)")
     ss = sub.add_parser(
         "score-sample", help="score a trained run on a black box -> bb<i>_scores.npz, bb<i>_metrics.json"
     )
@@ -249,11 +264,12 @@ def main(argv: list[str] | None = None) -> int:
     es.add_argument("--sr", default=None, help="SR m_jj window lo,hi [GeV] (default: 3300,3700)")
     es.add_argument("--n-boot", type=int, default=30)
 
-    if argv and argv[0] in ("download", "preprocess", "tables", "splits"):
+    if argv and argv[0] in ("download", "preprocess", "tables", "splits", "tau"):
         mod = {
             "download": "gaehep.data.download",
             "preprocess": "gaehep.data.preprocess",
             "tables": "gaehep.data.tables",
+            "tau": "gaehep.data.nsubjettiness",
             "splits": "gaehep.data.splits",
         }[argv[0]]
         import importlib
@@ -271,6 +287,15 @@ def main(argv: list[str] | None = None) -> int:
                 print(path)
         except FileNotFoundError as err:
             raise SystemExit(f"study-table: {err}") from None
+        return 0
+    if a.cmd == "posthoc":
+        from gaehep.eval.posthoc import posthoc
+
+        try:
+            for path in posthoc(a.prefix, a.curves, log=_log).values():
+                print(path)
+        except ValueError as err:
+            raise SystemExit(f"posthoc: {err}") from None
         return 0
     from gaehep.train import run as R
 
@@ -376,18 +401,23 @@ def main(argv: list[str] | None = None) -> int:
         R.ensemble_variant(a.runs, a.out)
     elif a.cmd == "baselines":
         R.baselines()
+    elif a.cmd == "bb-diagnose":
+        from gaehep.eval.bbdiag import diagnose
+
+        for path in diagnose(a.runs, a.sample, log=_log).values():
+            print(path)
     elif a.cmd == "obs-baselines":
         from gaehep.baselines import run_obs_baselines
 
-        run_obs_baselines(log=_log)
+        run_obs_baselines(log=_log, prefix=a.prefix, tau=a.tau)
     elif a.cmd == "hl-density":
         from gaehep.baselines import run_hl_density
 
-        run_hl_density(a.seed, epochs=a.epochs, threads=a.threads, log=_log)
+        run_hl_density(a.seed, name=a.name, epochs=a.epochs, threads=a.threads, log=_log, tau=a.tau)
     elif a.cmd == "efp-knn":
         from gaehep.baselines import run_efp_knn
 
-        run_efp_knn(k=a.k, n_ref=a.n_ref, threads=a.threads, log=_log)
+        run_efp_knn(name=a.name, k=a.k, n_ref=a.n_ref, threads=a.threads, log=_log)
     elif a.cmd == "probes":
         from gaehep.eval.probes import probe
 
