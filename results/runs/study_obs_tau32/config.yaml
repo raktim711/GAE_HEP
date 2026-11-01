@@ -1,0 +1,4 @@
+model: observable
+observable: -tau32
+data:
+  n_const: 50
