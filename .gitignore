@@ -29,3 +29,4 @@ results/dev/*/*.npz
 .project_upload/
 results/runs/*/_partial/
 results/runs/*/bb*_scores.npz
+results/runs/*/_partial_*/

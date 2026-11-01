@@ -1,0 +1,69 @@
+{
+  "name": "study_ewmp_s2",
+  "n_bkg_jets": 16000,
+  "n_sig_jets": 14944,
+  "sr": [
+    3300.0,
+    3700.0
+  ],
+  "auc": 0.7651643991735814,
+  "split top-1": {
+    "auc": 0.765164461907789,
+    "rho": 0.9999999983886718,
+    "flip_pct_at_1pct": 0.0
+  },
+  "split top-5": {
+    "auc": 0.7651643929001606,
+    "rho": 0.9999999981228028,
+    "flip_pct_at_1pct": 0.0
+  },
+  "split all": {
+    "auc": 0.7651643845355995,
+    "rho": 0.9999999978767089,
+    "flip_pct_at_1pct": 0.0
+  },
+  "10 soft (0.2% pT each)": {
+    "auc": 0.7641867827388918,
+    "rho": 0.9946350435901196,
+    "flip_pct_at_1pct": 0.0375
+  },
+  "10 soft (1% pT each)": {
+    "auc": 0.7366575569626606,
+    "rho": 0.8008416734904261,
+    "flip_pct_at_1pct": 0.2375
+  },
+  "random re-order": {
+    "auc": 0.765164380353319,
+    "rho": 0.9999999983688965,
+    "flip_pct_at_1pct": 0.0,
+    "max_abs_diff": 7.62939453125e-06
+  },
+  "knn_ties": {
+    "bkg": {
+      "k": 8,
+      "n_jets": 16000,
+      "n_nodes": 670494,
+      "nodes_with_tie": 0,
+      "jets_with_tie": 0,
+      "jet_fraction": 0.0,
+      "node_fraction": 0.0
+    },
+    "sig": {
+      "k": 8,
+      "n_jets": 14944,
+      "n_nodes": 608522,
+      "nodes_with_tie": 1,
+      "jets_with_tie": 1,
+      "jet_fraction": 6.691648822269808e-05,
+      "node_fraction": 1.643325960277525e-06
+    }
+  },
+  "time": "2026-11-01 07:47:33 UTC",
+  "git": "62e4d0e",
+  "splits_sha256": "5217cca54367efda6b33a1626da8cdb21e87ef7b6fd6b2abfa73d8ac510f7af2",
+  "python": "3.13.18",
+  "numpy": "2.5.4",
+  "host": "vm",
+  "torch": "2.15.0+cu132",
+  "torch_threads": 1
+}

@@ -1,0 +1,69 @@
+{
+  "name": "study_edgeconv_s4",
+  "n_bkg_jets": 16000,
+  "n_sig_jets": 14944,
+  "sr": [
+    3300.0,
+    3700.0
+  ],
+  "auc": 0.7678626580902035,
+  "split top-1": {
+    "auc": 0.7679087300923448,
+    "rho": 0.993927916276371,
+    "flip_pct_at_1pct": 0.0625
+  },
+  "split top-5": {
+    "auc": 0.7657028447872054,
+    "rho": 0.9839723961679121,
+    "flip_pct_at_1pct": 0.17500000000000002
+  },
+  "split all": {
+    "auc": 0.738667709448608,
+    "rho": 0.9258783034924319,
+    "flip_pct_at_1pct": 0.5875
+  },
+  "10 soft (0.2% pT each)": {
+    "auc": 0.7669149742371519,
+    "rho": 0.9679669647661395,
+    "flip_pct_at_1pct": 0.1625
+  },
+  "10 soft (1% pT each)": {
+    "auc": 0.6973383088530515,
+    "rho": 0.555647888760851,
+    "flip_pct_at_1pct": 0.6875
+  },
+  "random re-order": {
+    "auc": 0.7678627082775695,
+    "rho": 0.9999999989028321,
+    "flip_pct_at_1pct": 0.0,
+    "max_abs_diff": 7.62939453125e-06
+  },
+  "knn_ties": {
+    "bkg": {
+      "k": 8,
+      "n_jets": 16000,
+      "n_nodes": 670494,
+      "nodes_with_tie": 0,
+      "jets_with_tie": 0,
+      "jet_fraction": 0.0,
+      "node_fraction": 0.0
+    },
+    "sig": {
+      "k": 8,
+      "n_jets": 14944,
+      "n_nodes": 608522,
+      "nodes_with_tie": 1,
+      "jets_with_tie": 1,
+      "jet_fraction": 6.691648822269808e-05,
+      "node_fraction": 1.643325960277525e-06
+    }
+  },
+  "time": "2026-11-01 08:38:41 UTC",
+  "git": "62e4d0e",
+  "splits_sha256": "5217cca54367efda6b33a1626da8cdb21e87ef7b6fd6b2abfa73d8ac510f7af2",
+  "python": "3.13.18",
+  "numpy": "2.5.4",
+  "host": "vm",
+  "torch": "2.15.0+cu132",
+  "torch_threads": 1
+}
