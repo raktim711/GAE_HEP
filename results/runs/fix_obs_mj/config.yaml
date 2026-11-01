@@ -1,0 +1,5 @@
+model: observable
+observable: m_j
+tau: computed
+data:
+  n_const: 50
