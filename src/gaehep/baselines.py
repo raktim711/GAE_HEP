@@ -74,21 +74,24 @@ def _pairs(x: np.ndarray, n_events: int) -> np.ndarray:
 # ---------------------------------------------------------------------------------------- observables
 def observable_scorer(run_dir: Path, data: Data, split: str) -> np.ndarray:
     """Scores of the single observable named in the run's config (``observable``)."""
-    obs = _config(run_dir)["observable"]
+    cfg = _config(run_dir)
     tab = data.table(split)
-    return _pairs(observable_scores(tab)[obs], len(tab["m"]))
+    return _pairs(observable_scores(tab, cfg.get("tau", "official"))[cfg["observable"]], len(tab["m"]))
 
 
-def run_obs_baselines(data: Data | None = None, n_boot: int = 30, log=print) -> dict[str, dict[str, Any]]:
-    """The four single-observable baselines as run directories ``study_obs_*``."""
+def run_obs_baselines(
+    data: Data | None = None, n_boot: int = 30, log=print, prefix: str = "study", tau: str = "official"
+) -> dict[str, dict[str, Any]]:
+    """The four single-observable baselines as run directories ``<prefix>_obs_*`` (``tau``: official or computed)."""
     from gaehep.train.run import SCORE_SPLITS, Data, evaluate_run
 
     data = data or Data(n_const=N_CONST)
     out = {}
     for name, obs in OBSERVABLES.items():
+        name = prefix + name[len("study") :] if name.startswith("study") else name
         run_dir = _run_dir(name)
         run_dir.mkdir(parents=True, exist_ok=True)
-        cfg = {"model": "observable", "observable": obs, "data": {"n_const": data.n_const}}
+        cfg = {"model": "observable", "observable": obs, "tau": tau, "data": {"n_const": data.n_const}}
         (run_dir / "config.yaml").write_text(yaml.safe_dump(cfg, sort_keys=False))
         scores = {
             s: observable_scorer(run_dir, data, s).astype(np.float32) for s in SCORE_SPLITS if data.has(s)
@@ -100,10 +103,13 @@ def run_obs_baselines(data: Data | None = None, n_boot: int = 30, log=print) -> 
 
 
 # ------------------------------------------------------------------------------------- hl-density flow
-def hl_features(tab: Mapping[str, np.ndarray]) -> np.ndarray:
-    """(n_events, 2, 5) float64 (log m_J, log pT_J, tau21, tau32, log n_const); NaN where undefined."""
+def hl_features(tab: Mapping[str, np.ndarray], tau: str = "official") -> np.ndarray:
+    """(n_events, 2, 5) float64 (log m_J, log pT_J, tau21, tau32, log n_const); NaN where undefined.  ``tau``:
+    the official feature-file N-subjettiness or the values computed from the constituents (``gaehep tau``)."""
+    from gaehep.eval.evaluate import TAU_KEYS
+
     m, pt, n = (np.asarray(tab[k], dtype=np.float64) for k in ("m", "pt", "n_const"))
-    t1, t2, t3 = (np.asarray(tab[k], dtype=np.float64) for k in ("tau1", "tau2", "tau3"))
+    t1, t2, t3 = (np.asarray(tab[k], dtype=np.float64) for k in TAU_KEYS[tau])
     with np.errstate(invalid="ignore", divide="ignore"):
         tau21 = np.where(t1 > 0, t2 / t1, np.nan)
         tau32 = np.where(t2 > 0, t3 / t2, np.nan)
@@ -135,9 +141,11 @@ def _load_flow(path: Path) -> tuple[LatentFlow, np.ndarray]:
     return flow, d["fill"].numpy().astype(np.float64)
 
 
-def hl_nll(flow: LatentFlow, fill: np.ndarray, tab: Mapping[str, np.ndarray]) -> np.ndarray:
+def hl_nll(
+    flow: LatentFlow, fill: np.ndarray, tab: Mapping[str, np.ndarray], tau: str = "official"
+) -> np.ndarray:
     """(n_events, 2) float64 -log p; undefined features are replaced by the training means ``fill``."""
-    feats = hl_features(tab)
+    feats = hl_features(tab, tau)
     n = feats.shape[0]
     x = np.where(np.isfinite(feats), feats, fill).reshape(-1, feats.shape[-1])
     return _pairs(flow.nll(x.astype(np.float32)), n)
@@ -145,7 +153,7 @@ def hl_nll(flow: LatentFlow, fill: np.ndarray, tab: Mapping[str, np.ndarray]) ->
 
 def hl_density_scorer(run_dir: Path, data: Data, split: str) -> np.ndarray:
     flow, fill = _load_flow(Path(run_dir) / "model.pt")
-    return hl_nll(flow, fill, data.table(split))
+    return hl_nll(flow, fill, data.table(split), _config(run_dir).get("tau", "official"))
 
 
 def run_hl_density(
@@ -156,6 +164,7 @@ def run_hl_density(
     threads: int = 1,
     n_boot: int = 30,
     log=print,
+    tau: str = "official",
 ) -> dict[str, Any]:
     """Fit the jet-observable flow on ``bkg_train`` (early stopping on the ``bkg_val`` NLL), score the test
     splits and write the run directory ``study_hldensity_s<seed>`` (a finished run is only rescored)."""
@@ -172,6 +181,7 @@ def run_hl_density(
         "features": list(HL_FEATURES),
         "flow": {"transforms": FLOW_TRANSFORMS, "hidden": list(FLOW_HIDDEN)},
         "fit": {**FLOW_FIT, "epochs": epochs, "seed": seed},
+        "tau": tau,
         "data": {"n_const": data.n_const},
     }
     (run_dir / "config.yaml").write_text(yaml.safe_dump(cfg, sort_keys=False))
@@ -185,8 +195,8 @@ def run_hl_density(
     else:
         t0 = time.time()
         train, val = (
-            hl_features(data.table("bkg_train")).reshape(-1, 5),
-            hl_features(data.table("bkg_val")).reshape(-1, 5),
+            hl_features(data.table("bkg_train"), tau).reshape(-1, 5),
+            hl_features(data.table("bkg_val"), tau).reshape(-1, 5),
         )
         train, val = train[np.isfinite(train).all(1)], val[np.isfinite(val).all(1)]
         flow = LatentFlow(len(HL_FEATURES), transforms=FLOW_TRANSFORMS, hidden=FLOW_HIDDEN, seed=seed)

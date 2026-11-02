@@ -168,13 +168,18 @@ def write_metrics(metrics: dict[str, Any], path: Path, meta: dict[str, Any] | No
 
 
 # ------------------------------------------------------------------------------------------ baselines
-def observable_scores(tab: Mapping[str, np.ndarray]) -> dict[str, np.ndarray]:
-    """Per-jet scores from single observables (larger = more anomalous).  NaN -> very low score."""
+TAU_KEYS = {"official": ("tau1", "tau2", "tau3"), "computed": ("tau1c", "tau2c", "tau3c")}
+
+
+def observable_scores(tab: Mapping[str, np.ndarray], tau: str = "official") -> dict[str, np.ndarray]:
+    """Per-jet scores from single observables (larger = more anomalous).  NaN -> very low score.  ``tau``: the
+    official feature-file N-subjettiness or the values computed from the constituents (``gaehep tau``)."""
+    t1, t2, t3 = TAU_KEYS[tau]
     with np.errstate(invalid="ignore", divide="ignore"):
         obs = {
             "m_j": tab["m"].astype(np.float64),
             "n_const": tab["n_const"].astype(np.float64),
-            "-tau21": -(tab["tau2"] / tab["tau1"]).astype(np.float64),
-            "-tau32": -(tab["tau3"] / tab["tau2"]).astype(np.float64),
+            "-tau21": -(tab[t2] / tab[t1]).astype(np.float64),
+            "-tau32": -(tab[t3] / tab[t2]).astype(np.float64),
         }
     return {k: np.where(np.isfinite(v), v, -1e9) for k, v in obs.items()}

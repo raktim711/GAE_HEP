@@ -258,4 +258,56 @@ The development history (RESULTS.md, sections 1–11) made its choices on the R&
 
 ## Deviations
 
-None so far.
+Each entry gives the date, what changed, why, and the effect on the numbers. Entries D2–D5 were written on
+1 Nov 2026, after the E1 results (PR #11) had been seen.
+
+**D1 (E2 session, 31 Oct). `gaehep promote` refuses a run whose training was paused by the time budget.**
+A paused `gaehep dev` exits with partial weights; promoting it would score an undertrained model. Every promoted
+run of E1–E3 was checked to have `status: done` and `epochs_done` equal to its configured epochs, so no number
+changed.
+
+**D2 (1 Nov). Post-hoc robustness analyses of the verdicts (`gaehep posthoc`).** The verdicts of section 2 stay
+the pre-registered ones. Four analyses are added after seeing E1, and are reported beside them, labelled post hoc:
+- *Paired seeds.* Seed s of every encoder sees the same training jets (`default_rng([seed, epoch])`), so the seeds
+  are paired; contrasts are also computed from per-seed differences.
+- *Holm correction* over all primary tests of H1–H3 (Welch p-values, α = 0.05), because section 2 has no
+  multiplicity correction.
+- *Low-fit runs.* In E1, two of five Deep Sets seeds (2 and 4) ended at 1.4 × the median validation loss with a
+  3-prong AUC of 0.72 against 0.79 for the other seeds; the 1.5 × flag did not catch them. Contrasts are repeated
+  without runs above 1.25 × their configuration's median.
+- *Equal background fit.* Across all encoders the AUC is close to a single function of the background
+  validation loss (3-prong falling, BB1 rising; `results/study/figures/study_auc_vs_valloss.png`). Contrasts are
+  repeated on the residuals of a quadratic fit of AUC in the validation loss. Because the fit quality is itself
+  an outcome of the encoder, this is a conditional comparison ("at equal fit"), not a replacement.
+
+Section 2 does not define "contradicted" exactly. `gaehep posthoc` uses the mirror image of each rule: H1 is
+contradicted if both primary contrasts are significantly negative on at least two untuned signals and positive on
+none; H2a/H2b likewise; H3 is contradicted if `gcn_complete` is significantly better than `deepsets` on any signal.
+
+**D3 (1 Nov). N-subjettiness computed from the constituents (`gaehep tau`).** The black boxes have no LHCO
+feature files, so their τ were NaN: the τ21/τ32 baselines sat at AUC 0.500 on BB1/BB3, and the jet-observable
+flow replaced τ by training means there. τ1–τ3 (β = 1, unnormalised, minimised axes from exclusive-kT seeds) are
+now computed from the stored constituents (`src/gaehep/data/nsubjettiness.py`). On 10 000 R&D jets they agree
+with the official values to 1e-3 (relative) for 84 % of jets (90 % of jets with fewer than 100 stored
+constituents), with correlation 0.9996 for τ21 and 0.998 for τ32. That is below the 99 % agreement set as the
+threshold for mixing the two, so the computed values are used for **every** sample wherever τ enters a baseline
+that is compared across samples. The affected baselines are rerun as `fix_obs_*` and `fix_hldensity_s*` with
+`tau: computed`; E1's `study_obs_tau*` and `study_hldensity_s*` stay as the before-numbers. The encoders do not
+use τ.
+
+**D4 (1 Nov). Black-box diagnostics (`gaehep bb-diagnose`).** Every encoder is below AUC 0.5 on BB3 (dijet mode
+0.43). Before any interpretation, the diagnostics report single-observable AUCs per mode, the shift of the
+box-background scores against the R&D background, and the correlation of the scores with m_J. The BB3 modes are
+identified by their counts (1200 dijet, 2000 trijet). The LHCO paper describes the dijet mode as a decay to
+gluons; the Pythia card in the Zenodo record is named `KKg2qq`. The cards are checked before the paper
+describes the mode.
+
+**D5 (1 Nov). Disclosure: the IRC-safety hypothesis was formed after seeing 3-prong results.** No hyper-parameter
+was chosen with the 3-prong signal (the radius 0.3 is from Atkinson et al.), but the IRC-safe encoder's 3-prong
+advantage was seen during development (RESULTS.md §11) before H2 was written. The 3-prong signal is therefore not
+a blind test of H2, nor of the H1 contrast `ewmp − efn`. BB1 and BB3 are the confirmatory tests for these, and
+the paper says so.
+
+**D6 (E1 session, 31 Oct–1 Nov). Session conditions.** The environment was built with the PyPI torch wheel (CPU
+use only), one container restart interrupted the first runs (they resumed from their checkpoints), and the bb3
+download was repeated after a collision of two downloads (md5 verified). No number is affected (PR #11).

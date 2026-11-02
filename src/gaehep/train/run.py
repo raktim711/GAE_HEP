@@ -45,7 +45,7 @@ SPLIT_SAMPLE = {
 # with data.train_sample = <box>, these two splits are the box's seeded 90/10 training / validation parts
 TRAIN_ROLES = ("bkg_train", "bkg_val")
 SCORE_SPLITS = ("bkg_val", "bkg_test", "sig_test", "sig3_test")
-TABLE_KEYS = ("mjj", "m", "pt", "n_const", "tau1", "tau2", "tau3", "label")
+TABLE_KEYS = ("mjj", "m", "pt", "n_const", "tau1", "tau2", "tau3", "tau1c", "tau2c", "tau3c", "label")
 
 
 def concat_pools(pools: list[JetPool]) -> JetPool:
