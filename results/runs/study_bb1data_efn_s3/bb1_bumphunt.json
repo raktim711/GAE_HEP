@@ -1,0 +1,49 @@
+{
+  "name": "study_bb1data_efn_s3",
+  "sample": "bb1",
+  "subsample": false,
+  "window": [
+    3600.0,
+    4000.0
+  ],
+  "n_events": 1000000,
+  "agg": "prod",
+  "rows": [
+    {
+      "eff": 1.0,
+      "mode": "fixed",
+      "n_sr": 80532.0,
+      "b_sr": 80464.68186073937,
+      "z": 0.23728425109400886,
+      "fit_ok": true,
+      "threshold": -Infinity,
+      "n_sig_window_kept": 512,
+      "n_sig_window": 512
+    },
+    {
+      "eff": 0.1,
+      "mode": "fixed",
+      "n_sr": 8313.0,
+      "b_sr": 8089.538451770766,
+      "z": 2.4732022299553442,
+      "fit_ok": true,
+      "threshold": -0.5005062195802438,
+      "n_sig_window_kept": 374,
+      "n_sig_window": 512
+    },
+    {
+      "eff": 0.02,
+      "mode": "fixed",
+      "n_sr": 1802.0,
+      "b_sr": 1737.0783248311907,
+      "z": 1.5481315601051584,
+      "fit_ok": true,
+      "threshold": -0.19843177685728008,
+      "n_sig_window_kept": 162,
+      "n_sig_window": 512
+    }
+  ],
+  "time": "2026-11-01 09:54:35 UTC",
+  "git": "5e8cc7b",
+  "splits_sha256": "5217cca54367efda6b33a1626da8cdb21e87ef7b6fd6b2abfa73d8ac510f7af2"
+}

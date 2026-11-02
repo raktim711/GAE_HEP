@@ -1,0 +1,49 @@
+{
+  "name": "study_bb1data_edgeconv_s2",
+  "sample": "bb1",
+  "subsample": false,
+  "window": [
+    3600.0,
+    4000.0
+  ],
+  "n_events": 1000000,
+  "agg": "prod",
+  "rows": [
+    {
+      "eff": 1.0,
+      "mode": "fixed",
+      "n_sr": 80532.0,
+      "b_sr": 80464.68186073937,
+      "z": 0.23728425109400886,
+      "fit_ok": true,
+      "threshold": -Infinity,
+      "n_sig_window_kept": 512,
+      "n_sig_window": 512
+    },
+    {
+      "eff": 0.1,
+      "mode": "fixed",
+      "n_sr": 8502.0,
+      "b_sr": 8282.344637937893,
+      "z": 2.4030469523668514,
+      "fit_ok": true,
+      "threshold": -0.5010667043251394,
+      "n_sig_window_kept": 381,
+      "n_sig_window": 512
+    },
+    {
+      "eff": 0.02,
+      "mode": "fixed",
+      "n_sr": 1889.0,
+      "b_sr": 1711.6173718598034,
+      "z": 4.216505279917527,
+      "fit_ok": true,
+      "threshold": -0.20008374548455501,
+      "n_sig_window_kept": 187,
+      "n_sig_window": 512
+    }
+  ],
+  "time": "2026-11-01 09:54:32 UTC",
+  "git": "5e8cc7b",
+  "splits_sha256": "5217cca54367efda6b33a1626da8cdb21e87ef7b6fd6b2abfa73d8ac510f7af2"
+}

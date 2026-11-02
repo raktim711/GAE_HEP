@@ -1,0 +1,49 @@
+{
+  "name": "study_bb1data_edgeconv_s3",
+  "sample": "bb1",
+  "subsample": false,
+  "window": [
+    3600.0,
+    4000.0
+  ],
+  "n_events": 1000000,
+  "agg": "prod",
+  "rows": [
+    {
+      "eff": 1.0,
+      "mode": "fixed",
+      "n_sr": 80532.0,
+      "b_sr": 80464.68186073937,
+      "z": 0.23728425109400886,
+      "fit_ok": true,
+      "threshold": -Infinity,
+      "n_sig_window_kept": 512,
+      "n_sig_window": 512
+    },
+    {
+      "eff": 0.1,
+      "mode": "fixed",
+      "n_sr": 8428.0,
+      "b_sr": 8222.699459660886,
+      "z": 2.254709137617928,
+      "fit_ok": true,
+      "threshold": -0.5019895718266452,
+      "n_sig_window_kept": 390,
+      "n_sig_window": 512
+    },
+    {
+      "eff": 0.02,
+      "mode": "fixed",
+      "n_sr": 1838.0,
+      "b_sr": 1714.2773194885226,
+      "z": 2.953289615113473,
+      "fit_ok": true,
+      "threshold": -0.19948809337387172,
+      "n_sig_window_kept": 188,
+      "n_sig_window": 512
+    }
+  ],
+  "time": "2026-11-01 09:54:32 UTC",
+  "git": "5e8cc7b",
+  "splits_sha256": "5217cca54367efda6b33a1626da8cdb21e87ef7b6fd6b2abfa73d8ac510f7af2"
+}
