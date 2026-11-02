@@ -295,12 +295,55 @@ that is compared across samples. The affected baselines are rerun as `fix_obs_*`
 `tau: computed`; E1's `study_obs_tau*` and `study_hldensity_s*` stay as the before-numbers. The encoders do not
 use τ.
 
+*F1 result (1 Nov).* `gaehep tau` was run for `rnd`, `qqq`, `bb1`, `bb2` and `bb3`, and the baselines were rerun
+(`fix_obs_*`, `fix_hldensity_s1`–`s5`, all scored on BB1, BB2 and BB3; `results/study/fix_table.md`). The check on
+5 000 R&D events (9 999 jets) reproduces the numbers above: relative difference below 1e-3 for 83.4 % of jets in
+τ1, 73.6 % in τ2 and 66.3 % in τ3 (below 1e-2: 94.2 %, 93.0 %, 92.3 %); 90.4 % of the jets with fewer than 100
+stored constituents agree in τ1 (8.4 % of the jets are truncated); τ21 correlates with the official value at
+0.99959 (median absolute difference 8.8e-5) and τ32 at 0.99819 (1.8e-4). Window AUC and max SIC (`prod` event
+score), before (`study_*`, official τ, NaN on the black boxes) and after (`fix_*`, computed τ); the flow is the
+mean ± standard deviation of 5 seeds:
+
+| baseline | | R&D 3-prong AUC | BB1 AUC | BB3 AUC | R&D 3-prong max SIC | BB1 max SIC | BB3 max SIC |
+|---|---|---|---|---|---|---|---|
+| −τ21 | before | 0.684 | 0.500 | 0.500 | 1.15 | 1.00 | 1.00 |
+| −τ21 | after | 0.683 | 0.917 | 0.515 | 1.15 | 3.95 | 1.00 |
+| −τ32 | before | 0.806 | 0.500 | 0.500 | 1.59 | 1.00 | 1.00 |
+| −τ32 | after | 0.805 | 0.636 | 0.514 | 1.59 | 1.03 | 1.00 |
+| jet-observable flow | before | 0.753 ± 0.001 | 0.910 ± 0.001 | 0.730 ± 0.000 | 1.25 ± 0.00 | 3.86 ± 0.08 | 1.24 ± 0.00 |
+| jet-observable flow | after | 0.753 ± 0.001 | 0.804 ± 0.001 | 0.735 ± 0.000 | 1.26 ± 0.00 | 1.41 ± 0.00 | 1.28 ± 0.00 |
+
+On R&D the baselines are unchanged within 0.001 in AUC (the R&D 2-prong signal changes by at most 0.001 as well).
+The τ baselines on BB1/BB3 were uninformative placeholders (0.500) and are now real. The flow's BB1 window AUC falls
+from 0.910 to 0.804 (max SIC 3.86 to 1.41) with computed τ. The placeholder (τ replaced by training means) is the
+likely cause of the earlier high value, since it put BB1 jets at an unusual point of the five-dimensional density;
+this was not isolated further. The flow's BB3 number is unchanged (0.730 to 0.735). The full-range BB1 AUC of the flow falls from 0.888 to
+0.830. The encoders do not use τ and are unaffected.
+
 **D4 (1 Nov). Black-box diagnostics (`gaehep bb-diagnose`).** Every encoder is below AUC 0.5 on BB3 (dijet mode
 0.43). Before any interpretation, the diagnostics report single-observable AUCs per mode, the shift of the
 box-background scores against the R&D background, and the correlation of the scores with m_J. The BB3 modes are
 identified by their counts (1200 dijet, 2000 trijet). The LHCO paper describes the dijet mode as a decay to
 gluons; the Pythia card in the Zenodo record is named `KKg2qq`. The cards are checked before the paper
 describes the mode.
+
+*F1 result (1 Nov): the BB3 Pythia cards.* Both cards of Zenodo record 4536624 (md5 `eac88230…` and `f074e5a4…`)
+produce a 4.2 TeV KK gluon (particle 5100021, `m0 = 4200`, width 0.1 GeV), with `PartonLevel:MPI = off`. They
+differ only in its decay table:
+- `pythia_BlackBox3_KKg2qq.cmnd`: `5100021:oneChannel = 1 1 101 -1 1`, a single channel with branching fraction 1
+  into d d̄. The decay is **to quarks**, two-body, giving a dijet event.
+- `pythia_BlackBox3_KKg2gr.cmnd`: `oneChannel = 1 0.01 101 -1 1` (1 % to d d̄) and `addChannel = 1 0.99 101 5100040 21`
+  (99 % to a radion and a gluon). The radion (5100040, mass 2217 GeV, `isVisible = false`) decays with
+  `oneChannel = 1 1. 101 21 21`. This card gives **gluons**: g* → g R → g g g, a trijet event (about 1 % of its
+  events are the d d̄ dijet).
+
+So the dijet mode (1 200 events) is a quark pair and the trijet mode (2 000 events) is three gluons, with the
+card-to-label assignment made by decay topology: the record carries no per-event card information. The box
+contents agree with it: the dijet-mode jets have fewer constituents than the box background (jet-level AUC of
+n_const 0.449, full range) and the trijet-mode jets more (0.754). The sentence above that the paper describes
+the dijet mode as a decay to gluons is therefore not what the cards generate for the dijet mode, and the paper
+text is to be checked against the cards. The diagnostics are in `results/study/bb3_diagnostics.{md,json}` and
+`bb1_diagnostics.{md,json}` (one seed of every encoder, plus `fix_hldensity_s1`).
 
 **D5 (1 Nov). Disclosure: the IRC-safety hypothesis was formed after seeing 3-prong results.** No hyper-parameter
 was chosen with the 3-prong signal (the radius 0.3 is from Atkinson et al.), but the IRC-safe encoder's 3-prong
@@ -311,3 +354,40 @@ the paper says so.
 **D6 (E1 session, 31 Oct–1 Nov). Session conditions.** The environment was built with the PyPI torch wheel (CPU
 use only), one container restart interrupted the first runs (they resumed from their checkpoints), and the bb3
 download was repeated after a collision of two downloads (md5 verified). No number is affected (PR #11).
+
+**D7 (F1 session, 1 Nov). EFP k-NN: is E1's `prod` result (max SIC 1.00) a bug?** In E1, `study_efpknn` had
+event-level `prod` max SIC of exactly 1.00 on every signal (ε_S 0.99), against 1.52 for the `max` aggregation, and
+an independent reimplementation with a 30 000-jet reference had given SR `prod` max SIC 1.21 and AUC 0.70 (E1:
+0.651). `gaehep efp-knn --name fix_efpknn` reproduces every E1 metric exactly, so the result is deterministic.
+**Conclusion: no bug found; the baseline is weak at event level, and its `prod` number depends on the reference
+density.** No code changed, no test was added, and the frozen configuration (100 000 reference jets, k = 10) stays.
+The checks, all on the SR (3.3–3.7 TeV) of `bkg_test`, 2-prong and 3-prong signals:
+- *F_B.* The `bkg_val` and `bkg_test` jet-score distributions agree (KS 0.0028, p = 0.21). The 1, 10, 50 and 90 %
+  quantiles agree to three digits (0.060, 0.071, 0.090, 0.14), the 99 % quantile is 0.264 against 0.265 and the
+  99.9 % quantile 0.544 against 0.554 (about 200 jets in the validation tail); the maximum is 26.09 in both. No test
+  jet is above the largest validation score.
+- *Ties.* 1.0 % of the `bkg_val` jet scores share a float32 value (the scores are stored in float32). Among the
+  36 612 SR background events the `prod` score has one tied pair, and no tie at the top of the ranking.
+- *Log floor.* 10 of 200 000 `bkg_val` jets (0.005 %) and 28 of 600 000 `bkg_test` jets sit at the log floor (score
+  26.09); all have a single constituent, and no event has two. The reference set has 6 such jets of 100 000
+  (3 with one constituent). They do not drive the tail.
+- *Features.* The 20 prime EFPs agree with a brute-force loop over all vertex assignments to 1e-14 (relative) on
+  8 graphs × 6 jets with 3–7 constituents. `energyflow` is not installed in this environment, so the package
+  comparison in `tests/test_baselines.py` does not run here; the brute-force loop replaces it.
+- *Hand recomputation.* Sorting the `prod` scores and scanning thresholds gives SR 2-prong max SIC 1.0011 at
+  ε_S = 0.9916 (ε_B = 0.981, 35 921 background events), E1: 1.0012 at 0.9924. The SIC is 1 at the loose end because the
+  AUC (0.651) is below 2/3: a smooth ROC with ε_S = √ε_B has AUC 2/3, so for AUC < 2/3 the ratio ε_S/√ε_B peaks at
+  ε → 1. The `prod` ROC gives SIC 0.79, 0.86, 0.89, 0.95 at ε_B = 0.001, 0.01, 0.05, 0.3; the 3-prong signal has
+  AUC 0.462, below 0.5. It is not a tie or a saturation effect.
+- *Why `prod` is much worse than `max`.* The jet-level AUC is 0.654 (0.655 and 0.653 for the leading and
+  subleading jet). For the 2-prong signal one jet is often anomalous by this score and the other is not:
+  F_B > 0.99 for 11 % and 9.9 % of the signal jets against 1.3 % and 1.0 % of the background jets, but for both
+  jets of the same event in 0.49 % of the signal events (0.014 % of the background). `prod` needs both, `max` needs
+  one: SR AUC `max` 0.776 (SIC 1.52), `sum` 0.771, `prod` 0.651, `min` 0.608.
+- *Sensitivity to the reference set.* `max` is stable, `prod` is not. With the first 30 000 reference jets (k = 10)
+  the SR 2-prong `prod` has AUC 0.692 and max SIC 1.06 (`max`: 0.776, 1.45); with k = 5, 0.671 and 1.02; with 100 000
+  jets and k = 50, 0.696 and 1.07 (`max`: 0.777, 1.43); with k = 1, 0.607. So a smaller ratio of k to the reference
+  size gives a larger `prod` AUC. This reproduces the independent reimplementation's AUC (0.70) roughly but not its
+  SIC (1.21 against 1.06 here), which was not run in this session. The difference is attributed to the reference
+  size and k, not to a bug in either. The E1 numbers stand as the protocol's baseline, and no verdict (H1–H5)
+  uses it.

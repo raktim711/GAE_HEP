@@ -1,0 +1,14 @@
+model: efp_knn
+k: 10
+n_ref: 100000
+ref_seed: 20201
+efp:
+  set:
+  - d<=4
+  - p==1
+  measure: hadr
+  beta: 1
+  normed: true
+  log_floor: 1.0e-12
+data:
+  n_const: 50
