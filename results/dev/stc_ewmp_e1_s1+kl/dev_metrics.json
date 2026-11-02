@@ -1,0 +1,126 @@
+{
+  "name": "stc_ewmp_e1_s1+kl",
+  "metrics": {
+    "full/max": {
+      "auc": 0.39895502400000005,
+      "max_sic": 1.0005763636898544,
+      "rej@0.3": 2.5504348491417788
+    },
+    "full/sum": {
+      "auc": 0.3793595715,
+      "max_sic": 1.0000150003375083,
+      "rej@0.3": 2.1593142018095053
+    },
+    "full/min": {
+      "auc": 0.37943632,
+      "max_sic": 1.0000050000375003,
+      "rej@0.3": 1.9099642836678954
+    },
+    "full/prod": {
+      "auc": 0.37237972300000005,
+      "max_sic": 1.0000100001500025,
+      "rej@0.3": 2.0346293922562007
+    },
+    "full/jet": {
+      "auc": 0.39651123612499994
+    },
+    "full/heavy_jet": {
+      "auc": 0.525324526
+    },
+    "full/light_jet": {
+      "auc": 0.2275291075
+    },
+    "SR/max": {
+      "auc": 0.3769386402954976,
+      "max_sic": 1.0022963226662371,
+      "rej@0.3": 2.2116880767143114
+    },
+    "SR/sum": {
+      "auc": 0.35994349454367863,
+      "max_sic": 1.0006173670538296,
+      "rej@0.3": 2.038692461641094
+    },
+    "SR/min": {
+      "auc": 0.3699453581766343,
+      "max_sic": 1.0,
+      "rej@0.3": 1.8665445106123073
+    },
+    "SR/prod": {
+      "auc": 0.35740000014013923,
+      "max_sic": 1.0,
+      "rej@0.3": 1.9640102827763497
+    },
+    "SR/jet": {
+      "auc": 0.38373877386133365
+    },
+    "SR/heavy_jet": {
+      "auc": 0.5136280267448736
+    },
+    "SR/light_jet": {
+      "auc": 0.21313223928670527
+    },
+    "bkg_spearman": {
+      "m": -0.2832101084750931,
+      "n_const": -0.3989550557279243,
+      "tau21": 0.20953993941850294
+    }
+  },
+  "source_run": "stc_ewmp_e1_s1",
+  "train_minutes": 0,
+  "config": {
+    "model": "ef_ae",
+    "model_args": {
+      "hidden": [
+        48,
+        48,
+        48
+      ],
+      "k": 8,
+      "latent_dim": 4,
+      "n_out": 32,
+      "dec_hidden": [
+        256,
+        256
+      ],
+      "sigmas": [
+        0.02,
+        0.05,
+        0.1,
+        0.2,
+        0.4
+      ],
+      "variational": true,
+      "beta": 0.001,
+      "encoder": "ewmp",
+      "radii": [
+        0.3
+      ]
+    },
+    "extra_scores": [
+      "kl"
+    ],
+    "data": {
+      "n_const": 50
+    },
+    "train": {
+      "epochs": 1,
+      "jets_per_epoch": 120000,
+      "batch_size": 256,
+      "lr": 0.001,
+      "weight_decay": 0.0001,
+      "patience": 3,
+      "val_jets": 20000,
+      "time_budget_min": 100,
+      "threads": 1,
+      "seed": 1
+    }
+  },
+  "time": "2026-11-01 17:47:13 UTC",
+  "git": "c2df617",
+  "splits_sha256": "5217cca54367efda6b33a1626da8cdb21e87ef7b6fd6b2abfa73d8ac510f7af2",
+  "python": "3.13.18",
+  "numpy": "2.5.4",
+  "host": "vm",
+  "torch": "2.15.0+cu132",
+  "torch_threads": 1
+}

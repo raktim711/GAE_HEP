@@ -644,6 +644,11 @@ def promote(dev_run: str, name: str, log=print) -> dict[str, Any]:
     from gaehep.train.run import _run_dir, run
 
     src, dst = dev_dir(dev_run), _run_dir(name)
+    status = load_json(src / "history.json").get("status") if (src / "history.json").exists() else None
+    if status != "done":  # a time-boxed (paused) run has partial weights: rerun the dev command to resume
+        raise SystemExit(
+            f"promote: dev run {dev_run} is not finished (status {status!r}); rerun it to resume"
+        )
     dst.mkdir(parents=True, exist_ok=True)
     for f in ("model.pt", "history.json"):
         shutil.copy2(src / f, dst / f)

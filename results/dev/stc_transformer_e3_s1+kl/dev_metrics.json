@@ -1,0 +1,123 @@
+{
+  "name": "stc_transformer_e3_s1+kl",
+  "metrics": {
+    "full/max": {
+      "auc": 0.7726064385,
+      "max_sic": 1.4189545844101514,
+      "rej@0.3": 9.181893306399779
+    },
+    "full/sum": {
+      "auc": 0.7440942705000001,
+      "max_sic": 1.325719225404583,
+      "rej@0.3": 7.0506944934076
+    },
+    "full/min": {
+      "auc": 0.5868387475,
+      "max_sic": 1.0915806724897685,
+      "rej@0.3": 3.452204232402389
+    },
+    "full/prod": {
+      "auc": 0.6585411409999999,
+      "max_sic": 1.1690795224522639,
+      "rej@0.3": 4.486920626374119
+    },
+    "full/jet": {
+      "auc": 0.625819650375
+    },
+    "full/heavy_jet": {
+      "auc": 0.777427259
+    },
+    "full/light_jet": {
+      "auc": 0.5651892275
+    },
+    "SR/max": {
+      "auc": 0.7870158977460003,
+      "max_sic": 1.4635576643671282,
+      "rej@0.3": 8.775305096913137
+    },
+    "SR/sum": {
+      "auc": 0.7577876471812394,
+      "max_sic": 1.3869511719081873,
+      "rej@0.3": 6.813823857302118
+    },
+    "SR/min": {
+      "auc": 0.5989699075939353,
+      "max_sic": 1.1144880925214178,
+      "rej@0.3": 3.4965675057208236
+    },
+    "SR/prod": {
+      "auc": 0.6749744311572978,
+      "max_sic": 1.2132533057396764,
+      "rej@0.3": 4.598946576373213
+    },
+    "SR/jet": {
+      "auc": 0.6344779481486555
+    },
+    "SR/heavy_jet": {
+      "auc": 0.7919559866871224
+    },
+    "SR/light_jet": {
+      "auc": 0.5744391463295431
+    },
+    "bkg_spearman": {
+      "m": 0.8726463783368931,
+      "n_const": 0.751219071567283,
+      "tau21": -0.49248975814462315
+    }
+  },
+  "source_run": "stc_transformer_e3_s1",
+  "train_minutes": 0,
+  "config": {
+    "model": "ef_ae",
+    "model_args": {
+      "hidden": [
+        48,
+        48,
+        48
+      ],
+      "k": 8,
+      "latent_dim": 4,
+      "n_out": 32,
+      "dec_hidden": [
+        256,
+        256
+      ],
+      "sigmas": [
+        0.02,
+        0.05,
+        0.1,
+        0.2,
+        0.4
+      ],
+      "variational": true,
+      "beta": 0.001,
+      "encoder": "transformer"
+    },
+    "extra_scores": [
+      "kl"
+    ],
+    "data": {
+      "n_const": 50
+    },
+    "train": {
+      "epochs": 3,
+      "jets_per_epoch": 120000,
+      "batch_size": 256,
+      "lr": 0.001,
+      "weight_decay": 0.0001,
+      "patience": 3,
+      "val_jets": 20000,
+      "time_budget_min": 100,
+      "threads": 1,
+      "seed": 1
+    }
+  },
+  "time": "2026-11-01 03:44:52 UTC",
+  "git": "d95dee6",
+  "splits_sha256": "5217cca54367efda6b33a1626da8cdb21e87ef7b6fd6b2abfa73d8ac510f7af2",
+  "python": "3.13.18",
+  "numpy": "2.5.4",
+  "host": "vm",
+  "torch": "2.15.0+cu132",
+  "torch_threads": 1
+}
