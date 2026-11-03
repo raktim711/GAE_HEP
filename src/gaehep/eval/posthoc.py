@@ -15,7 +15,11 @@ the verdicts depend on choices that the rules leave open.  None of them replaces
 H4 (training length) is read from the training-length runs (``stct_<enc>_e<E>_s<s>``) when they exist: every
 contrast that is significant under the protocol rule must keep its sign at 1, 3 and 5 epochs.
 
-``gaehep posthoc [--prefix study] [--curves stct]`` writes ``results/study/<prefix>_posthoc.{md,json}`` and
+The ablation runs (``stat_<enc>_<setting>_s<s>``: latent width, pooling and 30 constituents of Deep Sets and
+EdgeConv, promoted and scored after the E1-E3 results were seen, Deviations D8) are put on the same curve and
+tested out of sample: their AUC residuals from the quadratic fitted to the E1+E2 runs only.
+
+``gaehep posthoc [--prefix study] [--curves stct] [--ablations stat]`` writes ``results/study/<prefix>_posthoc.{md,json}`` and
 ``results/study/figures/<prefix>_auc_vs_valloss.png``.  It needs only the committed metrics and history files.
 """
 
@@ -390,6 +394,81 @@ def fit_adjusted(
     return out
 
 
+def ablation_residuals(
+    configs: list[Config],
+    curves: list[Config],
+    ablations: list[Config],
+    signals: tuple[str, ...] = UNTUNED,
+) -> dict[str, Any]:
+    """Out-of-sample test of the AUC-vs-background-fit curve (Deviations D8).  The quadratic in the validation
+    loss is fitted to the E1 + E2 runs only (as in ``fit_adjusted``); for the ablation runs it gives the residual
+    of the AUC from that curve: mean, sample sd, and the fraction within 2 residual sd of the E1 + E2 runs
+    (``resid_sd``, the same sd as in ``fit_adjusted``).  ``in_range`` is the fraction of ablation runs whose
+    validation loss lies inside the loss range of the runs the curve was fitted to."""
+    pool = [c for c in configs + curves if c.kind not in ("", "hl_density")]
+    abl = [c for c in ablations if c.kind not in ("", "hl_density")]
+
+    def points(cs: list[Config], s: str) -> list[tuple[str, float, float]]:
+        out = []
+        for c in cs:
+            v = seed_values(c, s, "auc")
+            out += [
+                (r.name, r.best_val_loss, v[_seed_of(r)])
+                for r in c.runs
+                if _seed_of(r) in v and r.best_val_loss is not None
+            ]
+        return out
+
+    def family(c: Config) -> str:
+        label = c.label.split("_", 1)[-1]
+        return "n30" if label.startswith("n30") else "width" if label.startswith("l") else "pooling"
+
+    out: dict[str, Any] = {}
+    for s in signals:
+        fit, test = points(pool, s), points(abl, s)
+        if len(fit) < 6 or not test:
+            continue
+        xs, ys = np.array([p[1] for p in fit]), np.array([p[2] for p in fit])
+        coef = np.polyfit(xs, ys, 2)
+        sd = float(np.std(ys - np.polyval(coef, xs), ddof=3))
+        lo, hi = float(xs.min()), float(xs.max())
+
+        def summarise(pts: list[tuple[str, float, float]], coef=coef, sd=sd, lo=lo, hi=hi) -> dict[str, Any]:
+            x, y = np.array([p[1] for p in pts]), np.array([p[2] for p in pts])
+            res = y - np.polyval(coef, x)
+            return {
+                "n": len(pts),
+                "mean": float(res.mean()),
+                "sd": float(res.std(ddof=1)) if len(pts) > 1 else None,
+                "within_2sd": float(np.mean(np.abs(res) <= 2 * sd)),
+                "in_range": float(np.mean((x >= lo) & (x <= hi))),
+            }
+
+        fams: dict[str, list] = {}
+        for c in abl:
+            fams.setdefault(family(c), []).extend(points([c], s))
+        out[s] = {
+            "coef": [float(v) for v in coef],
+            "n_fit": len(fit),
+            "resid_sd": sd,
+            "loss_range": [lo, hi],
+            "all": summarise(test),
+            "families": {k: summarise(v) for k, v in sorted(fams.items())},
+            "runs": {n: float(y - np.polyval(coef, x)) for n, x, y in test},
+        }
+    return out
+
+
+def _enc(group: str, c: Config) -> str:
+    """The encoder of a configuration in a plot group: labels are ``<enc>`` (E1), ``<enc>_e<E>`` (curves) and
+    ``<enc>_<setting>`` (ablations, whose encoders are deepsets or edgeconv)."""
+    if group == "curves":
+        return c.label.split("_e")[0]
+    if group == "ablations":
+        return c.label.split("_")[0]
+    return c.label
+
+
 def plot_auc_vs_loss(
     groups: dict[str, list[Config]], path: Path, signals: tuple[str, ...] = ("rd3", "bb1")
 ) -> None:
@@ -400,13 +479,13 @@ def plot_auc_vs_loss(
 
     fig, axes = plt.subplots(1, len(signals), figsize=(5.2 * len(signals), 4.2), squeeze=False)
     groups = {g: [c for c in cs if c.kind not in ("", "hl_density")] for g, cs in groups.items()}  # AE losses
-    encs = sorted({c.label.split("_e")[0] for cs in groups.values() for c in cs if c.runs})
+    encs = sorted({_enc(g, c) for g, cs in groups.items() for c in cs if c.runs})
     colours = {e: f"C{i}" for i, e in enumerate(encs)}
-    markers = {"study": "o", "curves": "^"}
+    markers = {"study": "o", "curves": "^", "ablations": "s"}
     for ax, s in zip(axes[0], signals, strict=True):
         for gname, cs in groups.items():
             for c in cs:
-                enc = c.label.split("_e")[0] if gname == "curves" else c.label
+                enc = _enc(gname, c)
                 if enc not in colours:
                     continue
                 v = seed_values(c, s, "auc")
@@ -417,7 +496,7 @@ def plot_auc_vs_loss(
         ax.set_ylabel(f"AUC, {_SIG[s].label} ({_SIG[s].primary})")
         ax.grid(alpha=0.3)
     handles = [plt.Line2D([], [], color=colours[e], marker="o", ls="", label=e) for e in encs]
-    names = {"study": "2 epochs (E1)", "curves": "1, 3, 5 epochs (E2)"}
+    names = {"study": "2 epochs (E1)", "curves": "1, 3, 5 epochs (E2)", "ablations": "ablations"}
     handles += [
         plt.Line2D([], [], color="k", marker=m, ls="", label=names[g])
         for g, m in markers.items()
@@ -446,6 +525,7 @@ def render(
     h4rows: list[dict],
     fq: dict,
     fadj: dict | None = None,
+    abl: dict | None = None,
 ) -> str:
     lines = [
         f"# Post-hoc robustness of the hypothesis verdicts (`{prefix}`)",
@@ -513,6 +593,26 @@ def render(
                     f"| {_SIG[s].label} | {e['n_runs']} | {e['resid_sd']:.4f} | {c['hypothesis']}{tag}: {c['a']} − "
                     f"{c['b']} | {_fmt(c['delta'])} | {_fmt(c['se'], '{:.4f}')} | {_mark(c['sig2se'])} |"
                 )
+    if abl:
+        lines += [
+            "",
+            "## Ablation runs on the E1 + E2 curve (post hoc, Deviations D8)",
+            "",
+            "Residual of the AUC of the `stat_` ablation runs (latent width, pooling, 30 constituents of Deep Sets "
+            "and EdgeConv) from the quadratic fitted to the E1 + E2 runs only. `within 2 sd`: fraction of runs "
+            "within 2 residual sd of the E1 + E2 runs; `in range`: fraction whose validation loss lies in the "
+            "loss range of the fitted runs.",
+            "",
+            "| signal | fit runs | fit sd | ablation runs | subset | n | mean residual | sd | within 2 sd | in range |",
+            "|---|---|---|---|---|---|---|---|---|---|",
+        ]
+        for s, e in abl.items():
+            for name, r in [("all", e["all"]), *e["families"].items()]:
+                lines.append(
+                    f"| {_SIG[s].label} | {e['n_fit']} | {e['resid_sd']:.4f} | {e['all']['n']} | {name} | "
+                    f"{r['n']} | {_fmt(r['mean'])} | {_fmt(r['sd'], '{:.4f}')} | {r['within_2sd']:.2f} "
+                    f"| {r['in_range']:.2f} |"
+                )
     lines += ["", "## H4: sign at 1, 3 and 5 epochs", ""]
     if not h4rows:
         lines.append(
@@ -534,7 +634,11 @@ def render(
 
 
 def posthoc(
-    prefix: str = "study", curves: str = "stct", root: Path | None = None, log=print
+    prefix: str = "study",
+    curves: str = "stct",
+    root: Path | None = None,
+    log=print,
+    ablations: str = "stat",
 ) -> dict[str, Path]:
     root = Path(root) if root else results_dir()
     # the seven encoders and the baselines of the main grid only: `study_n100_*` and `study_bb1data_*` (E3) share
@@ -547,6 +651,7 @@ def posthoc(
     if not configs:
         raise ValueError(f"no seeded runs named {prefix}* under {root / 'runs'}")
     curve_cfgs = [c for c in collect(curves, root) if c.runs] if curves else []
+    abl_cfgs = [c for c in collect(ablations, root) if c.runs] if ablations else []
     cpath = root / "study" / f"{prefix}_contrasts.json"
     contrasts = None
     if cpath.exists():
@@ -558,10 +663,11 @@ def posthoc(
     h4rows = h4(rows, curve_cfgs)
     fq = fit_quality(configs)
     fadj = fit_adjusted(configs, curve_cfgs)
+    abl = ablation_residuals(configs, curve_cfgs, abl_cfgs)
     out_dir = root / "study"
     out_dir.mkdir(parents=True, exist_ok=True)
     paths = {"md": out_dir / f"{prefix}_posthoc.md", "json": out_dir / f"{prefix}_posthoc.json"}
-    paths["md"].write_text(render(prefix, rows, verd, h4rows, fq, fadj))
+    paths["md"].write_text(render(prefix, rows, verd, h4rows, fq, fadj, abl))
     save_json(
         {
             "prefix": prefix,
@@ -573,12 +679,15 @@ def posthoc(
             "h4": h4rows,
             "fit_quality": fq,
             "fit_adjusted": fadj,
+            "ablations": abl,
         },
         paths["json"],
     )
     groups = {"study": configs}
     if curve_cfgs:
         groups["curves"] = curve_cfgs
+    if abl_cfgs:
+        groups["ablations"] = abl_cfgs
     paths["png"] = out_dir / "figures" / f"{prefix}_auc_vs_valloss.png"
     plot_auc_vs_loss(groups, paths["png"])
     for p in paths.values():

@@ -170,3 +170,40 @@ def test_e3_groups_sharing_the_prefix_are_left_out(tmp_path):
     data = json.loads(P.posthoc("study", "", root=tmp_path, log=lambda *a: None)["json"].read_text())
     assert not any(k.startswith(("n100_", "bb1data_")) for k in data["fit_quality"])
     assert all(e["n_runs"] == 35 for e in data["fit_adjusted"].values())
+
+
+def test_ablation_runs_are_tested_out_of_sample_on_the_e1_e2_curve(tmp_path):
+    """Ablation runs on the curve have residual ~0 and fall within 2 sd; runs off the curve do not.  The ablations
+    are not part of the fit (the curve is unchanged by them)."""
+    rng = np.random.default_rng(5)
+
+    def auc(lo):
+        return 0.95 - 0.5 * lo + rng.normal(0, 0.002)
+
+    for i, enc in enumerate(ENCODERS):
+        for s in range(1, 4):
+            lo = 0.2 + 0.03 * i + rng.normal(0, 0.005)
+            a = auc(lo)
+            write_run(tmp_path, f"study_{enc}_s{s}", enc, a, a, a, 0.01, lo)
+            a = auc(lo + 0.01)
+            write_run(tmp_path, f"stct_{enc}_e3_s{s}", enc, a, a, a, 0.01, lo + 0.01)
+    for s in range(1, 4):
+        for enc in ("deepsets", "edgeconv"):
+            lo = 0.25 + rng.normal(0, 0.005)
+            a = auc(lo)
+            write_run(tmp_path, f"stat_{enc}_l8_s{s}", enc, a, a, a, 0.01, lo)  # on the curve
+            lo = 0.28 + rng.normal(0, 0.005)
+            a = auc(lo) - 0.05
+            write_run(tmp_path, f"stat_{enc}_pma_s{s}", enc, a, a, a, 0.01, lo)  # off the curve
+    configs = [c for c in collect("study", tmp_path) if len(c.runs) > 1]
+    curves, abl = collect("stct", tmp_path), collect("stat", tmp_path)
+    out = P.ablation_residuals(configs, curves, abl)
+    assert set(out) == set(P.UNTUNED)
+    e = out["rd3"]
+    assert e["n_fit"] == 2 * 7 * 3 and e["all"]["n"] == 12  # the ablations are not in the fit
+    assert abs(e["families"]["width"]["mean"]) < 0.005 and e["families"]["width"]["within_2sd"] == 1.0
+    assert e["families"]["pooling"]["mean"] < -0.04 and e["families"]["pooling"]["within_2sd"] == 0.0
+    assert e["all"]["within_2sd"] == 0.5 and e["all"]["in_range"] == 1.0
+    paths = P.posthoc("study", "stct", root=tmp_path, log=lambda *a: None, ablations="stat")
+    assert "Ablation runs on the E1 + E2 curve" in paths["md"].read_text()
+    assert json.loads(paths["json"].read_text())["ablations"]["bb1"]["all"]["n"] == 12
