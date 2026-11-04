@@ -46,9 +46,9 @@ events rarely have two anomalous jets (D7).
 
 ## 2. Background fit sets the detection performance
 
-Figure 1 (`results/study/figures/study_auc_vs_valloss.png`) plots each run's AUC against its background
-validation loss. It covers all 98 autoencoder runs of E1 and E2 (seven encoders at 1, 2, 3 and 5 epochs), plus
-the 42 E4 ablation runs as squares.
+Figure 2 (`paper/figures/fig2_auc_vs_fit.pdf`) plots each run's AUC against its background validation loss.
+It covers all 98 autoencoder runs of E1 and E2 (seven encoders at 1, 2, 3 and 5 epochs), plus the 42 E4
+ablation runs as crosses.
 
 - **One curve, not seven.** Encoders of every kind fall on a single curve.
 - **Opposite directions.** On the R&D 3-prong signal, the AUC rises steadily as the background fit improves:

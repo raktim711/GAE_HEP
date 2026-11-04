@@ -136,7 +136,7 @@ matches every encoder. Every encoder is below 0.5 on BB3.
 
 ### 4.2 Central finding: background fit quality
 
-Sources: `study/study_posthoc.md` and `study/figures/study_auc_vs_valloss.png`.
+Sources: `study/study_posthoc.md` and `../paper/figures/fig2_auc_vs_fit.pdf`.
 
 Across 98 runs (E1 + E2: seven encoders, 1–5 epochs), AUC is close to a single function of the background
 validation loss, whatever the encoder.
@@ -334,8 +334,9 @@ Verify each before citing.
 | `study/study_table.md` / `.csv` | E1 main grid: all metrics, probes, IRC probe, flagged runs |
 | `study/study_contrasts.json` | every pairwise contrast with SE and the black-box bootstrap |
 | `study/study_posthoc.md` / `.json` | verdicts, paired / Holm / low-fit / equal-fit checks, H4 signs, E4 residuals |
-| `study/figures/study_auc_vs_valloss.png` | the central figure (AUC vs background fit) |
-| `study/figures/overview/*.png` | clean versions of the main figures (main AUC, fit curve, training length, equal fit, IRC, BB3) |
+| `../paper/figures/fig1–fig6 .pdf/.png` | **the paper figures**: journal style, final print size, vector PDF; draft captions and the colour/marker encoding in `../paper/figures/CAPTIONS.md` |
+| `study/figures/study_auc_vs_valloss.png` | diagnostic version of Fig. 2 from the analysis code (not for the paper) |
+| `study/figures/overview/*.png` | presentation versions of the figures, for the results deck (not for the paper) |
 | `study/stct_table.md`, `curves.png`, `ablations.md` | E2 training length and ablations |
 | `study/study_n100_table.md`, `study_bb1data_table.md`, `e3_summary.md` | E3: 100 constituents, BB1 train-on-data, bump hunts, BB2 null |
 | `study/fix_table.md` | F1 baselines with computed τ. These replace the `obs_tau*` and `hldensity` rows of `study_table.md`, which used τ = 0 on the black boxes (D3). |
