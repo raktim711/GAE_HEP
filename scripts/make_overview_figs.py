@@ -7,12 +7,12 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import matplotlib.ticker  # noqa: F401
+import matplotlib.ticker
 import numpy as np
 
-sys.path.insert(0, "/home/claude/gae_hep/src")
-from gaehep.eval import posthoc as P  # noqa: E402
-from gaehep.eval.study import collect  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+from gaehep.eval import posthoc as P
+from gaehep.eval.study import collect
 
 matplotlib.rcdefaults()
 
@@ -103,7 +103,7 @@ plt.close(fig)
 fig, axes = plt.subplots(1, 2, figsize=(15, 6))
 for ax, s in zip(axes, ["rd3", "bb1"], strict=True):
     xs_all, ys_all = [], []
-    for group, cs, mk, alpha in (("E1", study.values(), "o", 0.9), ("E2", curves.values(), "^", 0.75)):
+    for _group, cs, mk, alpha in (("E1", study.values(), "o", 0.9), ("E2", curves.values(), "^", 0.75)):
         for c in cs:
             enc = c.label.split("_e")[0]
             if enc not in ENC:
