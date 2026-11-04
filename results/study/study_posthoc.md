@@ -67,47 +67,66 @@ AUC residuals from a quadratic in the background validation loss fitted to all a
 
 | signal | runs in the fit | residual sd | contrast | Δ at equal fit | SE | significant |
 |---|---|---|---|---|---|---|
-| R&D 3-prong | 35 | 0.0099 | H1: edgeconv − deepsets | +0.0086 | 0.0075 | no |
-| R&D 3-prong | 35 | 0.0099 | H1: ewmp − efn | +0.0026 | 0.0022 | no |
-| R&D 3-prong | 35 | 0.0099 | H1 (secondary): transformer − deepsets | +0.0022 | 0.0075 | no |
-| R&D 3-prong | 35 | 0.0099 | H1 (secondary): ew_attention − efn | -0.0113 | 0.0024 | yes |
-| R&D 3-prong | 35 | 0.0099 | H2a: ewmp − edgeconv | +0.0114 | 0.0022 | yes |
-| R&D 3-prong | 35 | 0.0099 | H2a: efn − deepsets | +0.0175 | 0.0075 | yes |
-| R&D 3-prong | 35 | 0.0099 | H2a: ew_attention − transformer | +0.0040 | 0.0023 | no |
-| R&D 3-prong | 35 | 0.0099 | H3: gcn_complete − deepsets | +0.0137 | 0.0074 | no |
-| BB1 | 35 | 0.0031 | H1: edgeconv − deepsets | +0.0013 | 0.0015 | no |
-| BB1 | 35 | 0.0031 | H1: ewmp − efn | -0.0023 | 0.0013 | no |
-| BB1 | 35 | 0.0031 | H1 (secondary): transformer − deepsets | -0.0026 | 0.0011 | yes |
-| BB1 | 35 | 0.0031 | H1 (secondary): ew_attention − efn | -0.0018 | 0.0018 | no |
-| BB1 | 35 | 0.0031 | H2a: ewmp − edgeconv | +0.0010 | 0.0016 | no |
-| BB1 | 35 | 0.0031 | H2a: efn − deepsets | +0.0046 | 0.0012 | yes |
-| BB1 | 35 | 0.0031 | H2a: ew_attention − transformer | +0.0054 | 0.0018 | yes |
-| BB1 | 35 | 0.0031 | H3: gcn_complete − deepsets | +0.0015 | 0.0007 | yes |
-| BB3 | 35 | 0.0032 | H1: edgeconv − deepsets | -0.0025 | 0.0019 | no |
-| BB3 | 35 | 0.0032 | H1: ewmp − efn | -0.0007 | 0.0011 | no |
-| BB3 | 35 | 0.0032 | H1 (secondary): transformer − deepsets | -0.0016 | 0.0015 | no |
-| BB3 | 35 | 0.0032 | H1 (secondary): ew_attention − efn | -0.0024 | 0.0008 | yes |
-| BB3 | 35 | 0.0032 | H2a: ewmp − edgeconv | +0.0016 | 0.0014 | no |
-| BB3 | 35 | 0.0032 | H2a: efn − deepsets | -0.0002 | 0.0017 | no |
-| BB3 | 35 | 0.0032 | H2a: ew_attention − transformer | -0.0010 | 0.0004 | yes |
-| BB3 | 35 | 0.0032 | H3: gcn_complete − deepsets | -0.0030 | 0.0034 | no |
+| R&D 3-prong | 98 | 0.0110 | H1: edgeconv − deepsets | +0.0077 | 0.0073 | no |
+| R&D 3-prong | 98 | 0.0110 | H1: ewmp − efn | +0.0024 | 0.0023 | no |
+| R&D 3-prong | 98 | 0.0110 | H1 (secondary): transformer − deepsets | +0.0004 | 0.0073 | no |
+| R&D 3-prong | 98 | 0.0110 | H1 (secondary): ew_attention − efn | -0.0124 | 0.0025 | yes |
+| R&D 3-prong | 98 | 0.0110 | H2a: ewmp − edgeconv | +0.0111 | 0.0022 | yes |
+| R&D 3-prong | 98 | 0.0110 | H2a: efn − deepsets | +0.0165 | 0.0073 | yes |
+| R&D 3-prong | 98 | 0.0110 | H2a: ew_attention − transformer | +0.0037 | 0.0024 | no |
+| R&D 3-prong | 98 | 0.0110 | H3: gcn_complete − deepsets | +0.0143 | 0.0072 | no |
+| BB1 | 98 | 0.0045 | H1: edgeconv − deepsets | +0.0021 | 0.0015 | no |
+| BB1 | 98 | 0.0045 | H1: ewmp − efn | -0.0021 | 0.0013 | no |
+| BB1 | 98 | 0.0045 | H1 (secondary): transformer − deepsets | -0.0010 | 0.0011 | no |
+| BB1 | 98 | 0.0045 | H1 (secondary): ew_attention − efn | -0.0009 | 0.0018 | no |
+| BB1 | 98 | 0.0045 | H2a: ewmp − edgeconv | +0.0013 | 0.0016 | no |
+| BB1 | 98 | 0.0045 | H2a: efn − deepsets | +0.0055 | 0.0012 | yes |
+| BB1 | 98 | 0.0045 | H2a: ew_attention − transformer | +0.0056 | 0.0018 | yes |
+| BB1 | 98 | 0.0045 | H3: gcn_complete − deepsets | +0.0010 | 0.0008 | no |
+| BB3 | 98 | 0.0034 | H1: edgeconv − deepsets | -0.0021 | 0.0019 | no |
+| BB3 | 98 | 0.0034 | H1: ewmp − efn | -0.0006 | 0.0012 | no |
+| BB3 | 98 | 0.0034 | H1 (secondary): transformer − deepsets | -0.0004 | 0.0015 | no |
+| BB3 | 98 | 0.0034 | H1 (secondary): ew_attention − efn | -0.0015 | 0.0009 | no |
+| BB3 | 98 | 0.0034 | H2a: ewmp − edgeconv | +0.0019 | 0.0015 | no |
+| BB3 | 98 | 0.0034 | H2a: efn − deepsets | +0.0003 | 0.0017 | no |
+| BB3 | 98 | 0.0034 | H2a: ew_attention − transformer | -0.0007 | 0.0004 | no |
+| BB3 | 98 | 0.0034 | H3: gcn_complete − deepsets | -0.0020 | 0.0035 | no |
+
+## Ablation runs on the E1 + E2 curve (post hoc, Deviations D8)
+
+Residual of the AUC of the `stat_` ablation runs (latent width, pooling, 30 constituents of Deep Sets and EdgeConv) from the quadratic fitted to the E1 + E2 runs only. `within 2 sd`: fraction of runs within 2 residual sd of the E1 + E2 runs; `in range`: fraction whose validation loss lies in the loss range of the fitted runs.
+
+| signal | fit runs | fit sd | ablation runs | subset | n | mean residual | sd | within 2 sd | in range |
+|---|---|---|---|---|---|---|---|---|---|
+| R&D 3-prong | 98 | 0.0110 | 42 | all | 42 | -0.0113 | 0.0182 | 0.60 | 1.00 |
+| R&D 3-prong | 98 | 0.0110 | 42 | n30 | 6 | -0.0040 | 0.0126 | 1.00 | 1.00 |
+| R&D 3-prong | 98 | 0.0110 | 42 | pooling | 12 | -0.0124 | 0.0235 | 0.50 | 1.00 |
+| R&D 3-prong | 98 | 0.0110 | 42 | width | 24 | -0.0126 | 0.0167 | 0.54 | 1.00 |
+| BB1 | 98 | 0.0045 | 42 | all | 42 | -0.0049 | 0.0040 | 0.90 | 1.00 |
+| BB1 | 98 | 0.0045 | 42 | n30 | 6 | -0.0062 | 0.0017 | 1.00 | 1.00 |
+| BB1 | 98 | 0.0045 | 42 | pooling | 12 | -0.0058 | 0.0057 | 0.83 | 1.00 |
+| BB1 | 98 | 0.0045 | 42 | width | 24 | -0.0042 | 0.0033 | 0.92 | 1.00 |
+| BB3 | 98 | 0.0034 | 42 | all | 42 | +0.0019 | 0.0042 | 0.88 | 1.00 |
+| BB3 | 98 | 0.0034 | 42 | n30 | 6 | +0.0008 | 0.0048 | 0.83 | 1.00 |
+| BB3 | 98 | 0.0034 | 42 | pooling | 12 | +0.0032 | 0.0042 | 0.83 | 1.00 |
+| BB3 | 98 | 0.0034 | 42 | width | 24 | +0.0015 | 0.0040 | 0.92 | 1.00 |
 
 ## H4: sign at 1, 3 and 5 epochs
 
 | hyp | contrast | signal | sign at 2 | 1 | 3 | 5 | status |
 |---|---|---|---|---|---|---|---|
-| H1 | edgeconv - deepsets | R&D 3-prong | 1 | – | – | – | pending |
-| H1 | edgeconv - deepsets | BB1 | -1 | – | – | – | pending |
-| H1 | ewmp - efn | R&D 3-prong | 1 | – | – | – | pending |
-| H1 | ewmp - efn | BB1 | -1 | – | – | – | pending |
-| H1 | transformer - deepsets | R&D 3-prong | 1 | – | – | – | pending |
-| H1 | transformer - deepsets | BB1 | -1 | – | – | – | pending |
-| H1 | ew_attention - efn | R&D 3-prong | 1 | – | – | – | pending |
-| H1 | ew_attention - efn | BB1 | -1 | – | – | – | pending |
-| H2a | ewmp - edgeconv | R&D 3-prong | 1 | – | – | – | pending |
-| H2a | efn - deepsets | R&D 3-prong | 1 | – | – | – | pending |
-| H2a | ew_attention - transformer | R&D 3-prong | 1 | – | – | – | pending |
-| H2b | ewmp - edgeconv | R&D background | -1 | – | – | – | pending |
-| H2b | efn - deepsets | R&D background | -1 | – | – | – | pending |
-| H3 | gcn_complete - deepsets | R&D 3-prong | -1 | – | – | – | pending |
-| H3 | gcn_complete - deepsets | BB3 | -1 | – | – | – | pending |
+| H1 | edgeconv - deepsets | R&D 3-prong | 1 | 1 | 1 | 1 | robust |
+| H1 | edgeconv - deepsets | BB1 | -1 | 1 | -1 | 1 | flips |
+| H1 | ewmp - efn | R&D 3-prong | 1 | 1 | 1 | 1 | robust |
+| H1 | ewmp - efn | BB1 | -1 | -1 | -1 | -1 | robust |
+| H1 | transformer - deepsets | R&D 3-prong | 1 | 1 | 1 | 1 | robust |
+| H1 | transformer - deepsets | BB1 | -1 | -1 | -1 | -1 | robust |
+| H1 | ew_attention - efn | R&D 3-prong | 1 | 1 | 1 | 1 | robust |
+| H1 | ew_attention - efn | BB1 | -1 | -1 | -1 | -1 | robust |
+| H2a | ewmp - edgeconv | R&D 3-prong | 1 | -1 | 1 | 1 | flips |
+| H2a | efn - deepsets | R&D 3-prong | 1 | 1 | 1 | 1 | robust |
+| H2a | ew_attention - transformer | R&D 3-prong | 1 | 1 | 1 | -1 | flips |
+| H2b | ewmp - edgeconv | R&D background | -1 | -1 | -1 | -1 | robust |
+| H2b | efn - deepsets | R&D background | -1 | -1 | -1 | 1 | flips |
+| H3 | gcn_complete - deepsets | R&D 3-prong | -1 | -1 | -1 | -1 | robust |
+| H3 | gcn_complete - deepsets | BB3 | -1 | -1 | -1 | -1 | robust |

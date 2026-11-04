@@ -391,3 +391,25 @@ The checks, all on the SR (3.3–3.7 TeV) of `bkg_test`, 2-prong and 3-prong sig
   SIC (1.21 against 1.06 here), which was not run in this session. The difference is attributed to the reference
   size and k, not to a bug in either. The E1 numbers stand as the protocol's baseline, and no verdict (H1–H5)
   uses it.
+
+**D8 (E4 session, 3 Nov). Ablation runs scored on the test signals after the E1–E3 results were seen (reporting
+only).** The 42 development runs of the ablations of Deep Sets and EdgeConv (`stw_*` latent width, `stp_*` pooling,
+`stn_*_n30`, 3 seeds each, development only in E2) were promoted to `stat_<rest of the name>` and scored on the R&D
+test splits and on BB1 and BB3 (`--subsample`), to test the fit-quality curve of D2 out of sample. No run was
+retrained, every `history.json` has `status: done` and `epochs_done: 2`, and no design choice, verdict or earlier
+number changes. The splits hash was checked (`5217cca5…`). The quadratic of AUC in the background validation loss is
+fitted to the E1 + E2 runs only (98 runs: `study_*` and `stct_*` autoencoders) and the ablation runs are its test
+set. Residual of the AUC from the curve (mean, sd over the 42 runs; fraction within 2 residual sd of the E1 + E2 runs,
+sd 0.0110, 0.0045, 0.0034):
+
+| signal | mean residual | sd | within 2 sd |
+|---|---|---|---|
+| R&D 3-prong | −0.0113 | 0.0182 | 0.60 |
+| BB1 | −0.0049 | 0.0040 | 0.90 |
+| BB3 | +0.0019 | 0.0042 | 0.88 |
+
+All ablation runs lie inside the loss range of the fitted runs. **Result:** the curve predicts the ablations' BB1 and
+BB3 AUC to within about 0.005 (the BB1 offset of −0.005 is about one fit sd, so it is a small bias), but on the
+3-prong signal it overpredicts them by 0.011 on average, with a spread of 0.018, and only 60 % of the runs fall
+within 2 sd (width 0.54, pooling 0.50, n30 1.00). The curve is therefore a good description of the black-box AUCs, and
+a weaker one for the 3-prong AUC outside the E1 + E2 configurations. Table by family: `results/study/study_posthoc.md`.

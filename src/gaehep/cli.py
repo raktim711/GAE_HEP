@@ -235,6 +235,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     ph.add_argument("--prefix", default="study")
     ph.add_argument("--curves", default="stct", help="prefix of the training-length runs ('' to skip)")
+    ph.add_argument("--ablations", default="stat", help="prefix of the scored ablation runs ('' to skip)")
     ss = sub.add_parser(
         "score-sample", help="score a trained run on a black box -> bb<i>_scores.npz, bb<i>_metrics.json"
     )
@@ -292,7 +293,7 @@ def main(argv: list[str] | None = None) -> int:
         from gaehep.eval.posthoc import posthoc
 
         try:
-            for path in posthoc(a.prefix, a.curves, log=_log).values():
+            for path in posthoc(a.prefix, a.curves, log=_log, ablations=a.ablations).values():
                 print(path)
         except ValueError as err:
             raise SystemExit(f"posthoc: {err}") from None

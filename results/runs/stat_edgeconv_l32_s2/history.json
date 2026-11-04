@@ -1,0 +1,39 @@
+{
+  "status": "done",
+  "epochs_done": 2,
+  "best_val_loss": 0.2611080841064453,
+  "history": [
+    {
+      "epoch": 0,
+      "train_loss": 0.5071033561706543,
+      "val_loss": 0.3020208015441895,
+      "lr": 0.0005153640669390546,
+      "seconds": 309.1615424156189
+    },
+    {
+      "epoch": 1,
+      "train_loss": 0.2811405872821808,
+      "val_loss": 0.2611080841064453,
+      "lr": 0.0,
+      "seconds": 313.44106435775757
+    }
+  ],
+  "train_config": {
+    "epochs": 2,
+    "jets_per_epoch": 120000,
+    "batch_size": 256,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "patience": 3,
+    "min_delta": 0.001,
+    "val_jets": 20000,
+    "time_budget_min": 100,
+    "seed": 2,
+    "grad_clip": 5.0,
+    "warmup_frac": 0.02,
+    "prepare_batches": 20,
+    "threads": 1,
+    "device": "auto"
+  },
+  "train_minutes": 10.56206293106079
+}
