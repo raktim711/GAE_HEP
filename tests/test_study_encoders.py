@@ -191,7 +191,7 @@ def test_pma_pool_masks_padding_and_is_permutation_invariant():
 
 
 def test_pool_option_validation_and_default_state_dict_keys():
-    for enc in ("transformer", "efn", "ewmp", "ew_attention", "gcn_complete"):
+    for enc in ("transformer", "ew_attention", "gcn_complete"):
         with pytest.raises(ValueError, match="pool"):
             build_model("ef_ae", **SMALL, encoder=enc, pool="pma")
     with pytest.raises(ValueError, match="pool"):
@@ -244,3 +244,23 @@ def test_study_config_smoke_run(encoder, fake_env):
     with np.load(out / "scores.npz") as f:
         assert {"bkg_val", "bkg_test", "sig_test", "sig3_test"} <= set(f.files)
         assert all(np.isfinite(f[k]).all() and f[k].shape[1] == 2 for k in f.files)
+
+
+# ------------------------------------------------------------------------- inputs x pooling decomposition (D9)
+@pytest.mark.parametrize("encoder", ["efn", "ewmp"])
+def test_safe_inputs_with_meanmax_pooling_are_not_irc_safe(encoder, pool, scaler):
+    """The off-diagonal cell of the inputs x pooling decomposition: an IRC-safe encoder with mean + max pooling
+    keeps its direction-only inputs and its initial weights (same seed, same parameter shapes) but loses IRC
+    safety, so a collinear split changes its score."""
+    native, mixed = _small(encoder), _small(encoder, pool="meanmax")
+    assert native.irc and not mixed.irc
+    assert native.safe_inputs and mixed.safe_inputs and mixed.pool_kind == "meanmax"
+    sd0, sd1 = native.state_dict(), mixed.state_dict()
+    assert sd0.keys() == sd1.keys() and all(torch.equal(sd0[k], sd1[k]) for k in sd0)
+    idx = np.arange(12)
+    s0, _ = _score_embed(mixed, make_batch(pool, idx, scaler))
+    s1, _ = _score_embed(mixed, make_batch(_split_one(pool, 0.3), idx, scaler))
+    assert (s0 - s1).abs().max() > 1e-4
+    for enc in ("deepsets", "edgeconv"):  # unsafe inputs with weighted pooling: not IRC safe either
+        m = _small(enc, pool="weighted")
+        assert not m.irc and not m.safe_inputs

@@ -236,6 +236,20 @@ def main(argv: list[str] | None = None) -> int:
     ph.add_argument("--prefix", default="study")
     ph.add_argument("--curves", default="stct", help="prefix of the training-length runs ('' to skip)")
     ph.add_argument("--ablations", default="stat", help="prefix of the scored ablation runs ('' to skip)")
+    sub.add_parser(
+        "audit-followup", help="bias-audit follow-up analyses (D9) -> results/study/audit_followup.*"
+    )
+    mc = sub.add_parser(
+        "mass-corr", help="Spearman(jet score, m_J) on R&D bkg_test jets -> <run>/mass_corr.json"
+    )
+    mc.add_argument("runs", nargs="+", metavar="RUN")
+    mc.add_argument("--events", type=int, default=5000)
+    rs = sub.add_parser(
+        "rnd-scan",
+        help="BB1 train-on-data bump hunt without signal, window scan + toys -> <run>/rnd_scan.json",
+    )
+    rs.add_argument("runs", nargs="+", metavar="RUN")
+    rs.add_argument("--toys", type=int, default=1000)
     ss = sub.add_parser(
         "score-sample", help="score a trained run on a black box -> bb<i>_scores.npz, bb<i>_metrics.json"
     )
@@ -288,6 +302,19 @@ def main(argv: list[str] | None = None) -> int:
                 print(path)
         except FileNotFoundError as err:
             raise SystemExit(f"study-table: {err}") from None
+        return 0
+    if a.cmd in ("audit-followup", "mass-corr", "rnd-scan"):
+        from gaehep.eval import followup as FU
+
+        if a.cmd == "audit-followup":
+            for path in FU.followup(log=_log).values():
+                print(path)
+        elif a.cmd == "mass-corr":
+            for r in a.runs:
+                FU.mass_corr(r, n_events=a.events, log=_log)
+        else:
+            for r in a.runs:
+                FU.rnd_scan(r, n_toys=a.toys, log=_log)
         return 0
     if a.cmd == "posthoc":
         from gaehep.eval.posthoc import posthoc
