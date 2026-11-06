@@ -234,10 +234,20 @@ These AUCs include the events the models were trained on. On the held-out valida
 
 **Bump hunt.** A sideband-defined score cut at the known window gives a local significance of 2.3–2.5σ (10 % cut)
 and 3.2–3.8σ (2 % cut; per seed 1.6–4.4σ), as computed by the analysis code. This quoted local Z overstates the
-evidence, in three ways:
-- **Calibration.** ⟨…⟩
-- **Look-elsewhere.** ⟨…⟩
-- **Fit convergence.** ⟨…⟩
+evidence. The D9 null test repeats the procedure without signal: three R&D-trained EFN runs scan their own training
+sample, the whole R&D background (1 000 000 events, as many as BB1), over 14 windows of 400 GeV × the same cuts, with
+3000 toy experiments.
+- **Calibration.** Without signal, the quoted local Z at a fixed window is spread with sd 1.34, not 1, because it
+  ignores the uncertainty of the background fitted in the sidebands. The calibrated local significance of the BB1
+  result (2 % cut, mean per encoder) is 2.4–2.8σ.
+- **Look-elsewhere.** A blind scan over these windows and cuts finds a largest local Z of 2.6 (median) and above 4.0
+  in 5 % of background-only experiments. The real null scans give 2.2–2.7, in line with the toys, so the procedure
+  does not create spurious bumps. Even if BB1's own scan peaked at the true window, its global significance would be
+  0.8–1.4σ (p = 0.08–0.21 per encoder; the best single seed 1.9σ).
+- **Fit convergence** is not an issue on these spectra: the analysis fit and a fully converged fit agree to 0.000
+  in Z.
+
+So BB1 is detected at the AUC level, but the bump hunt does not establish a significant excess.
 
 **The BB2 test.** The R&D-trained main runs applied to BB2 (background only, Herwig) give a largest |Z| of 3.3
 over 360 window × cut combinations. These runs were not trained on BB2, so this tests the R&D-trained procedure,
@@ -295,7 +305,8 @@ the card (D4).
 - **The IRC-safety contrasts test a design, not IRC safety.** In the set family the equal-fit edge comes from the
   direction-only inputs (section 2.2).
 - **Statistics.** The black boxes give few signal events in the window (BB1: 512; BB3 trijet: 137). The BB1 bump
-  hunt's local Z is not calibrated and ignores the look-elsewhere effect (section 5).
+  hunt's quoted local Z is not calibrated; after calibration and the look-elsewhere effect it is 0.8–1.4σ
+  (section 5).
 - **Generator dependence.** All signals are Pythia + Delphes.
 - **Seeds.** H4 rests on 3 seeds per training length; E2–E5 have 3 seeds per configuration.
 - **Unfinished black-box checks.** The E5 runs on BB1 and BB3, a blind BB1 scan, a BB2-trained null and BB1 at fixed

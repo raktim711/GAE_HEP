@@ -55,6 +55,7 @@ Set family: Deep Sets (unsafe inputs, mean + max), Deep Sets with pT-weighted po
 | rd3 | set | safe/weighted (study_efn) | 5 | 0.235 | 0.8117 ± 0.0060 | +0.0110 ± 0.0022 | 1.000 | 0.745 |
 | rd3 | graph | unsafe/meanmax (study_edgeconv) | 5 | 0.244 | 0.8001 ± 0.0030 | +0.0022 ± 0.0021 | 0.992 | 0.528 |
 | rd3 | graph | unsafe/weighted (stat_edgeconv_weighted) | 3 | 0.206 | 0.8191 ± 0.0045 | +0.0094 ± 0.0021 | 0.997 | 0.694 |
+| rd3 | graph | safe/meanmax (e5_ewmp_meanmax) | 1 | 0.270 | 0.8135 ± – | +0.0239 ± – | 1.000 | 0.980 |
 | rd3 | graph | safe/weighted (study_ewmp) | 5 | 0.219 | 0.8189 ± 0.0040 | +0.0133 ± 0.0008 | 1.000 | 0.788 |
 | bb1 | set | unsafe/meanmax (study_deepsets) | 5 | 0.342 | 0.9160 ± 0.0032 | -0.0005 ± 0.0006 | 0.988 | 0.730 |
 | bb1 | set | unsafe/weighted (stat_deepsets_weighted) | 3 | 0.379 | 0.9089 ± 0.0091 | -0.0082 ± 0.0066 | 0.999 | 0.881 |
@@ -79,6 +80,12 @@ Effects at equal fit (A − B of the cell residuals, Welch SE); the last columns
 | rd3 | set | inputs | weighted pooling | +0.0270 | 0.0182 | no | – | – | – | – |
 | rd3 | set | IRC-safe design (both) | +0.0165 | 0.0073 | yes | +0.0151* | +0.0107* | +0.0135* | +0.0108* |
 | rd3 | set | interaction | +0.0095 | 0.0196 | no | – | – | – | – |
+| rd3 | graph | pooling | unsafe inputs | +0.0071 | 0.0030 | yes | +0.0060* | +0.0082* | +0.0071* | +0.0090* |
+| rd3 | graph | pooling | safe inputs | -0.0106 | – | – | -0.0118 | -0.0107 | -0.0114 | -0.0093 |
+| rd3 | graph | inputs | mean+max pooling | +0.0217 | – | – | +0.0223 | +0.0223 | +0.0223 | +0.0214 |
+| rd3 | graph | inputs | weighted pooling | +0.0040 | 0.0023 | no | – | – | – | – |
+| rd3 | graph | IRC-safe design (both) | +0.0111 | 0.0022 | yes | +0.0104* | +0.0116* | +0.0110* | +0.0122* |
+| rd3 | graph | interaction | -0.0177 | – | no | – | – | – | – |
 
 ## 4. IRC robustness: IRC-safe minus IRC-unsafe
 
@@ -125,7 +132,44 @@ Spearman ρ of the background jet scores before and after the perturbation (bkg_
 
 ## 6. Look-elsewhere calibration of the BB1 bump hunt
 
-No `rnd_scan.json` files yet (`gaehep rnd-scan RUN...`).
+The BB1 hunt (E3) trains on BB1's own events and tests the known window (3.6–4.0 TeV) with cuts keeping 10 % and 2 % of the sideband events. Here the same procedure is run without signal: R&D-trained runs (study_efn_s1, study_efn_s2, study_efn_s3) scan their own training sample, the whole R&D background (1 000 000 events), over 14 windows of 400 GeV (lower edges 3.0–4.3 TeV) × the same cuts. 3000 toy experiments from smooth fits of the selected spectra give the distribution of the largest local Z of the scan (windows × {10 %, 2 %}). The toys and the `converged` columns minimise the likelihood fully (L-BFGS-B then BFGS, started at the analysis optimum); the analysis fit of `bumphunt.search` (Nelder–Mead then Powell) can stop short of the minimum, and the last columns give how much that moves the local Z of these spectra (42 tests per run).
+
+| null run | largest local Z, data scan (10 %, 2 %), converged | (all three cuts) | (10 %, 2 %), analysis fit | converged − analysis ΔZ: mean ± sd | max abs |
+|---|---|---|---|---|---|
+| study_efn_s1 | +2.47 | +2.68 | +2.47 | -0.000 ± 0.000 | 0.000 |
+| study_efn_s2 | +2.66 | +2.68 | +2.66 | -0.000 ± 0.000 | 0.000 |
+| study_efn_s3 | +2.21 | +2.68 | +2.21 | -0.000 ± 0.000 | 0.000 |
+
+Toys: largest local Z of the scan, median 2.56, 90 % 3.62, 95 % 4.03, 99 % 4.89. At the fixed BB1 window alone (2 % cut) the toys give Z = +0.00 ± 1.34: without signal the quoted local Z is wider than N(0, 1), because it ignores the uncertainty of the background extrapolated from the sideband fit. The calibrated local p is the fraction of toys with a larger Z at that fixed window.
+
+| quoted local Z | calibrated local p (fixed window) | calibrated local Z | global p (scan) | global Z |
+|---|---|---|---|---|
+| 2.0 | 0.0716 | 1.46 | 0.823 | -0.93 |
+| 2.5 | 0.0323 | 1.85 | 0.545 | -0.11 |
+| 3.0 | 0.0133 | 2.22 | 0.289 | 0.56 |
+| 3.5 | 0.00367 | 2.68 | 0.127 | 1.14 |
+| 4.0 | 0.00133 | 3.00 | 0.0536 | 1.61 |
+| 4.5 | 0.000333 | 3.40 | 0.021 | 2.03 |
+
+| BB1-trained run | quoted local Z (2 % cut) | calibrated local Z | global p | global Z |
+|---|---|---|---|---|
+| edgeconv_s1 | +3.01 | 2.23 | 0.284 | 0.57 |
+| edgeconv_s2 | +4.22 | 3.21 | 0.036 | 1.80 |
+| edgeconv_s3 | +2.95 | 2.20 | 0.309 | 0.50 |
+| ewmp_s1 | +3.42 | 2.60 | 0.144 | 1.06 |
+| ewmp_s2 | +4.18 | 3.21 | 0.0387 | 1.77 |
+| ewmp_s3 | +3.73 | 2.79 | 0.082 | 1.39 |
+| efn_s1 | +4.35 | 3.21 | 0.029 | 1.90 |
+| efn_s2 | +3.73 | 2.79 | 0.0806 | 1.40 |
+| efn_s3 | +1.55 | 1.14 | 0.958 | -1.72 |
+
+| encoder | mean quoted local Z (2 % cut) | calibrated local Z | global p | global Z |
+|---|---|---|---|---|
+| edgeconv | +3.39 | 2.55 | 0.151 | 1.03 |
+| ewmp | +3.78 | 2.83 | 0.0753 | 1.44 |
+| efn | +3.21 | 2.35 | 0.208 | 0.81 |
+
+The global values assume that BB1's own scan would peak at the true window; a larger excess elsewhere would make the hunt point to the wrong mass, so they are an upper bound on what a blind hunt achieves.
 
 ## 7. BB1 at fixed jet masses (session F2)
 

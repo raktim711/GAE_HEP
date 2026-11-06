@@ -462,6 +462,13 @@ Output: `results/study/audit_followup.{md,json}`. Tests: `tests/test_followup.py
 - *Look-elsewhere null of the BB1 hunt.* `gaehep rnd-scan` repeats the E3 train-on-data hunt without signal: the
   three EFN E1 runs scan their own training sample, the whole R&D background (1 000 000 events, as many as BB1), over
   14 windows of 400 GeV (lower edges 3.0–4.3 TeV) × the three cuts of E3. It also runs 1000 nested toy experiments
-  per run from smooth fits of the selected spectra, using a converged fit (L-BFGS-B then BFGS). Results: ⟨…⟩
+  per run from smooth fits of the selected spectra, using a converged fit (L-BFGS-B then BFGS). Results:
+  - The quoted local Z of `bumphunt.search` at a fixed window has a null spread of 1.34, because it ignores the
+    uncertainty of the fitted background. BB1's 3.2–3.8 (2 % cut, per encoder) are 2.4–2.8σ calibrated.
+  - The largest local Z of a blind scan without signal has a median of 2.6, a 95 % quantile of 4.0 and a 99 %
+    quantile of 4.9. The real null scans give 2.2–2.7.
+  - The global significance of the BB1 results, assuming its scan peaked at the true window, is 0.8–1.4σ per
+    encoder.
+  - The analysis fit and the converged fit agree to 0.000 in Z on these spectra.
 - *Not run here.* zenodo.org was not reachable from this session (proxy policy). The black-box parts — E5 on BB1
   and BB3, a blind BB1 scan, a BB2-trained null, and BB1 at fixed jet masses — are prepared in `docs/F2_SESSION.md`.

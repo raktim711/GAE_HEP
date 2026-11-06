@@ -226,7 +226,10 @@ far from the soft limit.
 - Trained on BB1's own events (label-blind, 3 seeds), the AUC is 0.904–0.908 including the training events and
   0.894–0.899 on the held-out validation part (`study/e3_summary.md`).
 - The bump hunt with a sideband-defined cut at the known window reaches a quoted local Z of 2.3–2.5 (10 % cut) and
-  3.2–3.8 (2 % cut; per seed 1.6–4.4). Calibrated against the no-signal null (D9): ⟨…⟩
+  3.2–3.8 (2 % cut; per seed 1.6–4.4). Calibrated against the no-signal null (D9; `study/audit_followup.md`
+  section 6): the quoted local Z has a null spread of 1.34, so the calibrated local significance is 2.4–2.8σ (per
+  encoder); a blind scan over 14 windows × 2 cuts gives a largest Z of 2.6 (median) without signal, so the global
+  significance is at most 0.8–1.4σ (p 0.08–0.21). The real background scans (2.2–2.7) match the toys.
 - Mass mechanism (D9, `study/audit_followup.md` section 5): within each encoder the score's correlation with m_J
   rises with the loss (+0.87; +0.58 between seeds), and BB1 AUC rises with it (+0.75; +0.54). Not for the GCN.
 - BB2 test: the R&D-trained runs give a largest |Z| of 3.3 over 360 trials. They were not trained on BB2, so this
@@ -307,8 +310,8 @@ Revised after the bias audit (D9). Numbers in section 4.
   black-box AUCs of new runs poorly (R² 0.23 and −0.85).
 - "Fit quality causes the performance" or "architecture acts only through the fit": the seed test varies the fit
   only by chance, and the equal-fit comparison conditions on a mediator.
-- Any significance for BB1 beyond what section 4.5 gives after calibration and look-elsewhere correction; nothing
-  discovery-level.
+- Any significant BB1 excess: after calibration and the look-elsewhere effect the bump hunt gives at most 0.8–1.4σ
+  (global). Say "detected at the AUC level", not "found".
 
 ## 8. Framing options
 
@@ -329,7 +332,7 @@ The author has not yet chosen a framing.
 - The curve explains the 3-prong signal, not the black boxes.
 - The IRC-safety contrasts test a design (inputs + pooling + energy weighting), not IRC safety alone.
 - There are few signal events in the windows: 512 for BB1, 137 for the BB3 trijet mode. The BB1 bump hunt's quoted
-  local Z is not calibrated and ignores the look-elsewhere effect (section 4.5).
+  local Z is not calibrated; after calibration and look-elsewhere it is at most 0.8–1.4σ (section 4.5).
 - All signals are Pythia; BB2 (Herwig) is the only generator change on the background side.
 - H4 rests on 3 seeds per training length; E2–E5 have 3 seeds per configuration.
 - The analysis is jet-level with a two-jet event score; there is no event-level embedding.
