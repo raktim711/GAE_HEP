@@ -1,6 +1,6 @@
 # GAE_HEP: context for writing the paper
 
-This file holds everything a writer (human or model) needs to draft the paper from this results folder.
+This file collects everything needed to write the paper from this results folder: the study, the numbers with their sources, and the claims the data support.
 
 **Facts and references.**
 - Every number below comes from a file in `results/`; the file is named next to it.
