@@ -454,7 +454,11 @@ Output: `results/study/audit_followup.{md,json}`. Tests: `tests/test_followup.py
   `gaehep promote e5d_<enc>_meanmax_s<s> e5_<enc>_meanmax_s<s>` and `gaehep irc-probe`. The IRC probe was also run on
   the six E4 weighted-pooling runs, with the committed weights. Scored on R&D only. Results: ⟨…⟩
 - *Mass check.* `gaehep mass-corr` on the 98 E1 + E2 runs: Spearman correlation of the jet score with m_J on 10 000
-  bkg_test jets per run, against the validation loss. Results: ⟨…⟩
+  bkg_test jets per run, against the validation loss. Within each encoder ρ_mass rises with the loss (Spearman
+  +0.87; between seeds of one configuration +0.58), and BB1 AUC rises with ρ_mass (+0.75; +0.54). Across encoders the
+  relation holds without the complete-graph GCN (+0.75), which fits worst but is the least mass-like. The audit had
+  doubted this mechanism on the seed-1 runs of the seven encoders (`bb1_diagnostics.json`), where the GCN dominates;
+  with all 98 runs it is supported within architectures.
 - *Look-elsewhere null of the BB1 hunt.* `gaehep rnd-scan` repeats the E3 train-on-data hunt without signal: the
   three EFN E1 runs scan their own training sample, the whole R&D background (1 000 000 events, as many as BB1), over
   14 windows of 400 GeV (lower edges 3.0–4.3 TeV) × the three cuts of E3. It also runs 1000 nested toy experiments

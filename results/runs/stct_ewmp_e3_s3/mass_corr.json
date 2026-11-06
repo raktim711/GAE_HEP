@@ -1,0 +1,11 @@
+{
+  "name": "stct_ewmp_e3_s3",
+  "split": "bkg_test",
+  "n_events": 5000,
+  "n_jets": 10000,
+  "spearman_score_mJ": 0.7034240991420402,
+  "time": "2026-11-06 19:17:11 CET",
+  "git": "05fe7b7",
+  "splits_sha256": "5217cca54367efda6b33a1626da8cdb21e87ef7b6fd6b2abfa73d8ac510f7af2",
+  "torch": "2.15.0+cu132"
+}

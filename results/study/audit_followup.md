@@ -54,19 +54,19 @@ Set family: Deep Sets (unsafe inputs, mean + max), Deep Sets with pT-weighted po
 | rd3 | set | safe/meanmax (e5_efn_meanmax) | 3 | 0.410 | 0.7552 ± 0.0076 | +0.0120 ± 0.0020 | 0.996 | 0.947 |
 | rd3 | set | safe/weighted (study_efn) | 5 | 0.235 | 0.8117 ± 0.0060 | +0.0110 ± 0.0022 | 1.000 | 0.745 |
 | rd3 | graph | unsafe/meanmax (study_edgeconv) | 5 | 0.244 | 0.8001 ± 0.0030 | +0.0022 ± 0.0021 | 0.992 | 0.528 |
-| rd3 | graph | unsafe/weighted (stat_edgeconv_weighted) | 3 | 0.206 | 0.8191 ± 0.0045 | +0.0094 ± 0.0021 | 0.997 | 0.627 |
+| rd3 | graph | unsafe/weighted (stat_edgeconv_weighted) | 3 | 0.206 | 0.8191 ± 0.0045 | +0.0094 ± 0.0021 | 0.997 | 0.694 |
 | rd3 | graph | safe/weighted (study_ewmp) | 5 | 0.219 | 0.8189 ± 0.0040 | +0.0133 ± 0.0008 | 1.000 | 0.788 |
 | bb1 | set | unsafe/meanmax (study_deepsets) | 5 | 0.342 | 0.9160 ± 0.0032 | -0.0005 ± 0.0006 | 0.988 | 0.730 |
 | bb1 | set | unsafe/weighted (stat_deepsets_weighted) | 3 | 0.379 | 0.9089 ± 0.0091 | -0.0082 ± 0.0066 | 0.999 | 0.881 |
 | bb1 | set | safe/weighted (study_efn) | 5 | 0.235 | 0.9126 ± 0.0036 | +0.0050 ± 0.0011 | 1.000 | 0.745 |
 | bb1 | graph | unsafe/meanmax (study_edgeconv) | 5 | 0.244 | 0.9103 ± 0.0038 | +0.0016 ± 0.0014 | 0.992 | 0.528 |
-| bb1 | graph | unsafe/weighted (stat_edgeconv_weighted) | 3 | 0.206 | 0.8971 ± 0.0032 | -0.0071 ± 0.0020 | 0.997 | 0.627 |
+| bb1 | graph | unsafe/weighted (stat_edgeconv_weighted) | 3 | 0.206 | 0.8971 ± 0.0032 | -0.0071 ± 0.0020 | 0.997 | 0.694 |
 | bb1 | graph | safe/weighted (study_ewmp) | 5 | 0.219 | 0.9088 ± 0.0022 | +0.0029 ± 0.0008 | 1.000 | 0.788 |
 | bb3 | set | unsafe/meanmax (study_deepsets) | 5 | 0.342 | 0.4758 ± 0.0026 | +0.0013 ± 0.0014 | 0.988 | 0.730 |
 | bb3 | set | unsafe/weighted (stat_deepsets_weighted) | 3 | 0.379 | 0.4749 ± 0.0071 | +0.0026 ± 0.0044 | 0.999 | 0.881 |
 | bb3 | set | safe/weighted (study_efn) | 5 | 0.235 | 0.4751 ± 0.0012 | +0.0016 ± 0.0009 | 1.000 | 0.745 |
 | bb3 | graph | unsafe/meanmax (study_edgeconv) | 5 | 0.244 | 0.4731 ± 0.0027 | -0.0009 ± 0.0012 | 0.992 | 0.528 |
-| bb3 | graph | unsafe/weighted (stat_edgeconv_weighted) | 3 | 0.206 | 0.4771 ± 0.0031 | +0.0048 ± 0.0018 | 0.997 | 0.627 |
+| bb3 | graph | unsafe/weighted (stat_edgeconv_weighted) | 3 | 0.206 | 0.4771 ± 0.0031 | +0.0048 ± 0.0018 | 0.997 | 0.694 |
 | bb3 | graph | safe/weighted (study_ewmp) | 5 | 0.219 | 0.4739 ± 0.0014 | +0.0010 ± 0.0008 | 1.000 | 0.788 |
 
 Effects at equal fit (A − B of the cell residuals, Welch SE); the last columns give Δ for the other curve forms (`*`: |Δ| > 2 SE).
@@ -101,7 +101,27 @@ Spearman ρ of the background jet scores before and after the perturbation (bkg_
 
 ## 5. Does a worse fit make the score more mass-like?
 
-No `mass_corr.json` files yet (`gaehep mass-corr RUN...`).
+ρ_mass = Spearman correlation of the jet score with m_J on 10 000 R&D bkg_test jets per run, for 98 E1 + E2 runs. If a poorly fitting model behaved like a mass tagger, ρ_mass would rise with the validation loss and predict the BB1 AUC.
+
+| test | Spearman | p | runs |
+|---|---|---|---|
+| ρ_mass vs loss, all runs | +0.31 | 0.0021 | 98 |
+| ρ_mass vs loss, all runs without the GCN | +0.75 | 2.5e-16 | 84 |
+| ρ_mass vs loss, within encoder | +0.87 | 1.2e-31 | 98 |
+| ρ_mass vs loss, within configuration (seeds only) | +0.58 | 4.1e-10 | 98 |
+| BB1 AUC vs ρ_mass, all runs | +0.46 | 2.3e-06 | 98 |
+| BB1 AUC vs ρ_mass, within encoder | +0.75 | 4.5e-19 | 98 |
+| BB1 AUC vs ρ_mass, within configuration (seeds only) | +0.54 | 7.5e-09 | 98 |
+
+| encoder | runs | mean loss | mean ρ_mass |
+|---|---|---|---|
+| deepsets | 14 | 0.353 | +0.771 |
+| efn | 14 | 0.249 | +0.738 |
+| edgeconv | 14 | 0.241 | +0.716 |
+| ewmp | 14 | 0.229 | +0.726 |
+| transformer | 14 | 0.169 | +0.703 |
+| ew_attention | 14 | 0.155 | +0.701 |
+| gcn_complete | 14 | 0.575 | +0.680 |
 
 ## 6. Look-elsewhere calibration of the BB1 bump hunt
 

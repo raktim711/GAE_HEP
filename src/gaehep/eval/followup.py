@@ -426,13 +426,17 @@ def mass_mechanism(main: dict[str, Config], curves: dict[str, Config]) -> dict[s
         r, p = stats.spearmanr(a[ok], b[ok])
         return {"spearman": float(r), "p": float(p), "n": int(ok.sum())}
 
+    cfg = np.array([r["config"] for r in rows])
     out["rho_mass_vs_loss"] = sp(rho, loss)
+    out["rho_mass_vs_loss_without_gcn"] = sp(rho[enc != "gcn_complete"], loss[enc != "gcn_complete"])
     out["rho_mass_vs_loss_within_encoder"] = within_group_test(loss, rho, enc)
+    out["rho_mass_vs_loss_within_configuration"] = within_group_test(loss, rho, cfg)
     for s in ("bb1", "rd3"):
         auc = np.array([np.nan if r[f"auc_{s}"] is None else r[f"auc_{s}"] for r in rows], float)
         out[f"auc_{s}_vs_rho_mass"] = sp(auc, rho)
         ok = np.isfinite(auc)
         out[f"auc_{s}_vs_rho_mass_within_encoder"] = within_group_test(rho[ok], auc[ok], enc[ok])
+        out[f"auc_{s}_vs_rho_mass_within_configuration"] = within_group_test(rho[ok], auc[ok], cfg[ok])
     out["per_encoder"] = {
         e: {
             "rho_mass": float(rho[enc == e].mean()),
@@ -1085,6 +1089,8 @@ def render(res: dict[str, Any]) -> str:
     if mm.get("n_runs", 0) >= 5:
         a, b = mm["rho_mass_vs_loss"], mm["rho_mass_vs_loss_within_encoder"]
         c, d = mm["auc_bb1_vs_rho_mass"], mm["auc_bb1_vs_rho_mass_within_encoder"]
+        a2, b2 = mm["rho_mass_vs_loss_without_gcn"], mm["rho_mass_vs_loss_within_configuration"]
+        d2 = mm["auc_bb1_vs_rho_mass_within_configuration"]
         L += [
             f"ρ_mass = Spearman correlation of the jet score with m_J on 10 000 R&D bkg_test jets per run, for "
             f"{mm['n_runs']} E1 + E2 runs. If a poorly fitting model behaved like a mass tagger, ρ_mass would rise "
@@ -1093,9 +1099,12 @@ def render(res: dict[str, Any]) -> str:
             "| test | Spearman | p | runs |",
             "|---|---|---|---|",
             f"| ρ_mass vs loss, all runs | {a['spearman']:+.2f} | {a['p']:.2g} | {a['n']} |",
+            f"| ρ_mass vs loss, all runs without the GCN | {a2['spearman']:+.2f} | {a2['p']:.2g} | {a2['n']} |",
             f"| ρ_mass vs loss, within encoder | {b['spearman']:+.2f} | {b['p']:.2g} | {b['n']} |",
+            f"| ρ_mass vs loss, within configuration (seeds only) | {b2['spearman']:+.2f} | {b2['p']:.2g} | {b2['n']} |",
             f"| BB1 AUC vs ρ_mass, all runs | {c['spearman']:+.2f} | {c['p']:.2g} | {c['n']} |",
             f"| BB1 AUC vs ρ_mass, within encoder | {d['spearman']:+.2f} | {d['p']:.2g} | {d['n']} |",
+            f"| BB1 AUC vs ρ_mass, within configuration (seeds only) | {d2['spearman']:+.2f} | {d2['p']:.2g} | {d2['n']} |",
             "",
             "| encoder | runs | mean loss | mean ρ_mass |",
             "|---|---|---|---|",

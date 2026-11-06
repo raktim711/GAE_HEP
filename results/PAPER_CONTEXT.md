@@ -227,6 +227,8 @@ far from the soft limit.
   0.894–0.899 on the held-out validation part (`study/e3_summary.md`).
 - The bump hunt with a sideband-defined cut at the known window reaches a quoted local Z of 2.3–2.5 (10 % cut) and
   3.2–3.8 (2 % cut; per seed 1.6–4.4). Calibrated against the no-signal null (D9): ⟨…⟩
+- Mass mechanism (D9, `study/audit_followup.md` section 5): within each encoder the score's correlation with m_J
+  rises with the loss (+0.87; +0.58 between seeds), and BB1 AUC rises with it (+0.75; +0.54). Not for the GCN.
 - BB2 test: the R&D-trained runs give a largest |Z| of 3.3 over 360 trials. They were not trained on BB2, so this
   does not test the train-on-data procedure behind the BB1 numbers.
 
@@ -292,6 +294,9 @@ Revised after the bias audit (D9). Numbers in section 4.
 - The complete-graph GCN collapses (H3).
 - On BB1 the autoencoders detect the signal about as well as jet mass alone; they miss the quark-dijet mode of BB3.
   This is not a generator shift.
+- Within an architecture, a worse background fit makes the score more mass-like, and a more mass-like score detects
+  BB1 better (D9: ρ_mass vs loss +0.87 within encoder, +0.58 between seeds; BB1 AUC vs ρ_mass +0.75 and +0.54). This
+  explains the BB1 trend; it does not hold for the complete-graph GCN.
 
 **Not supported (do not write):**
 - "Graphs (or attention) improve unsupervised anomaly detection."
@@ -302,7 +307,6 @@ Revised after the bias audit (D9). Numbers in section 4.
   black-box AUCs of new runs poorly (R² 0.23 and −0.85).
 - "Fit quality causes the performance" or "architecture acts only through the fit": the seed test varies the fit
   only by chance, and the equal-fit comparison conditions on a mediator.
-- "A poorly fitting model acts as a mass tagger": ⟨mass check⟩
 - Any significance for BB1 beyond what section 4.5 gives after calibration and look-elsewhere correction; nothing
   discovery-level.
 

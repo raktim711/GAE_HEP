@@ -217,7 +217,16 @@ On BB1 the encoders do no better than jet mass or −τ21:
   diagnostics).
 - Their BB1 background is barely shifted from the R&D background (KS 0.03–0.04).
 
-**Is a worse fit a better mass tagger?** ⟨…⟩
+**Is a worse fit a better mass tagger?** Within an architecture, yes (D9). The check uses 10 000 R&D background jets
+per run and the Spearman correlation of the jet score with m_J (ρ_mass):
+- **Within each encoder**, ρ_mass rises with the validation loss (Spearman +0.87 over 98 runs). It rises even
+  between seeds of one configuration (+0.58).
+- **The more mass-like the score, the higher the BB1 AUC**: +0.75 within encoder, +0.54 within configuration.
+- **Across encoders** the relation holds without the complete-graph GCN (+0.75). The GCN fits worst but is the least
+  mass-like (ρ_mass 0.68 against 0.70–0.77), which fits its collapse.
+
+So the BB1 trend of section 2 is the score turning into a jet-mass tagger as the fit gets worse. Whether any encoder
+adds information beyond the jet masses needs the black boxes (`docs/F2_SESSION.md`, step 4).
 
 **Trained on BB1's own events** (E3, label-blind, 3 seeds), the encoders reach AUC 0.904–0.908 in the window.
 These AUCs include the events the models were trained on. On the held-out validation part alone the AUC is
