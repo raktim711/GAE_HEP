@@ -234,7 +234,7 @@ per run and the Spearman correlation of the jet score with m_J (ρ_mass):
   between seeds of one configuration (+0.58).
 - **The more mass-like the score, the higher the BB1 AUC**: +0.75 within encoder, +0.54 within configuration.
 - **Across encoders** the relation holds without the complete-graph GCN (+0.75). The GCN fits worst but is the least
-  mass-like (ρ_mass 0.68 against 0.70–0.77), which fits its collapse.
+  mass-like (ρ_mass 0.68 against 0.70–0.77), consistent with its collapse.
 
 So the BB1 trend of section 2 is the score turning into a jet-mass tagger as the fit gets worse. Whether any encoder
 adds information beyond the jet masses needs the black boxes (`docs/F2_SESSION.md`, step 4).
