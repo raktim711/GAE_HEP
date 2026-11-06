@@ -182,7 +182,13 @@ for k, (ax, s) in enumerate(zip(axes, ["rd3", "bb1"], strict=True)):
     ax.set_xlabel(r"$\Delta$AUC")
     ax.set_title(f"({'ab'[k]}) {S.SIGNAL[s]}", loc="left", pad=3)
 axes[1].text(
-    1.02, 1 - 2.0 / len(pairs), "interaction", transform=axes[1].transAxes, rotation=90, va="center", fontsize=7
+    1.02,
+    1 - 2.0 / len(pairs),
+    "interaction",
+    transform=axes[1].transAxes,
+    rotation=90,
+    va="center",
+    fontsize=7,
 )
 axes[1].text(
     1.02,
