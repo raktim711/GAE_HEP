@@ -180,7 +180,10 @@ differ from their partners in their inputs (directions only) and their pooling (
 EFN with mean + max pooling fits much worse (loss 0.41 vs 0.235; raw 3-prong AUC 0.755 vs 0.812) but has the same
 equal-fit residual as EFN (+0.012 vs +0.011): the pooling acts through the fit, and the equal-fit edge comes from the
 direction-only inputs (+0.018 ± 0.007 with mean + max pooling; +0.018 to +0.025 for every curve form). That edge does
-not need IRC safety: the mean + max EFN is not IRC safe. Graph family: ⟨…⟩
+not need IRC safety: the mean + max EFN is not IRC safe. Graph family: EWMP with mean + max pooling fits worse than
+EWMP (loss 0.282 vs 0.219) but has the largest equal-fit residual of all cells (+0.025 vs +0.013); with mean + max
+pooling the EWMP encoder beats EdgeConv by +0.023 ± 0.002 at equal fit (all curve forms), and pT-weighted pooling hurts
+EWMP at equal fit (−0.012). In both families the edge comes from the encoder side, not the IRC-safe pooling.
 
 ### 4.3 Pre-registered verdicts
 
@@ -292,8 +295,9 @@ Revised after the bias audit (D9). Numbers in section 4.
   (EdgeConv over Deep Sets), ±0.005 on BB1. Energy-weighted attention is even below EFN on 3-prong.
 - IRC-safe encoders are exactly robust to collinear splits. The two with an energy-weighted interaction (EWMP,
   energy-weighted attention) are much more robust to soft emissions than their partners; EFN is not.
-- The IRC-safe design keeps a small equal-fit edge on some signals. In the set family that edge comes from the
-  direction-only inputs, not from IRC safety or the pooling. ⟨graph family⟩
+- The IRC-safe design keeps a small equal-fit edge on some signals. In both families that edge comes from the
+  encoder side (direction-only inputs; for EWMP also its energy-weighted radius graph), not from IRC safety or the
+  pooling: EFN and EWMP with mean + max pooling, which are not IRC safe, keep or exceed it at equal fit.
 - The complete-graph GCN collapses (H3).
 - On BB1 the autoencoders detect the signal about as well as jet mass alone; they miss the quark-dijet mode of BB3.
   This is not a generator shift.

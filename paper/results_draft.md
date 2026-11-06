@@ -132,9 +132,9 @@ The IRC-safe encoders differ from their unsafe partners in two ways at once:
 
 IRC safety needs both. E4 already had the unsafe inputs with weighted pooling; E5 adds the safe inputs with mean +
 max pooling: EFN and EWMP with mean + max pooling, 3 seeds each. Changing only the pooling keeps every parameter
-shape, so a seed starts from the same weights as the native encoder. Both mixed cells are not IRC safe: their score
-changes under a collinear split of the hardest constituent (ρ = 0.996–0.999, against 1.000 for the IRC-safe
-encoders).
+shape, so a seed starts from the same weights as the native encoder. Neither mixed cell is IRC safe: its score
+changes when the five hardest constituents are split collinearly (ρ = 0.966–0.999, against exactly 1 for the
+IRC-safe encoders).
 
 Table 4 gives the 3-prong AUC and the residual from the curve of section 2. The E5 runs were scored on R&D only;
 the black boxes were not reachable from the session (`docs/F2_SESSION.md`).
@@ -147,7 +147,7 @@ the black boxes were not reachable from the session (`docs/F2_SESSION.md`).
 | set | safe / weighted (EFN) | 5 | 0.235 | 0.812 ± 0.006 | +0.011 ± 0.002 |
 | graph | unsafe / mean + max (EdgeConv) | 5 | 0.244 | 0.800 ± 0.003 | +0.002 ± 0.002 |
 | graph | unsafe / weighted (E4) | 3 | 0.206 | 0.819 ± 0.005 | +0.009 ± 0.002 |
-| graph | safe / mean + max (E5) | 3 | ⟨…⟩ | ⟨…⟩ | ⟨…⟩ |
+| graph | safe / mean + max (E5) | 3 | 0.282 | 0.811 ± 0.002 | **+0.025 ± 0.001** |
 | graph | safe / weighted (EWMP) | 5 | 0.219 | 0.819 ± 0.004 | +0.013 ± 0.001 |
 
 **Set family.** EFN with mean + max pooling fits much worse than EFN (loss 0.41 against 0.235), and its raw 3-prong
@@ -160,7 +160,18 @@ AUC drops from 0.812 to 0.755. At equal fit, however, it is exactly as good as E
 So in the set family the equal-fit edge of the IRC-safe encoder comes from not giving the network the constituents'
 energies, and it does not need IRC safety.
 
-**Graph family.** ⟨…⟩
+**Graph family.** EWMP with mean + max pooling also fits worse than EWMP (loss 0.282 against 0.219, raw AUC 0.811
+against 0.819). At equal fit, however, it has the largest residual of all eight cells: +0.025 against +0.013 for
+EWMP.
+- **The encoder side carries the edge.** With mean + max pooling, EWMP beats EdgeConv by +0.023 ± 0.002 at equal fit
+  (+0.023 to +0.024 for every curve form). In this family that factor also includes EWMP's energy-weighted radius
+  graph, not only the inputs.
+- **Pooling acts both ways.** pT-weighted pooling helps EdgeConv at equal fit (+0.007 ± 0.003) and hurts EWMP
+  (−0.012 ± 0.001), in every curve form. Its raw benefit for EWMP comes through the fit.
+
+In both families, then, the equal-fit edge of the IRC-safe design comes from the encoder side (direction-only
+inputs), not from the pT-weighted pooling that IRC safety also requires. The best detectors at equal fit are not IRC
+safe.
 
 ## 3. Hypothesis verdicts
 
@@ -176,8 +187,8 @@ The pre-registered rules give:
 - **H1 (interactions help): inconclusive.** Interactions help on the 3-prong signal and hurt on BB1. Section 2
   shows both effects follow the fit quality.
 - **H2a (IRC safety generalises): inconclusive.** It is supported on the 3-prong signal only, and that signal is
-  not blind for H2 (D5). The contrasts test the IRC-safe design as a whole; section 2.2 shows that in the set family
-  its equal-fit edge comes from the inputs, not from IRC safety.
+  not blind for H2 (D5). The contrasts test the IRC-safe design as a whole; section 2.2 shows that in both families
+  its equal-fit edge comes from the encoder side (direction-only inputs), not from IRC safety.
 - **H2b (IRC safety sculpts less): supported but fragile.** It fails with paired seeds and with the Holm
   correction, and after the H4 check only EWMP − EdgeConv keeps its sign at every training length. The protocol
   drops a contrast that flips, which leaves H2b inconclusive.
@@ -302,8 +313,8 @@ the card (D4).
   data size).
 - **The curve explains the 3-prong signal, not the black boxes.** On BB1 and BB3 the AUCs differ by less than 0.03,
   the curve explains less than the configuration, and it predicts new runs poorly (R² 0.23 and −0.85).
-- **The IRC-safety contrasts test a design, not IRC safety.** In the set family the equal-fit edge comes from the
-  direction-only inputs (section 2.2).
+- **The IRC-safety contrasts test a design, not IRC safety.** In both families the equal-fit edge comes from the
+  direction-only inputs, not the IRC-safe pooling (section 2.2).
 - **Statistics.** The black boxes give few signal events in the window (BB1: 512; BB3 trijet: 137). The BB1 bump
   hunt's quoted local Z is not calibrated; after calibration and the look-elsewhere effect it is 0.8–1.4σ
   (section 5).

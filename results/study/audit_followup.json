@@ -1379,15 +1379,15 @@
           "safe/meanmax": {
             "run_prefix": "e5",
             "config": "ewmp_meanmax",
-            "n": 1,
-            "loss": 0.27047028737068174,
-            "auc": 0.8134773619304889,
-            "auc_sd": null,
-            "resid": 0.023903588815783472,
-            "resid_se": null,
+            "n": 3,
+            "loss": 0.28171613732179007,
+            "auc": 0.8110977747076972,
+            "auc_sd": 0.002394010099197621,
+            "resid": 0.02512570295117063,
+            "resid_se": 0.0006199128458959853,
             "irc_rho": {
-              "split top-1": 0.9998996617769252,
-              "10 soft (1% pT each)": 0.9798766341852416
+              "split top-1": 0.999849794540149,
+              "10 soft (1% pT each)": 0.9654602238447391
             }
           },
           "safe/weighted": {
@@ -1412,14 +1412,14 @@
             "sig2se": true
           },
           "pooling | safe inputs": {
-            "delta": -0.01055976102405356,
-            "se": null,
-            "sig2se": null
+            "delta": -0.01178187515944072,
+            "se": 0.0009811006343788686,
+            "sig2se": true
           },
           "inputs | mean+max pooling": {
-            "delta": 0.021677866481053475,
-            "se": null,
-            "sig2se": null
+            "delta": 0.022899980616440635,
+            "se": 0.002197355259728049,
+            "sig2se": true
           },
           "inputs | weighted pooling": {
             "delta": 0.003979379244317438,
@@ -1432,22 +1432,22 @@
             "sig2se": true
           },
           "interaction": {
-            "delta": -0.01769848723673604,
-            "se": NaN,
-            "sig2se": false
+            "delta": -0.0189206013721232,
+            "se": 0.003151026713831627,
+            "sig2se": true
           }
         },
         "effects_by_form": {
           "quadratic": {
             "pooling | safe inputs": {
-              "delta": -0.01055976102405356,
-              "se": null,
-              "sig2se": null
+              "delta": -0.01178187515944072,
+              "se": 0.0009811006343788686,
+              "sig2se": true
             },
             "inputs | mean+max pooling": {
-              "delta": 0.021677866481053475,
-              "se": null,
-              "sig2se": null
+              "delta": 0.022899980616440635,
+              "se": 0.002197355259728049,
+              "sig2se": true
             },
             "pooling | unsafe inputs": {
               "delta": 0.007138726212682478,
@@ -1462,14 +1462,14 @@
           },
           "linear": {
             "pooling | safe inputs": {
-              "delta": -0.011844656553264988,
-              "se": null,
-              "sig2se": null
+              "delta": -0.013264110981215056,
+              "se": 0.0011024656801670342,
+              "sig2se": true
             },
             "inputs | mean+max pooling": {
-              "delta": 0.022271398313776135,
-              "se": null,
-              "sig2se": null
+              "delta": 0.023690852741726203,
+              "se": 0.002297062744091136,
+              "sig2se": true
             },
             "pooling | unsafe inputs": {
               "delta": 0.006032661445015634,
@@ -1484,14 +1484,14 @@
           },
           "cubic": {
             "pooling | safe inputs": {
-              "delta": -0.010668601392115073,
-              "se": null,
-              "sig2se": null
+              "delta": -0.012471008339762252,
+              "se": 0.0011247956784434642,
+              "sig2se": true
             },
             "inputs | mean+max pooling": {
-              "delta": 0.02227179409079085,
-              "se": null,
-              "sig2se": null
+              "delta": 0.02407420103843803,
+              "se": 0.002316577288804524,
+              "sig2se": true
             },
             "pooling | unsafe inputs": {
               "delta": 0.00818833171342724,
@@ -1506,14 +1506,14 @@
           },
           "quadratic in log(loss)": {
             "pooling | safe inputs": {
-              "delta": -0.01135402304635429,
-              "se": null,
-              "sig2se": null
+              "delta": -0.012959126057161919,
+              "se": 0.0010872920825380635,
+              "sig2se": true
             },
             "inputs | mean+max pooling": {
-              "delta": 0.022341464579680115,
-              "se": null,
-              "sig2se": null
+              "delta": 0.023946567590487744,
+              "se": 0.0023126096339095878,
+              "sig2se": true
             },
             "pooling | unsafe inputs": {
               "delta": 0.00711501709844653,
@@ -1528,14 +1528,14 @@
           },
           "quadratic without GCN": {
             "pooling | safe inputs": {
-              "delta": -0.009254120432995672,
-              "se": null,
-              "sig2se": null
+              "delta": -0.010713975258956936,
+              "se": 0.0010027732517259435,
+              "sig2se": true
             },
             "inputs | mean+max pooling": {
-              "delta": 0.02144180951369825,
-              "se": null,
-              "sig2se": null
+              "delta": 0.022901664339659514,
+              "se": 0.0021701692751804566,
+              "sig2se": true
             },
             "pooling | unsafe inputs": {
               "delta": 0.009008757860190715,

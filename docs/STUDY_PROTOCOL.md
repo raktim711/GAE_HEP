@@ -452,7 +452,16 @@ Output: `results/study/audit_followup.{md,json}`. Tests: `tests/test_followup.py
   `gaehep dev configs/study/<efn|ewmp>.yaml --name e5d_<enc>_meanmax_s<s> --set train.epochs=2 --set train.seed=<s>
   --set train.threads=1 --set model_args.pool=meanmax` for s = 1–3, then
   `gaehep promote e5d_<enc>_meanmax_s<s> e5_<enc>_meanmax_s<s>` and `gaehep irc-probe`. The IRC probe was also run on
-  the six E4 weighted-pooling runs, with the committed weights. Scored on R&D only. Results: ⟨…⟩
+  the six E4 weighted-pooling runs, with the committed weights. Scored on R&D only. Results on 3-prong, as residuals from the E1 + E2 curve:
+  - The mean + max EFN fits worse than EFN (loss 0.410 vs 0.235; AUC 0.755 vs 0.812) but has the same residual (+0.012
+    vs +0.011). Direction-only inputs give +0.018 ± 0.007 at mean + max pooling.
+  - The mean + max EWMP (loss 0.282, AUC 0.811) has the largest residual of all cells (+0.025, against +0.013 for
+    EWMP), and beats EdgeConv by +0.023 ± 0.002 at equal fit.
+  - pT-weighted pooling is neutral or negative at equal fit with direction-only inputs (−0.001 set, −0.012 graph).
+  - Both mixed cells change under collinear splits (top-5 ρ = 0.966–0.999).
+
+  The equal-fit edge of the IRC-safe encoders therefore comes from their encoder side, not from IRC safety. All
+  signs hold for the five curve forms.
 - *Mass check.* `gaehep mass-corr` on the 98 E1 + E2 runs: Spearman correlation of the jet score with m_J on 10 000
   bkg_test jets per run, against the validation loss. Within each encoder ρ_mass rises with the loss (Spearman
   +0.87; between seeds of one configuration +0.58), and BB1 AUC rises with ρ_mass (+0.75; +0.54). Across encoders the

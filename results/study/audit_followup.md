@@ -55,7 +55,7 @@ Set family: Deep Sets (unsafe inputs, mean + max), Deep Sets with pT-weighted po
 | rd3 | set | safe/weighted (study_efn) | 5 | 0.235 | 0.8117 ± 0.0060 | +0.0110 ± 0.0022 | 1.000 | 0.745 |
 | rd3 | graph | unsafe/meanmax (study_edgeconv) | 5 | 0.244 | 0.8001 ± 0.0030 | +0.0022 ± 0.0021 | 0.992 | 0.528 |
 | rd3 | graph | unsafe/weighted (stat_edgeconv_weighted) | 3 | 0.206 | 0.8191 ± 0.0045 | +0.0094 ± 0.0021 | 0.997 | 0.694 |
-| rd3 | graph | safe/meanmax (e5_ewmp_meanmax) | 1 | 0.270 | 0.8135 ± – | +0.0239 ± – | 1.000 | 0.980 |
+| rd3 | graph | safe/meanmax (e5_ewmp_meanmax) | 3 | 0.282 | 0.8111 ± 0.0024 | +0.0251 ± 0.0006 | 1.000 | 0.965 |
 | rd3 | graph | safe/weighted (study_ewmp) | 5 | 0.219 | 0.8189 ± 0.0040 | +0.0133 ± 0.0008 | 1.000 | 0.788 |
 | bb1 | set | unsafe/meanmax (study_deepsets) | 5 | 0.342 | 0.9160 ± 0.0032 | -0.0005 ± 0.0006 | 0.988 | 0.730 |
 | bb1 | set | unsafe/weighted (stat_deepsets_weighted) | 3 | 0.379 | 0.9089 ± 0.0091 | -0.0082 ± 0.0066 | 0.999 | 0.881 |
@@ -81,11 +81,11 @@ Effects at equal fit (A − B of the cell residuals, Welch SE); the last columns
 | rd3 | set | IRC-safe design (both) | +0.0165 | 0.0073 | yes | +0.0151* | +0.0107* | +0.0135* | +0.0108* |
 | rd3 | set | interaction | +0.0095 | 0.0196 | no | – | – | – | – |
 | rd3 | graph | pooling | unsafe inputs | +0.0071 | 0.0030 | yes | +0.0060* | +0.0082* | +0.0071* | +0.0090* |
-| rd3 | graph | pooling | safe inputs | -0.0106 | – | – | -0.0118 | -0.0107 | -0.0114 | -0.0093 |
-| rd3 | graph | inputs | mean+max pooling | +0.0217 | – | – | +0.0223 | +0.0223 | +0.0223 | +0.0214 |
+| rd3 | graph | pooling | safe inputs | -0.0118 | 0.0010 | yes | -0.0133* | -0.0125* | -0.0130* | -0.0107* |
+| rd3 | graph | inputs | mean+max pooling | +0.0229 | 0.0022 | yes | +0.0237* | +0.0241* | +0.0239* | +0.0229* |
 | rd3 | graph | inputs | weighted pooling | +0.0040 | 0.0023 | no | – | – | – | – |
 | rd3 | graph | IRC-safe design (both) | +0.0111 | 0.0022 | yes | +0.0104* | +0.0116* | +0.0110* | +0.0122* |
-| rd3 | graph | interaction | -0.0177 | – | no | – | – | – | – |
+| rd3 | graph | interaction | -0.0189 | 0.0032 | yes | – | – | – | – |
 
 ## 4. IRC robustness: IRC-safe minus IRC-unsafe
 
