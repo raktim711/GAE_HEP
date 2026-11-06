@@ -413,3 +413,71 @@ BB3 AUC to within about 0.005 (the BB1 offset of −0.005 is about one fit sd, s
 3-prong signal it overpredicts them by 0.011 on average, with a spread of 0.018, and only 60 % of the runs fall
 within 2 sd (width 0.54, pooling 0.50, n30 1.00). The curve is therefore a good description of the black-box AUCs, and
 a weaker one for the 3-prong AUC outside the E1 + E2 configurations. Table by family: `results/study/study_posthoc.md`.
+
+**D9 (main session, 6 Nov). Follow-up of a bias audit of the results draft (reporting only).** An adversarial audit
+of the results draft (6 Nov) found claims that went further than the analyses behind them. Everything below was added
+after all study results had been seen. It narrows claims; it changes no verdict of section 2 and no earlier number.
+Code: `src/gaehep/eval/followup.py`. Commands:
+- `gaehep audit-followup`, `gaehep mass-corr` and `gaehep rnd-scan`, run in this session;
+- `gaehep prepare-run`, `gaehep bb-scan` and `gaehep bb1-mass-check`, for the black-box parts.
+
+Output: `results/study/audit_followup.{md,json}`. Tests: `tests/test_followup.py`. The splits hash was checked
+(`5217cca5…`).
+
+- *What the fit-quality curve explains.* Each E1 + E2 run is predicted while leaving it out, by the quadratic of D2
+  refitted without it, and by the mean of the other seeds of its configuration (encoder × training length). R²,
+  curve vs configuration:
+
+  | signal | R², curve vs configuration | within-configuration Spearman ρ(loss, AUC) | out-of-sample R² on the 42 E4 runs |
+  |---|---|---|---|
+  | R&D 3-prong | 0.95 vs 0.83 | −0.71 (p = 2 × 10⁻¹⁶) | 0.86 |
+  | BB1 | 0.81 vs 0.89 | +0.29 | 0.23 |
+  | BB3 | 0.61 vs 0.83 | +0.24 | −0.85 |
+
+  The seed test fixes architecture and training length and leaves only the seed-to-seed variation of the fit. This
+  **corrects the conclusion of D8**: the black-box residuals of the E4 runs are small because the black-box AUCs barely
+  vary between runs (sd 0.007 and 0.003), not because the curve describes them.
+- *Equal-fit contrasts.* The residual contrasts of D2 were recomputed with five forms of the curve: linear, quadratic,
+  cubic, quadratic in log(loss), and quadratic without the GCN runs. A bootstrap SE refits the curve in every replica
+  (runs resampled within configurations, 2000 replicas), and the 95 % intervals use the larger of the Welch and
+  bootstrap SE. The contrasts significant in every form are:
+  - on 3-prong: EWMP − EdgeConv +0.011, EFN − Deep Sets +0.017, energy-weighted attention − EFN −0.012;
+  - on BB1: EFN − Deep Sets +0.006, energy-weighted attention − transformer +0.006.
+
+  No interaction contrast is significantly positive. The 95 % intervals allow up to +0.022 on 3-prong (EdgeConv −
+  Deep Sets) and ±0.005 on BB1.
+- *E5: inputs × pooling.* The IRC-safe encoders differ from their partners in their inputs (directions only) and in
+  their pooling (pT-weighted). Commit cf7c4bc extends the pooling ablation of `ef_ae` to efn and ewmp; with the
+  native pooling every model is unchanged. Runs:
+  `gaehep dev configs/study/<efn|ewmp>.yaml --name e5d_<enc>_meanmax_s<s> --set train.epochs=2 --set train.seed=<s>
+  --set train.threads=1 --set model_args.pool=meanmax` for s = 1–3, then
+  `gaehep promote e5d_<enc>_meanmax_s<s> e5_<enc>_meanmax_s<s>` and `gaehep irc-probe`. The IRC probe was also run on
+  the six E4 weighted-pooling runs, with the committed weights. Scored on R&D only. Results on 3-prong, as residuals from the E1 + E2 curve:
+  - The mean + max EFN fits worse than EFN (loss 0.410 vs 0.235; AUC 0.755 vs 0.812) but has the same residual (+0.012
+    vs +0.011). Direction-only inputs give +0.018 ± 0.007 at mean + max pooling.
+  - The mean + max EWMP (loss 0.282, AUC 0.811) has the largest residual of all cells (+0.025, against +0.013 for
+    EWMP), and beats EdgeConv by +0.023 ± 0.002 at equal fit.
+  - pT-weighted pooling is neutral or negative at equal fit with direction-only inputs (−0.001 set, −0.012 graph).
+  - Both mixed cells change under collinear splits (top-5 ρ = 0.966–0.999).
+
+  The equal-fit edge of the IRC-safe encoders therefore comes from their encoder side, not from IRC safety. All
+  signs hold for the five curve forms.
+- *Mass check.* `gaehep mass-corr` on the 98 E1 + E2 runs: Spearman correlation of the jet score with m_J on 10 000
+  bkg_test jets per run, against the validation loss. Within each encoder ρ_mass rises with the loss (Spearman
+  +0.87; between seeds of one configuration +0.58), and BB1 AUC rises with ρ_mass (+0.75; +0.54). Across encoders the
+  relation holds without the complete-graph GCN (+0.75), which fits worst but is the least mass-like. The audit had
+  doubted this mechanism on the seed-1 runs of the seven encoders (`bb1_diagnostics.json`), where the GCN dominates;
+  with all 98 runs it is supported within architectures.
+- *Look-elsewhere null of the BB1 hunt.* `gaehep rnd-scan` repeats the E3 train-on-data hunt without signal: the
+  three EFN E1 runs scan their own training sample, the whole R&D background (1 000 000 events, as many as BB1), over
+  14 windows of 400 GeV (lower edges 3.0–4.3 TeV) × the three cuts of E3. It also runs 1000 nested toy experiments
+  per run from smooth fits of the selected spectra, using a converged fit (L-BFGS-B then BFGS). Results:
+  - The quoted local Z of `bumphunt.search` at a fixed window has a null spread of 1.34, because it ignores the
+    uncertainty of the fitted background. BB1's 3.2–3.8 (2 % cut, per encoder) are 2.4–2.8σ calibrated.
+  - The largest local Z of a blind scan without signal has a median of 2.6, a 95 % quantile of 4.0 and a 99 %
+    quantile of 4.9. The real null scans give 2.2–2.7.
+  - The global significance of the BB1 results, assuming its scan peaked at the true window, is 0.8–1.4σ per
+    encoder.
+  - The analysis fit and the converged fit agree to 0.000 in Z on these spectra.
+- *Not run here.* zenodo.org was not reachable from this session (proxy policy). The black-box parts — E5 on BB1
+  and BB3, a blind BB1 scan, a BB2-trained null, and BB1 at fixed jet masses — are prepared in `docs/F2_SESSION.md`.

@@ -478,6 +478,17 @@ def _cases(cfg: str):
             {"k": 5, "n_ref": 1000, "threads": 2},
         ),
         (["probes", "r"], "gaehep.eval.probes.probe", ("r",), {}),
+        (["audit-followup"], "gaehep.eval.followup.followup", (), {}),
+        (["mass-corr", "r", "--events", "100"], "gaehep.eval.followup.mass_corr", ("r",), {"n_events": 100}),
+        (["rnd-scan", "r", "--toys", "5"], "gaehep.eval.followup.rnd_scan", ("r",), {"n_toys": 5}),
+        (["prepare-run", "r"], "gaehep.eval.followup.prepare_run", ("r",), {}),
+        (
+            ["bb-scan", "r", "--sample", "bb2", "--toys", "5"],
+            "gaehep.eval.followup.bb_scan",
+            ("r", "bb2"),
+            {"n_toys": 5},
+        ),
+        (["bb1-mass-check", "r"], "gaehep.eval.followup.bb1_mass_check", ("r",), {}),
         (
             ["posthoc", "--prefix", "study", "--curves", "stct"],
             "gaehep.eval.posthoc.posthoc",
@@ -525,7 +536,7 @@ def _subcommands() -> set[str]:
     with contextlib.redirect_stdout(out), pytest.raises(SystemExit) as e:
         cli.main(["-h"])
     assert e.value.code == 0
-    return set(re.search(r"\{([a-z,-]+)\}", out.getvalue()).group(1).split(","))
+    return set(re.search(r"\{([a-z0-9,-]+)\}", out.getvalue()).group(1).split(","))
 
 
 def test_every_subcommand_parses_and_dispatches(tmp_path, monkeypatch):

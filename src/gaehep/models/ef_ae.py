@@ -28,10 +28,14 @@ interaction step (:mod:`gaehep.models.set_encoders`): ``"deepsets"`` (no interac
 (self-attention) and ``"gcn_complete"`` (mean over the complete graph, the collapse control) on the 7
 standard node features with EdgeConv's masked mean + max pooling, and the IRC-safe ``"efn"`` (no interaction)
 and ``"ew_attention"`` (attention weighted by z_j), which read only (deta, dphi, dR) and pool with EWMP's
-pT-fraction weights, like ``"ewmp"`` (``IRC_SAFE``; ``self.irc``).  Encoders without a k-NN graph ignore
-``k``, ``dynamic`` and ``aggr``.  ``pool`` (``deepsets`` and ``edgeconv`` only) is the pooling ablation:
-``"meanmax"`` (default), ``"weighted"`` (EWMP's pT-fraction weighted moments) or ``"pma"`` (one learned seed
-attending over the nodes, 4 heads; :class:`~gaehep.models.set_encoders.PMAPool`).
+pT-fraction weights, like ``"ewmp"`` (``IRC_SAFE``; ``self.safe_inputs``, ``self.irc``).  Encoders without a k-NN graph ignore
+``k``, ``dynamic`` and ``aggr``.  ``pool`` is the pooling ablation (``deepsets``, ``edgeconv``, ``efn`` and
+``ewmp``): ``"meanmax"`` (EdgeConv's masked mean + max, native for the IRC-unsafe encoders), ``"weighted"`` (EWMP's
+pT-fraction weighted moments, native for the IRC-safe ones) or ``"pma"`` (one learned seed attending over the
+nodes, 4 heads; :class:`~gaehep.models.set_encoders.PMAPool`).  An IRC-safe encoder with a non-native pooling
+keeps its direction-only inputs (``safe_inputs``) but is no longer IRC safe (``irc`` is False): mean + max
+pooling changes when a constituent is split or a soft one added.  Changing only the pooling keeps every
+parameter shape, so a run with the same seed starts from the same weights as the native encoder.
 
 ``variational=True`` turns the bottleneck into a Gaussian VAE latent (loss = MMD + beta * KL); the KL term
 of a jet is a density-like anomaly score that does not reward "simple" jets the way reconstruction does.
@@ -55,7 +59,7 @@ from gaehep.models.set_encoders import AttentionEncoder, CompleteGraphEncoder, D
 ENCODERS = ("deepsets", "edgeconv", "transformer", "gcn_complete", "efn", "ewmp", "ew_attention")
 IRC_SAFE = ("efn", "ewmp", "ew_attention")  # direction-only node inputs, pT-fraction weighted pooling
 POOLS = ("meanmax", "weighted", "pma")
-POOL_ABLATION = ("deepsets", "edgeconv")  # the encoders whose pooling can be changed
+POOL_ABLATION = ("deepsets", "edgeconv", "efn", "ewmp")  # the encoders whose pooling can be changed
 
 
 def principal_axis_frame(coords: torch.Tensor, z: torch.Tensor) -> torch.Tensor:
@@ -120,10 +124,12 @@ class EnergyFlowAE(JetModel):
         self.n_out, self.cond_dim, self.sigmas = n_out, cond_dim, tuple(sigmas)
         self.variational, self.beta, self.score_kind = variational, beta, score
         self.loss_kind, self.energy_power, self.align = loss, float(energy_power), bool(align)
-        self.coord_scale, self.min_sigma, self.irc = float(coord_scale), float(min_sigma), encoder in IRC_SAFE
+        self.coord_scale, self.min_sigma = float(coord_scale), float(min_sigma)
+        self.safe_inputs = encoder in IRC_SAFE  # direction-only node inputs
+        self.irc = self.safe_inputs and pool == "weighted"  # IRC safe needs both the inputs and the pooling
         self.encoder_kind, self.pool_kind = encoder, pool
         self.use_nll = "nll" in loss
-        enc_in = 3 if self.irc else in_dim  # IRC-safe encoders read only (deta, dphi, dR)
+        enc_in = 3 if self.safe_inputs else in_dim  # IRC-safe encoders read only (deta, dphi, dR)
         if encoder == "ewmp":
             self.eval_batch_size = 256  # dense (B, N, N, C) pairwise messages: keep the scoring batches small
             self.encoder = EWMPEncoder(enc_in, hidden, radii, checkpoint=ewmp_checkpoint)
@@ -154,7 +160,7 @@ class EnergyFlowAE(JetModel):
 
     def _encode(self, b: JetBatch) -> tuple[torch.Tensor, torch.Tensor | None]:
         x, coords, z = self._frame(b)
-        if self.irc:
+        if self.safe_inputs:
             x = x[..., [0, 1, 6]]
         kind = self.encoder_kind
         if kind == "edgeconv":

@@ -1,0 +1,11 @@
+{
+  "name": "stct_ew_attention_e5_s1",
+  "split": "bkg_test",
+  "n_events": 5000,
+  "n_jets": 10000,
+  "spearman_score_mJ": 0.6913233046548434,
+  "time": "2026-11-06 19:12:08 CET",
+  "git": "9d8fecc",
+  "splits_sha256": "5217cca54367efda6b33a1626da8cdb21e87ef7b6fd6b2abfa73d8ac510f7af2",
+  "torch": "2.15.0+cu132"
+}
