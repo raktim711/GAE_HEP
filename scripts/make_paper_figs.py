@@ -135,17 +135,23 @@ fig.legend(handles=S.encoder_handles(), loc="lower center", ncol=7, bbox_to_anch
 written += S.save(fig, OUT, "fig3_training_length")
 
 # Figure 4: contrasts as measured and at equal background fit -------------------------------------------------
+# raw: the protocol contrasts (study_posthoc.json), +-2 Welch SE; at equal fit: the residual contrasts of the bias-audit
+# follow-up (audit_followup.json), with 95 % intervals from the larger of the Welch and the bootstrap SE (the
+# bootstrap refits the curve, so it includes the curve's own uncertainty)
+fu = json.loads((ROOT / "study" / "audit_followup.json").read_text())
 pairs = [
     ("edgeconv", "deepsets"),
     ("ewmp", "efn"),
+    ("transformer", "deepsets"),
+    ("ew_attention", "efn"),
     ("ewmp", "edgeconv"),
     ("efn", "deepsets"),
     ("ew_attention", "transformer"),
 ]
-fig, axes = plt.subplots(1, 2, figsize=(S.DOUBLE, 1.9), sharey=True, gridspec_kw={"wspace": 0.08})
+fig, axes = plt.subplots(1, 2, figsize=(S.DOUBLE, 2.4), sharey=True, gridspec_kw={"wspace": 0.08})
 for k, (ax, s) in enumerate(zip(axes, ["rd3", "bb1"], strict=True)):
     raw = {(r["a"], r["b"]): r for r in ph["contrasts"] if r["signal_key"] == s and r["metric"] == "auc"}
-    adj = {(c["a"], c["b"]): c for c in ph["fit_adjusted"][s]["contrasts"]}
+    adj = {(c["a"], c["b"]): c for c in fu["equal_fit"][s]}
     for i, ab in enumerate(pairs):
         r, q = raw[ab], adj[ab]
         ax.errorbar(
@@ -158,30 +164,53 @@ for k, (ax, s) in enumerate(zip(axes, ["rd3", "bb1"], strict=True)):
             ls="",
             elinewidth=0.7,
         )
-        ax.errorbar(q["delta"], i + 0.14, xerr=2 * q["se"], marker="o", color=S.BLACK, ls="", elinewidth=0.7)
+        lo, hi = q["ci95"]
+        ax.errorbar(
+            q["delta"],
+            i + 0.14,
+            xerr=[[q["delta"] - lo], [hi - q["delta"]]],
+            marker="o",
+            color=S.BLACK,
+            ls="",
+            elinewidth=0.7,
+        )
     ax.axvline(0, color="0.5", lw=0.6, zorder=0)
+    ax.axhline(3.5, color="0.85", lw=0.5, zorder=0)
     ax.set_yticks(range(len(pairs)), [f"{S.LABEL[a]} $-$ {S.LABEL[b]}" for a, b in pairs])
     ax.tick_params(axis="y", which="minor", left=False, right=False)
     ax.set_ylim(len(pairs) - 0.5, -0.5)
     ax.set_xlabel(r"$\Delta$AUC")
     ax.set_title(f"({'ab'[k]}) {S.SIGNAL[s]}", loc="left", pad=3)
+axes[1].text(
+    1.02, 1 - 2.0 / len(pairs), "interaction", transform=axes[1].transAxes, rotation=90, va="center", fontsize=7
+)
+axes[1].text(
+    1.02,
+    1.5 / len(pairs),
+    "IRC-safe\ndesign",
+    transform=axes[1].transAxes,
+    rotation=90,
+    va="center",
+    fontsize=7,
+)
 fig.legend(
     handles=[
-        plt.Line2D([], [], marker="s", color=S.GREY, mfc="white", ls="", label="as measured"),
-        plt.Line2D([], [], marker="o", color=S.BLACK, ls="", label="at equal background fit"),
+        plt.Line2D([], [], marker="s", color=S.GREY, mfc="white", ls="", label="as measured ($\\pm 2$ SE)"),
+        plt.Line2D([], [], marker="o", color=S.BLACK, ls="", label="at equal background fit (95 % interval)"),
     ],
     loc="lower center",
     ncol=2,
-    bbox_to_anchor=(0.5, -0.14),
+    bbox_to_anchor=(0.5, -0.1),
 )
 written += S.save(fig, OUT, "fig4_equal_fit")
 
 # Figure 5: IRC robustness ------------------------------------------------------------------------------------
 probes = [
     ("split all", "(a) Collinear splits", (0.78, 1.01)),
-    ("10 soft (1% pT each)", "(b) Soft emissions", (0.4, 1.02)),
+    ("10 soft (0.2% pT each)", "(b) Soft emissions, 0.2 % each", (0.84, 1.005)),
+    ("10 soft (1% pT each)", "(c) Soft emissions, 1 % each", (0.4, 1.02)),
 ]
-fig, axes = plt.subplots(1, 2, figsize=(S.SINGLE, 2.0), sharey=True, gridspec_kw={"wspace": 0.1})
+fig, axes = plt.subplots(1, 3, figsize=(S.DOUBLE, 2.0), sharey=True, gridspec_kw={"wspace": 0.08})
 for ax, (key, title, xlim) in zip(axes, probes, strict=True):
     for i, e in enumerate(S.ENCODERS):
         rho = np.array([r.irc[key]["rho"] for r in study[e].runs if r.irc and key in r.irc])
@@ -194,7 +223,7 @@ for ax, (key, title, xlim) in zip(axes, probes, strict=True):
     for y in (1.5, 3.5, 5.5):
         ax.axhline(y, color="0.85", lw=0.5, zorder=0)
 axes[0].set_yticks(range(len(S.ENCODERS)), [S.LABEL[e].replace(" (complete graph)", "") for e in S.ENCODERS])
-fig.supxlabel(r"Spearman $\rho$ of scores before and after", fontsize=8, y=-0.04)
+fig.supxlabel(r"Spearman $\rho$ of the background scores before and after", fontsize=8, y=-0.05)
 written += S.save(fig, OUT, "fig5_irc_robustness")
 
 # Figure 6: black box 3 by decay mode -------------------------------------------------------------------------

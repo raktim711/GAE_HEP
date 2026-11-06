@@ -164,8 +164,22 @@ def curve_checks(
         res = y - f(x)
         cfg_mean = y - group_centred(y, g)
         enc = np.array([lbl.split("_e")[0] if lbl.split("_e")[0] in ENCODERS else lbl for lbl in g])
+        # leave-one-out versions: the configuration means are 28 parameters fitted to ~100 runs, so their in-sample
+        # R^2 is flattered; each run is predicted by the curve refitted without it and by the mean of the other
+        # seeds of its configuration
+        n = len(y)
+        loo_c, loo_g = np.empty(n), np.empty(n)
+        for k in range(n):
+            m = np.ones(n, bool)
+            m[k] = False
+            loo_c[k] = fit_curve(x[m], y[m])(x[k : k + 1])[0]
+            same = (g == g[k]) & m
+            loo_g[k] = y[same].mean() if same.any() else np.nan
+        ok = np.isfinite(loo_g)
         e_entry: dict[str, Any] = {
             "n_runs": len(y),
+            "r2_curve_loo": r2(y, loo_c),
+            "r2_configuration_loo": r2(y[ok], loo_g[ok]),
             "n_configs": len(np.unique(g)),
             "auc_sd": float(y.std(ddof=1)),
             "resid_sd": float(np.std(res, ddof=3)),
@@ -351,7 +365,29 @@ def decomposition(
                 d = (np.mean(sw) - np.mean(sm)) - (np.mean(uw) - np.mean(um))
                 se = math.sqrt(sum(np.var(v, ddof=1) / len(v) for v in (um, uw, sm, sw)))
                 effects["interaction"] = {"delta": float(d), "se": se, "sig2se": bool(abs(d) > 2 * se)}
-            fam_out[fam] = {"cells": cell_out, "effects_at_equal_fit": effects}
+            # the same effects with every functional form of the curve (the cells' losses barely overlap)
+            by_form: dict[str, dict[str, Any]] = {}
+            if len(res) == 4:
+                pts_all = [p for c in fit_cfgs for p in _points([c], s)]
+                for form in CURVE_FORMS:
+                    pts = [p for p in pts_all if not (form.endswith("GCN") and p[0].startswith("gcn"))]
+                    _, xf, yf = _arrays(pts)
+                    ff_ = fit_curve(xf, yf, form)
+                    rr = {}
+                    for key, (prefix, label) in cells.items():
+                        _, xc, yc = _arrays(_points([groups[prefix][label]], s))
+                        rr[key] = list(yc - ff_(xc))
+                    by_form[form] = {
+                        "pooling | safe inputs": welch(rr[("safe", "weighted")], rr[("safe", "meanmax")]),
+                        "inputs | mean+max pooling": welch(
+                            rr[("safe", "meanmax")], rr[("unsafe", "meanmax")]
+                        ),
+                        "pooling | unsafe inputs": welch(
+                            rr[("unsafe", "weighted")], rr[("unsafe", "meanmax")]
+                        ),
+                        "IRC-safe design (both)": welch(rr[("safe", "weighted")], rr[("unsafe", "meanmax")]),
+                    }
+            fam_out[fam] = {"cells": cell_out, "effects_at_equal_fit": effects, "effects_by_form": by_form}
         out[s] = fam_out
     return out
 
@@ -433,10 +469,10 @@ def _load_model(run: str):
     return model, cfg
 
 
-def _jet_scores(model, data, events: np.ndarray, chunk: int = 20000) -> np.ndarray:
+def _jet_scores(model, data, events: np.ndarray, chunk: int = 20000, store=None) -> np.ndarray:
     from gaehep.train.loop import score_pool
 
-    store, scaler = data.store("rnd"), data.scaler()
+    store, scaler = store if store is not None else data.store("rnd"), data.scaler()
     parts = []
     for i in range(0, len(events), chunk):
         pool = store.pool(events[i : i + chunk], data.n_const)
@@ -548,9 +584,11 @@ def null_toys(
         thr = -np.inf if eff >= 1 else float(np.quantile(score[sb], 1 - eff))
         counts, _ = np.histogram(mjj[score >= thr], bins=edges)
         fit = fit_sidebands(counts, edges, np.ones(len(counts), bool))
-        params[eff], mu[eff] = fit.params, _bin_expectation(edges, fit.params)
-    r10 = np.clip(mu[0.1] / mu[1.0], 0.0, 1.0)
-    r2_ = np.clip(mu[0.02] / mu[0.1], 0.0, 1.0)
+        params[eff] = fit.params
+        mu[eff] = np.clip(np.nan_to_num(_bin_expectation(edges, fit.params), nan=0.0, posinf=0.0), 0.0, None)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        r10 = np.clip(np.nan_to_num(mu[0.1] / mu[1.0]), 0.0, 1.0)
+        r2_ = np.clip(np.nan_to_num(mu[0.02] / mu[0.1]), 0.0, 1.0)
     i_bb1 = [i for i, w in enumerate(windows) if tuple(w) == (w0, w1)]
     zmax_cuts, zmax_all, z_bb1_2, z_bb1_10 = [], [], [], []
     for _ in range(n_toys):
@@ -573,6 +611,47 @@ def null_toys(
     }
 
 
+def _scan(mjj: np.ndarray, score: np.ndarray, n_toys: int, seed: int) -> dict[str, Any]:
+    """The window scan of one sample (every window x cut, with the analysis fit of ``bumphunt.search`` and with
+    the converged fit of the toys started at the analysis optimum; the analysis fit, Nelder-Mead then Powell, can
+    stop short of the minimum) and its toy experiments."""
+    ff = _FastFit()
+    in_range = (mjj >= DEFAULT_EDGES[0]) & (mjj < DEFAULT_EDGES[-1])
+    rows = []
+    for w in SCAN_WINDOWS:
+        sbm = in_range & ~((mjj >= w[0]) & (mjj < w[1]))
+        sr = _sr_bins(w)
+        for eff in SCAN_EFFS:
+            r = {"window": list(w), **search(mjj, score, eff, sr=w)}
+            thr = -np.inf if eff >= 1 else float(np.quantile(score[sbm], 1 - eff))
+            counts, _ = np.histogram(mjj[score >= thr], bins=DEFAULT_EDGES)
+            p_ref = fit_sidebands(counts, DEFAULT_EDGES, ~sr).params
+            b = float(ff.expectation(ff.fit(counts, ~sr, p_ref))[sr].sum())
+            r["z_converged"] = poisson_z(float(counts[sr].sum()), b)
+            rows.append(r)
+    dz = np.array([r["z_converged"] - r["z"] for r in rows])
+    zc = [r["z_converged"] for r in rows if r["eff"] < 1]
+    za = [r["z"] for r in rows if r["eff"] < 1]
+    best = max((r for r in rows if r["eff"] < 1), key=lambda r: r["z_converged"])
+    return {
+        "windows": [list(w) for w in SCAN_WINDOWS],
+        "effs": list(SCAN_EFFS),
+        "rows": rows,
+        "zmax_data_cuts": float(max(zc)),
+        "zmax_data_all": float(max(r["z_converged"] for r in rows)),
+        "zmax_data_cuts_analysis_fit": float(max(za)),
+        "largest_excess": {"window": best["window"], "eff": best["eff"], "z": best["z_converged"]},
+        "fit_dz_max_abs": float(np.abs(dz).max()),
+        "fit_dz_mean": float(dz.mean()),
+        "fit_dz_sd": float(dz.std(ddof=1)),
+        "toys": null_toys(mjj, score, n_toys, np.random.default_rng(seed)) if n_toys > 0 else None,
+    }
+
+
+def _meta() -> dict[str, Any]:
+    return {k: v for k, v in run_metadata().items() if k in ("git", "time", "splits_sha256", "torch")}
+
+
 def rnd_scan(run: str, n_toys: int = 1000, data=None, log=print, chunk: int = 20000) -> dict[str, Any]:
     """The BB1 train-on-data bump hunt without signal (module docstring).  Jet scores of all R&D background
     events are cached in ``<run>/scores_rnd_all.npz`` (ignored by git)."""
@@ -593,48 +672,144 @@ def rnd_scan(run: str, n_toys: int = 1000, data=None, log=print, chunk: int = 20
     ref = jet_reference({"bkg_val": have["bkg_val"]})
     mjj = np.concatenate([np.asarray(data.store("rnd")["mjj"][data.events(sp)], np.float64) for sp in splits])
     score = aggregate(np.concatenate([have[sp] for sp in splits]), "prod", ref)
-    # every window x cut with the analysis fit (bumphunt.search) and with the converged fit of the toys, started
-    # at the analysis optimum (the analysis fit, Nelder-Mead then Powell, can stop short of the minimum)
-    ff = _FastFit()
-    in_range = (mjj >= DEFAULT_EDGES[0]) & (mjj < DEFAULT_EDGES[-1])
-    rows = []
-    for w in SCAN_WINDOWS:
-        sbm = in_range & ~((mjj >= w[0]) & (mjj < w[1]))
-        sr = _sr_bins(w)
-        for eff in SCAN_EFFS:
-            r = {"window": list(w), **search(mjj, score, eff, sr=w)}
-            thr = -np.inf if eff >= 1 else float(np.quantile(score[sbm], 1 - eff))
-            counts, _ = np.histogram(mjj[score >= thr], bins=DEFAULT_EDGES)
-            p_ref = fit_sidebands(counts, DEFAULT_EDGES, ~sr).params
-            b = float(ff.expectation(ff.fit(counts, ~sr, p_ref))[sr].sum())
-            r["z_converged"] = poisson_z(float(counts[sr].sum()), b)
-            rows.append(r)
-    dz = np.array([r["z_converged"] - r["z"] for r in rows])
-    seed = zlib.crc32(run.encode())  # a fixed, run-specific toy seed
-    toys = null_toys(mjj, score, n_toys, np.random.default_rng(seed))
-    zc = [r["z_converged"] for r in rows if r["eff"] < 1]
-    za = [r["z"] for r in rows if r["eff"] < 1]
+    res = _scan(mjj, score, n_toys, zlib.crc32(run.encode()))
     out = {
         "name": run,
         "sample": "rnd background (bkg_train + bkg_val + bkg_test)",
         "n_events": len(mjj),
         "agg": "prod",
-        "windows": [list(w) for w in SCAN_WINDOWS],
-        "effs": list(SCAN_EFFS),
-        "rows": rows,
-        "zmax_data_cuts": float(max(zc)),
-        "zmax_data_all": float(max(r["z_converged"] for r in rows)),
-        "zmax_data_cuts_analysis_fit": float(max(za)),
-        "fit_dz_max_abs": float(np.abs(dz).max()),
-        "fit_dz_mean": float(dz.mean()),
-        "fit_dz_sd": float(dz.std(ddof=1)),
-        "toys": toys,
-        **{k: v for k, v in run_metadata().items() if k in ("git", "time", "splits_sha256", "torch")},
+        **res,
+        **_meta(),
     }
     save_json(out, rdir / "rnd_scan.json")
+    toys = res["toys"] or {"zmax_scan_cuts": [float("nan")]}
     log(
         f"[rnd-scan] {run}: data max Z (10 %, 2 % cuts) {out['zmax_data_cuts']:+.2f}; toys: median max Z "
         f"{np.median(toys['zmax_scan_cuts']):.2f}; converged - analysis fit |dZ| <= {out['fit_dz_max_abs']:.3f}"
+    )
+    return out
+
+
+# ------------------------------------------------------------------------- black-box commands (session F2)
+def _reference(run: str, model=None, data=None, n_events: int | None = None) -> np.ndarray:
+    """bkg_val jet scores of the run's training sample (F_B of the ``prod`` score): from ``<run>/scores.npz``
+    when it has them, else scored now (all of bkg_val, or ``n_events`` of it)."""
+    from gaehep.train.run import Data
+
+    p = results_dir() / "runs" / run / "scores.npz"
+    if p.exists():
+        with np.load(p) as f:
+            if "bkg_val" in f.files:
+                return f["bkg_val"]
+    if model is None:
+        model, cfg = _load_model(run)
+        data = data or Data.from_config(cfg.get("data"))
+    ev = data.events("bkg_val", n_events)
+    return _jet_scores(model, data, ev, store=data.store(data.sample_of("bkg_val")))
+
+
+def prepare_run(run: str, log=print) -> None:
+    """Make a committed run scoreable on the black boxes in a fresh session: copy ``results/models/<run>/model.pt``
+    into the run directory and write ``<run>/scores.npz`` with the bkg_val jet scores (all that
+    ``gaehep score-sample`` reads from it), unless they are already there."""
+    import shutil
+
+    rdir = results_dir() / "runs" / run
+    src = results_dir() / "models" / run / "model.pt"
+    if not (rdir / "model.pt").exists():
+        if not src.exists():
+            raise SystemExit(f"prepare-run: no weights for {run} in {src.parent}")
+        shutil.copy2(src, rdir / "model.pt")
+    p = rdir / "scores.npz"
+    if p.exists() and "bkg_val" in np.load(p).files:
+        log(f"[prepare-run] {run}: ready")
+        return
+    np.savez(p, bkg_val=_reference(run))
+    log(f"[prepare-run] {run}: wrote {p}")
+
+
+def bb_scan(run: str, sample: str, n_toys: int = 1000, log=print) -> dict[str, Any]:
+    """The window scan + toys of ``rnd_scan`` on a black box, from ``<run>/<sample>_scores.npz`` of all its events
+    (``gaehep score-sample RUN --sample S`` without ``--subsample``).  For a BB1-trained run on BB1 this is the
+    blind version of the E3 hunt (does its largest excess sit at the true window?); for a BB2-trained run on BB2
+    it is the procedure-matched null test.  Writes ``<run>/<sample>_scan.json``."""
+    from gaehep.eval.evaluate import aggregate, jet_reference
+
+    rdir = results_dir() / "runs" / run
+    with np.load(rdir / f"{sample}_scores.npz") as f:
+        js, mjj, label, sub = f["jet_scores"], f["mjj"].astype(np.float64), f["label"], bool(f["subsample"])
+    if sub:
+        raise SystemExit(
+            f"bb-scan: {run}/{sample}_scores.npz is the subsample; score all events (no --subsample)"
+        )
+    score = aggregate(js, "prod", jet_reference({"bkg_val": _reference(run)}))
+    res = _scan(mjj, score, n_toys, zlib.crc32(f"{run}:{sample}".encode()))
+    out = {"name": run, "sample": sample, "n_events": len(mjj), "agg": "prod", **res, **_meta()}
+    if sample in BLACKBOX_WINDOWS:  # truth, for the report only: where the signal is and how much a cut keeps
+        w = BLACKBOX_WINDOWS[sample]
+        out["true_window"] = list(w)
+        out["true_window_rows"] = [r for r in res["rows"] if r["window"] == list(w)]
+        out["n_signal_in_true_window"] = int(np.sum((mjj >= w[0]) & (mjj < w[1]) & (label > 0)))
+    save_json(out, rdir / f"{sample}_scan.json")
+    log(f"[bb-scan] {run} on {sample}: largest excess {res['largest_excess']}")
+    return out
+
+
+MASS_WINDOWS = ((650.0, 820.0), (320.0, 440.0))  # heavier and lighter jet, around m_X = 732 and m_Y = 378 GeV
+
+
+def bb1_mass_check(run: str, n_ref_events: int = 20000, log=print) -> dict[str, Any]:
+    """BB1 AUC at fixed jet masses: all BB1 events in the 3.6-4.0 TeV window are scored, and the event AUC is
+    computed in the window and among the events whose heavier and lighter jets both fall in ``MASS_WINDOWS``
+    (where the masses are nearly fixed, so a mass tagger is ~0.5).  F_B from ``n_ref_events`` events of the run's
+    bkg_val (or ``<run>/scores.npz``).  References in the same events: the summed jet mass and minus the summed
+    tau21 (computed tau, when the store has it).  Writes ``<run>/bb1_mass.json``."""
+    from gaehep.eval.evaluate import aggregate, jet_reference
+    from gaehep.eval.metrics import auc as _auc
+    from gaehep.train.run import Data
+
+    def auc(sig: np.ndarray, bkg: np.ndarray) -> float | None:  # None when a class has no events
+        return _auc(sig, bkg) if len(sig) and len(bkg) else None
+
+    model, cfg = _load_model(run)
+    data = Data.from_config(cfg.get("data"))
+    ref = jet_reference({"bkg_val": _reference(run, model, data, n_events=n_ref_events)})
+    st = data.store("bb1")
+    ev = data.splits["bb1_test"]
+    m = np.asarray(st["mjj"][ev])
+    w0, w1 = BLACKBOX_WINDOWS["bb1"]
+    ev = ev[(m >= w0) & (m < w1)]
+    score = aggregate(_jet_scores(model, data, ev, store=st), "prod", ref)
+    sig = np.asarray(st["label"][ev]) > 0
+    jm = np.asarray(st["m"][ev], np.float64)
+    hi, lo = jm.max(1), jm.min(1)
+    (a0, a1), (b0, b1) = MASS_WINDOWS
+    inm = (hi >= a0) & (hi < a1) & (lo >= b0) & (lo < b1)
+    refs = {"m_J sum": jm.sum(1)}
+    if "tau1c" in st.table:
+        t21 = np.asarray(st["tau2c"][ev], np.float64) / np.maximum(
+            np.asarray(st["tau1c"][ev], np.float64), 1e-12
+        )
+        refs["-tau21 sum"] = -t21.sum(1)
+    out = {
+        "name": run,
+        "window": [w0, w1],
+        "mass_windows": [list(x) for x in MASS_WINDOWS],
+        "n_sig_window": int(sig.sum()),
+        "n_bkg_window": int((~sig).sum()),
+        "n_sig_mass_window": int((sig & inm).sum()),
+        "n_bkg_mass_window": int((~sig & inm).sum()),
+        "auc_window": auc(score[sig], score[~sig]),
+        "auc_mass_window": auc(score[sig & inm], score[~sig & inm]),
+        "ref_auc_window": {k: auc(v[sig], v[~sig]) for k, v in refs.items()},
+        "ref_auc_mass_window": {k: auc(v[sig & inm], v[~sig & inm]) for k, v in refs.items()},
+        "n_ref_events": n_ref_events,
+        **_meta(),
+    }
+    save_json(out, results_dir() / "runs" / run / "bb1_mass.json")
+    log(
+        f"[bb1-mass] {run}: AUC window {_f(out['auc_window'], '{:.3f}')}, at fixed jet masses "
+        f"{_f(out['auc_mass_window'], '{:.3f}')}"
     )
     return out
 
@@ -698,6 +873,81 @@ def lee_summary(root: Path, null_runs: Sequence[str]) -> dict[str, Any]:
     }
 
 
+def bb_scan_summary(root: Path) -> dict[str, Any]:
+    """BB1 scans of the BB1-trained runs and the BB2 scans of BB2-trained runs (session F2), if present."""
+    out: dict[str, Any] = {}
+    for key, pattern, sample in (("bb1", "study_bb1data_", "bb1"), ("bb2_null", "study_bb2data_", "bb2")):
+        rows = {}
+        for d in sorted((root / "runs").glob(f"{pattern}*")):
+            p = d / f"{sample}_scan.json"
+            if not p.exists():
+                continue
+            s = load_json(p)
+            e = {"largest_excess": s["largest_excess"], "zmax_cuts": s["zmax_data_cuts"]}
+            if s.get("toys"):
+                e["toy_median_zmax"] = float(np.median(s["toys"]["zmax_scan_cuts"]))
+                e["global"] = _global(np.asarray(s["toys"]["zmax_scan_cuts"]), s["zmax_data_cuts"])
+            if s.get("true_window_rows"):
+                e["z_true_window"] = {f"{r['eff']:g}": r["z_converged"] for r in s["true_window_rows"]}
+            rows[d.name] = e
+        if rows:
+            out[key] = rows
+    return out
+
+
+def bb1_mass_summary(main: dict[str, Config], curves: dict[str, Config]) -> dict[str, Any]:
+    rows = []
+    for c in [*main.values(), *curves.values()]:
+        for r in c.runs:
+            p = r.dir / "bb1_mass.json"
+            if p.exists() and r.best_val_loss is not None:
+                j = load_json(p)
+                rows.append(
+                    {
+                        "run": r.name,
+                        "encoder": c.label.split("_e")[0],
+                        "loss": float(r.best_val_loss),
+                        **{
+                            k: j[k]
+                            for k in (
+                                "auc_window",
+                                "auc_mass_window",
+                                "n_sig_mass_window",
+                                "n_bkg_mass_window",
+                                "ref_auc_mass_window",
+                                "ref_auc_window",
+                            )
+                        },
+                    }
+                )
+    if len(rows) < 3:
+        return {"n_runs": len(rows)}
+    enc = np.array([r["encoder"] for r in rows])
+    loss = np.array([r["loss"] for r in rows])
+    out: dict[str, Any] = {"n_runs": len(rows), "runs": rows}
+    for k in ("auc_window", "auc_mass_window"):
+        v = np.array([r[k] for r in rows])
+        rho, pv = stats.spearmanr(v, loss)
+        out[f"{k}_vs_loss"] = {"spearman": float(rho), "p": float(pv), "n": len(v)}
+        out[f"{k}_vs_loss_within_encoder"] = within_group_test(loss, v, enc)
+    out["per_encoder"] = {
+        e: {
+            k: float(np.mean([r[k] for r in rows if r["encoder"] == e]))
+            for k in ("auc_window", "auc_mass_window", "loss")
+        }
+        | {"n": int(np.sum(enc == e))}
+        for e in ENCODERS
+        if np.any(enc == e)
+    }
+    out["references"] = {
+        "window": rows[0]["ref_auc_window"],
+        "mass_window": rows[0]["ref_auc_mass_window"],
+        "n_sig_mass_window": rows[0]["n_sig_mass_window"],
+        "n_bkg_mass_window": rows[0]["n_bkg_mass_window"],
+    }
+    return out
+
+
 # ------------------------------------------------------------------------------------------- report
 def _f(x: float | None, fmt: str = "{:+.4f}") -> str:
     return "–" if x is None or (isinstance(x, float) and not math.isfinite(x)) else fmt.format(x)
@@ -720,14 +970,17 @@ def render(res: dict[str, Any]) -> str:
         "Curve: quadratic in the background validation loss, fitted to the E1 + E2 runs (seven encoders, 1, 2, 3 "
         "and 5 epochs). `R² curve`: share of the AUC variance between these runs that the curve explains; `R² "
         "configuration`: share explained by knowing only each run's configuration (encoder × training length, the "
-        "mean of its seeds); `configuration on residual`: share of the curve's residual variance that the "
+        "mean of its seeds); the leave-one-out versions predict each run by the curve refitted without it and by "
+        "the mean of the other seeds of its configuration (the fair comparison: the configuration means are 28 "
+        "parameters); `configuration on residual`: share of the curve's residual variance that the "
         "configuration still explains. Within-configuration test: loss and AUC with every configuration's mean "
         "removed (seeds change the fit at fixed architecture and training length). Out of sample: the E4 ablation "
         "runs, which the curve was not fitted to; R² < 0 means the curve predicts them worse than their mean.",
         "",
-        "| signal | runs | AUC sd | R² curve | R² configuration | configuration on residual | within-config ρ (p) "
+        "| signal | runs | AUC sd | R² curve | R² configuration | R² curve, leave one out | R² configuration, leave "
+        "one out | configuration on residual | within-config ρ (p) "
         "| without Deep Sets ρ (p) | E4 runs | E4 AUC sd | E4 RMSE | E4 R² |",
-        "|---|---|---|---|---|---|---|---|---|---|---|---|",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     for s, e in res["curve"].items():
         w, w2, o = (
@@ -737,6 +990,7 @@ def render(res: dict[str, Any]) -> str:
         )
         L.append(
             f"| {s} | {e['n_runs']} | {e['auc_sd']:.4f} | {e['r2_curve']:.2f} | {e['r2_configuration']:.2f} | "
+            f"{e['r2_curve_loo']:.2f} | {e['r2_configuration_loo']:.2f} | "
             f"{e['r2_configuration_on_residual']:.2f} | {w['spearman']:+.2f} ({w['p']:.1g}) | "
             f"{w2['spearman']:+.2f} ({w2['p']:.1g}) | {o.get('n_runs', '–')} | {_f(o.get('auc_sd'), '{:.4f}')} | "
             f"{_f(o.get('rmse'), '{:.4f}')} | {_f(o.get('r2'), '{:+.2f}')} |"
@@ -785,12 +1039,28 @@ def render(res: dict[str, Any]) -> str:
                     f"{_f(c['resid_se'], '{:.4f}')} | {_f(c['irc_rho'].get('split top-1'), '{:.3f}')} | "
                     f"{_f(c['irc_rho'].get('10 soft (1% pT each)'), '{:.3f}')} |"
                 )
-    L += ["", "| signal | family | effect at equal fit | Δ | SE | significant |", "|---|---|---|---|---|---|"]
+    L += [
+        "",
+        "Effects at equal fit (A − B of the cell residuals, Welch SE); the last columns give Δ for the other curve "
+        "forms (`*`: |Δ| > 2 SE).",
+        "",
+        "| signal | family | effect at equal fit | Δ | SE | significant | "
+        + " | ".join(CURVE_FORMS[1:])
+        + " |",
+        "|---|---|---|---|---|---|" + "---|" * (len(CURVE_FORMS) - 1),
+    ]
     for s, fams in res["decomposition"].items():
         for fam, e in fams.items():
+            bf = e.get("effects_by_form", {})
             for k, v in e["effects_at_equal_fit"].items():
+                alt = " | ".join(
+                    f"{bf[f][k]['delta']:+.4f}{'*' if bf[f][k]['sig2se'] else ''}"
+                    if f in bf and k in bf[f]
+                    else "–"
+                    for f in CURVE_FORMS[1:]
+                )
                 L.append(
-                    f"| {s} | {fam} | {k} | {v['delta']:+.4f} | {_f(v['se'], '{:.4f}')} | {_m(v['sig2se'])} |"
+                    f"| {s} | {fam} | {k} | {v['delta']:+.4f} | {_f(v['se'], '{:.4f}')} | {_m(v['sig2se'])} | {alt} |"
                 )
     irc = res["irc"]
     L += [
@@ -903,6 +1173,56 @@ def render(res: dict[str, Any]) -> str:
         ]
     else:
         L.append("No `rnd_scan.json` files yet (`gaehep rnd-scan RUN...`).")
+    bbs = res.get("bb_scans") or {}
+    if bbs:
+        L += [
+            "",
+            "### Black-box scans (session F2)",
+            "",
+            "BB1-trained runs scanned blind on BB1, and BB2-trained runs on BB2 (the procedure-matched null), with "
+            "the windows, cuts and converged fit above; global p from each run's own toys.",
+            "",
+            "| sample | run | largest excess (window, cut, Z) | Z at the true window (10 %, 2 %) | toys: median largest Z "
+            "| global p | global Z |",
+            "|---|---|---|---|---|---|---|",
+        ]
+        for key, rows in bbs.items():
+            for r, e in rows.items():
+                le = e["largest_excess"]
+                zt = e.get("z_true_window", {})
+                g = e.get("global", {})
+                L.append(
+                    f"| {key} | {r} | {le['window'][0] / 1000:.1f}–{le['window'][1] / 1000:.1f} TeV, {100 * le['eff']:g} %, "
+                    f"{le['z']:+.2f} | {_f(zt.get('0.1'), '{:+.2f}')}, {_f(zt.get('0.02'), '{:+.2f}')} | "
+                    f"{_f(e.get('toy_median_zmax'), '{:.2f}')} | {_f(g.get('p_global'), '{:.3g}')} | "
+                    f"{_f(g.get('z_global'), '{:.2f}')} |"
+                )
+    bm = res.get("bb1_mass") or {}
+    L += ["", "## 7. BB1 at fixed jet masses (session F2)", ""]
+    if bm.get("n_runs", 0) >= 3:
+        rf = bm["references"]
+        L += [
+            f"Event AUC in the BB1 window (3.6–4.0 TeV) and among the events whose heavier jet has 650–820 GeV and "
+            f"lighter jet 320–440 GeV ({rf['n_sig_mass_window']} signal, {rf['n_bkg_mass_window']} background "
+            "events), where a mass tagger is near 0.5. References in the same events: "
+            + ", ".join(f"{k} {v:.3f}" for k, v in rf["mass_window"].items())
+            + ".",
+            "",
+            "| encoder | runs | mean loss | AUC in the window | AUC at fixed jet masses |",
+            "|---|---|---|---|---|",
+        ]
+        L += [
+            f"| {e} | {v['n']} | {v['loss']:.3f} | {v['auc_window']:.3f} | {v['auc_mass_window']:.3f} |"
+            for e, v in bm["per_encoder"].items()
+        ]
+        a, b = bm["auc_mass_window_vs_loss"], bm["auc_mass_window_vs_loss_within_encoder"]
+        L += [
+            "",
+            f"AUC at fixed jet masses vs validation loss: Spearman {a['spearman']:+.2f} (p {a['p']:.2g}) over all runs, "
+            f"{b['spearman']:+.2f} (p {b['p']:.2g}) within encoder.",
+        ]
+    else:
+        L.append("No `bb1_mass.json` files yet (`gaehep bb1-mass-check RUN...`, needs the black boxes).")
     return "\n".join(L) + "\n"
 
 
@@ -923,6 +1243,8 @@ def followup(
         "irc": irc_contrasts(main),
         "mass": mass_mechanism(main, curves),
         "lee": lee_summary(root, null_runs),
+        "bb_scans": bb_scan_summary(root),
+        "bb1_mass": bb1_mass_summary(main, curves),
     }
     out = root / "study"
     paths = {"md": out / "audit_followup.md", "json": out / "audit_followup.json"}

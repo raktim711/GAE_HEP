@@ -1,0 +1,69 @@
+{
+  "name": "e5_efn_meanmax_s1",
+  "n_bkg_jets": 16000,
+  "n_sig_jets": 14944,
+  "sr": [
+    3300.0,
+    3700.0
+  ],
+  "auc": 0.7524155325716007,
+  "split top-1": {
+    "auc": 0.7566451146781317,
+    "rho": 0.9960931908295015,
+    "flip_pct_at_1pct": 0.1
+  },
+  "split top-5": {
+    "auc": 0.7584939168729924,
+    "rho": 0.9682486520456598,
+    "flip_pct_at_1pct": 0.22499999999999998
+  },
+  "split all": {
+    "auc": 0.7524155095690579,
+    "rho": 0.9999999993481447,
+    "flip_pct_at_1pct": 0.0
+  },
+  "10 soft (0.2% pT each)": {
+    "auc": 0.761469115949545,
+    "rho": 0.9560882013220329,
+    "flip_pct_at_1pct": 0.475
+  },
+  "10 soft (1% pT each)": {
+    "auc": 0.7639231861449411,
+    "rho": 0.9479964871295042,
+    "flip_pct_at_1pct": 0.4875
+  },
+  "random re-order": {
+    "auc": 0.7524155095690578,
+    "rho": 0.9999999995144043,
+    "flip_pct_at_1pct": 0.0,
+    "max_abs_diff": 6.67572021484375e-06
+  },
+  "knn_ties": {
+    "bkg": {
+      "k": 8,
+      "n_jets": 16000,
+      "n_nodes": 670494,
+      "nodes_with_tie": 0,
+      "jets_with_tie": 0,
+      "jet_fraction": 0.0,
+      "node_fraction": 0.0
+    },
+    "sig": {
+      "k": 8,
+      "n_jets": 14944,
+      "n_nodes": 608522,
+      "nodes_with_tie": 1,
+      "jets_with_tie": 1,
+      "jet_fraction": 6.691648822269808e-05,
+      "node_fraction": 1.643325960277525e-06
+    }
+  },
+  "time": "2026-11-06 18:25:42 CET",
+  "git": "3b23a42",
+  "splits_sha256": "5217cca54367efda6b33a1626da8cdb21e87ef7b6fd6b2abfa73d8ac510f7af2",
+  "python": "3.13.16",
+  "numpy": "2.5.4",
+  "host": "vm",
+  "torch": "2.15.0+cu132",
+  "torch_threads": 1
+}

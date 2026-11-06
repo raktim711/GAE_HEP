@@ -6,7 +6,8 @@ This file holds everything a writer (human or model) needs to draft the paper fr
 - Every number below comes from a file in `results/`; the file is named next to it.
 - Before citing a reference, verify it on arXiv. The arXiv IDs below were checked on 31 Oct 2026, but titles and author lists were not re-checked when writing this file.
 - Repository: github.com/raktim711/GAE_HEP (code in `src/gaehep`).
-- Frozen protocol: `docs/STUDY_PROTOCOL.md`, including the deviations D1–D8.
+- Frozen protocol: `docs/STUDY_PROTOCOL.md`, including the deviations D1–D9. D9 is the follow-up of the bias audit of
+  6 November (`study/audit_followup.md`), which narrowed several claims; section 7 below already reflects it.
 - Results draft: `paper/results_draft.md`.
 
 **Do not overclaim.** The paper's claims must stay within section 7 ("What the paper may claim").
@@ -109,6 +110,7 @@ of the 5-seed rank ensembles must also exclude zero. The training-length runs mu
 | E3 | training on BB1's own events, bump hunts, 100 constituents |
 | F1 | fixed τ baselines, EFP check, black-box diagnostics, reproducibility check |
 | E4 | 42 ablation runs scored on the test signals, post hoc |
+| E5 | bias-audit follow-up (D9): EFN and EWMP with mean + max pooling (3 seeds each, R&D only), score–mass correlations of the 98 E1 + E2 runs, a look-elsewhere null of the BB1 bump hunt on the R&D background |
 
 ## 4. Results (numbers and where they are)
 
@@ -134,46 +136,51 @@ Source: `study/study_table.md` and `study/fix_table.md`. AUC in the window, mean
 The rankings flip between signals. The best encoders on 3-prong are the weakest on BB1, and on BB1 jet mass alone
 matches every encoder. Every encoder is below 0.5 on BB3.
 
-### 4.2 Central finding: background fit quality
+### 4.2 Central finding: background fit quality, on the 3-prong signal
 
-Sources: `study/study_posthoc.md` and `../paper/figures/fig2_auc_vs_fit.pdf`.
+Sources: `study/study_posthoc.md`, `study/audit_followup.md` (D9) and `../paper/figures/fig2_auc_vs_fit.pdf`.
 
-Across 98 runs (E1 + E2: seven encoders, 1–5 epochs), AUC is close to a single function of the background
-validation loss, whatever the encoder.
-- The 3-prong AUC falls from about 0.83 to 0.67 as the loss rises from 0.13 to 0.6.
-- The BB1 AUC rises from about 0.89 to 0.92 over the same range.
-- A quadratic in the loss leaves a residual spread of 0.011 (3-prong), 0.0045 (BB1) and 0.0034 (BB3).
+Across 98 runs (E1 + E2: seven encoders, 1–5 epochs), the 3-prong AUC is close to a single function of the
+background validation loss, whatever the encoder.
+- The 3-prong AUC falls from about 0.83 to 0.67 as the loss rises from 0.13 to 0.6; the BB1 AUC rises from about
+  0.89 to 0.92 over the same range.
+- Training longer moves every encoder along the curve: 3-prong goes up and BB1 goes down (`study/stct_table.md`).
 
-Training longer moves every encoder along the curve: 3-prong goes up and BB1 goes down (`study/stct_table.md`).
-The two Deep Sets seeds with a poor fit (loss 0.42 against 0.29) are the ones with a low 3-prong AUC (0.72 against
-0.79).
+**How much it explains** (D9). Predicting each run while leaving it out, the quadratic in the loss explains 95 % of
+the variance of the 3-prong AUC between the 98 runs, more than the mean of the other seeds of its configuration
+(encoder × training length: 83 %). On the black boxes the configuration predicts better than the curve (BB1 89 % vs
+81 %; BB3 83 % vs 61 %), and the curve predicts the 42 E4
+ablation runs poorly there (out-of-sample R² 0.23 on BB1 and −0.85 on BB3, against 0.86 on 3-prong). The black-box
+residuals of about ±0.005 are small only because the black-box AUCs barely vary (sd 0.010 and 0.006 between runs).
 
-**Contrasts at equal fit.** These are the residuals of that curve (post hoc, protocol D2):
+**Fixed-architecture evidence** (D9). Seeds change the fit at fixed architecture and training length. Within each
+configuration, better-fitting seeds detect the 3-prong signal better: Spearman ρ(loss, AUC) = −0.71 (p = 2 × 10⁻¹⁶;
+−0.59 without Deep Sets). On BB1 the within-configuration relation is weak (+0.29).
 
-| contrast | 3-prong, raw → equal fit | BB1, raw → equal fit |
+**Contrasts at equal fit.** Residuals of the curve (post hoc, D2 and D9). The 95 % intervals use the larger of the
+Welch SE and a bootstrap SE that refits the curve; † = significant for all five curve forms tried.
+
+| contrast | 3-prong, raw → equal fit [95 %] | BB1, raw → equal fit [95 %] |
 |---|---|---|
-| EdgeConv − Deep Sets | +0.040* → +0.008 | −0.006* → +0.002 |
-| EWMP − EFN | +0.007* → +0.002 | −0.004* → −0.002 |
-| EWMP − EdgeConv | +0.019* → +0.011* | −0.002 → +0.001 |
-| EFN − Deep Sets | +0.051* → +0.017* | −0.003 → +0.006* |
-| EW attention − Transformer | +0.009* → +0.004 | +0.003 → +0.006* |
+| EdgeConv − Deep Sets | +0.040* → +0.008 [−0.007, +0.022] | −0.006* → +0.002 [−0.001, +0.005] |
+| EWMP − EFN | +0.007* → +0.002 [−0.002, +0.007] | −0.004* → −0.002 [−0.005, +0.001] |
+| Transformer − Deep Sets | +0.054* → +0.000 [−0.014, +0.015] | −0.017* → −0.001 [−0.003, +0.001] |
+| EW attention − EFN | +0.012* → −0.012 [−0.017, −0.007] † | −0.011* → −0.001 [−0.005, +0.003] |
+| EWMP − EdgeConv | +0.019* → +0.011 [+0.007, +0.016] † | −0.002 → +0.001 [−0.002, +0.004] |
+| EFN − Deep Sets | +0.051* → +0.017 [+0.002, +0.031] † | −0.003 → +0.006 [+0.003, +0.008] † |
+| EW attention − Transformer | +0.009* → +0.004 [−0.001, +0.008] | +0.003 → +0.006 [+0.002, +0.009] † |
 
-\* significant.
+\* significant under the protocol rule.
 
-At equal fit the interaction contrasts vanish, and a small IRC-safety advantage remains. This comparison conditions
-on a variable the encoder itself influences, so it explains the result but does not replace the pre-registered
-verdicts.
+No interaction contrast is significantly positive at equal fit; the intervals still allow up to +0.022 on 3-prong.
+The encoders compared never overlap in validation loss, so "equal fit" is read off the pooled curve.
 
-**Out-of-sample test (E4, D8).** The 42 ablation runs were not used to fit the curve:
-
-| signal | mean residual | within 2 sd of the curve |
-|---|---|---|
-| BB1 | −0.005 | 90 % |
-| BB3 | +0.002 | 88 % |
-| 3-prong | −0.011 | 60 % |
-
-On 3-prong, about half of the latent-width and pooling variants fall below the curve; the 30-constituent runs fall
-on it. Conclusion: fit quality explains most, but not all, of the differences.
+**What the IRC-safe design's edge is made of** (E5, D9; `study/audit_followup.md` section 3). The IRC-safe encoders
+differ from their partners in their inputs (directions only) and their pooling (pT-weighted). In the set family,
+EFN with mean + max pooling fits much worse (loss 0.41 vs 0.235; raw 3-prong AUC 0.755 vs 0.812) but has the same
+equal-fit residual as EFN (+0.012 vs +0.011): the pooling acts through the fit, and the equal-fit edge comes from the
+direction-only inputs (+0.018 ± 0.007 with mean + max pooling; +0.018 to +0.025 for every curve form). That edge does
+not need IRC safety: the mean + max EFN is not IRC safe. Graph family: ⟨…⟩
 
 ### 4.3 Pre-registered verdicts
 
@@ -193,34 +200,42 @@ In the H3 latent, the MLP probe recovers τ21 with R² 0.24, against 0.50–0.61
 
 ### 4.4 IRC robustness
 
-Source: `study/study_table.md`, IRC probe. The table gives the Spearman ρ of the background scores before and after
-each perturbation.
+Source: `study/study_table.md` (IRC probe) and `study/audit_followup.md` section 4. Spearman ρ of the background
+scores before and after each perturbation, mean over 5 seeds.
 
-| encoder | split every constituent | 10 soft emissions of 1 % pT |
-|---|---|---|
-| EdgeConv | 0.92 | 0.53 |
-| GCN complete | 0.83 | 0.47 |
-| Deep Sets | 0.96 | 0.73 |
-| EWMP | 1.000 | 0.79 |
-| EFN | 1.000 | 0.75 |
-| EW attention | 1.000 | 0.98 |
+| encoder | split every constituent | 10 soft emissions of 0.2 % pT | 10 soft emissions of 1 % pT |
+|---|---|---|---|
+| Deep Sets | 0.96 | 0.982 | 0.73 ± 0.08 |
+| EFN (safe) | 1.000 | 0.988 | 0.75 ± 0.16 |
+| EdgeConv | 0.92 | 0.968 | 0.53 |
+| EWMP (safe) | 1.000 | 0.993 | 0.79 |
+| Transformer | 0.95 | 0.978 | 0.74 |
+| EW attention (safe) | 1.000 | 0.999 | 0.98 |
+| GCN complete | 0.83 | 0.867 | 0.47 |
+
+The IRC-safe encoders are exactly collinear safe. Under soft emissions, only the two with an energy-weighted
+interaction (EWMP, EW attention) are significantly more robust than their partners; EFN is not more robust than
+Deep Sets (difference +0.005 ± 0.007 at 0.2 %, +0.016 ± 0.080 at 1 %). Ten emissions of 1 % add 10 % of the jet pT,
+far from the soft limit.
 
 ### 4.5 Black boxes
 
 **BB1** (`study/bb1_diagnostics.md`, `study/e3_summary.md`, `study/study_bb1data_table.md`):
 - The encoders reach 0.90–0.92, matched by jet mass and by −τ21.
 - Encoder scores correlate with m_J (ρ ≈ 0.7) on both R&D and BB1.
-- Trained on BB1's own events (label-blind, 3 seeds), the AUC is 0.904–0.908.
-- The bump hunt with a sideband-defined cut reaches local Z 2.3–2.5 (10 % cut) and 3.2–3.8 (2 % cut). There is no
-  look-elsewhere correction, so these are optimistic.
-- BB2 null test: the largest |Z| is 3.3 over 360 trials, consistent with chance.
+- Trained on BB1's own events (label-blind, 3 seeds), the AUC is 0.904–0.908 including the training events and
+  0.894–0.899 on the held-out validation part (`study/e3_summary.md`).
+- The bump hunt with a sideband-defined cut at the known window reaches a quoted local Z of 2.3–2.5 (10 % cut) and
+  3.2–3.8 (2 % cut; per seed 1.6–4.4). Calibrated against the no-signal null (D9): ⟨…⟩
+- BB2 test: the R&D-trained runs give a largest |Z| of 3.3 over 360 trials. They were not trained on BB2, so this
+  does not test the train-on-data procedure behind the BB1 numbers.
 
 **BB3** (`study/bb3_diagnostics.md`):
 - The box background is not shifted relative to R&D: KS ≈ 0.02, and 10–11 % of jets lie above the R&D 90 %
   quantile.
 - The dijet (quark) jets have fewer constituents than the background (n_const jet AUC 0.44), and the encoders score
-  them as ordinary (jet AUC 0.44).
-- The trijet mode is found (jet AUC ≈ 0.70), but only 137 of its 2000 events fall in the window.
+  them as ordinary (jet AUC 0.44; mean over seed 1 of the seven encoders).
+- The trijet mode is detected (jet AUC ≈ 0.70), but only 137 of its 2000 events fall in the window.
 - The jet-observable flow reaches 0.735 through jet pT (jet AUC of pT 0.76).
 
 ### 4.6 Reproducibility
@@ -255,32 +270,47 @@ All of this was done on the 2-prong validation split before the protocol; 3-pron
 | D6 | E1 session conditions (environment, one restart, a repeated download); no number affected |
 | D7 | EFP k-NN checked: no bug, just a weak event-level baseline |
 | D8 | E4: ablation runs scored on the test signals after the results were seen, for reporting only |
+| D9 | bias-audit follow-up: curve diagnostics, robust equal-fit contrasts, the inputs × pooling runs (E5), the mass check, the BB1 look-elsewhere null; black-box parts left for session F2 (`docs/F2_SESSION.md`) |
 
 ## 7. What the paper may claim, and what it may not
 
+Revised after the bias audit (D9). Numbers in section 4.
+
 **Supported:**
-- In permutation-invariant energy-flow autoencoders, how well the model fits the background explains most of the
-  differences between encoders. On BB1 and BB3 this holds out of sample to about ±0.005 AUC.
-- The direction of the effect depends on the signal: a better fit helps 3-prong and hurts BB1.
-- Message passing and attention give no measurable gain at equal fit.
-- IRC-safe encoders are exactly robust to collinear splits, much more robust to soft radiation (energy-weighted
-  attention most of all), and keep a small detection advantage at equal fit on some signals.
-- Complete-graph GCN collapses (H3).
-- Unsupervised autoencoders behave close to mass taggers on BB1 and miss the quark-dijet mode of BB3. This is not a
-  generator shift.
+- On the R&D 3-prong signal, how well an energy-flow autoencoder fits the background explains most of the
+  differences between the seven encoders: 95 % of the AUC variance between 98 runs (leave one out; 83 % for knowing
+  the configuration), across encoders, training lengths
+  and seeds at fixed architecture (within-configuration ρ = −0.71). It does not explain all of them: width and
+  pooling cost detection at equal fit.
+- The direction of the fit effect depends on the signal: a better fit helps 3-prong and hurts BB1.
+- At equal fit, message passing and attention give no detectable gain. Quote the limits: up to +0.022 on 3-prong
+  (EdgeConv over Deep Sets), ±0.005 on BB1. Energy-weighted attention is even below EFN on 3-prong.
+- IRC-safe encoders are exactly robust to collinear splits. The two with an energy-weighted interaction (EWMP,
+  energy-weighted attention) are much more robust to soft emissions than their partners; EFN is not.
+- The IRC-safe design keeps a small equal-fit edge on some signals. In the set family that edge comes from the
+  direction-only inputs, not from IRC safety or the pooling. ⟨graph family⟩
+- The complete-graph GCN collapses (H3).
+- On BB1 the autoencoders detect the signal about as well as jet mass alone; they miss the quark-dijet mode of BB3.
+  This is not a generator shift.
 
 **Not supported (do not write):**
-- "Graphs improve anomaly detection."
-- "IRC safety improves generalisation" (H2a is inconclusive).
-- "Fit quality fully determines performance": on 3-prong, width and pooling matter at equal fit.
-- "Fit quality causes performance": the study has no intervention on fit at fixed architecture.
-- Any discovery-level significance.
+- "Graphs (or attention) improve unsupervised anomaly detection."
+- "IRC safety improves generalisation" or "IRC safety improves detection": H2a is inconclusive, and in the set family
+  the equal-fit edge comes from the inputs.
+- "IRC-safe encoders are more robust to soft radiation" as a general statement: EFN is not.
+- "Fit quality explains the black-box results", or "the curve holds out of sample on BB1/BB3": it predicts the
+  black-box AUCs of new runs poorly (R² 0.23 and −0.85).
+- "Fit quality causes the performance" or "architecture acts only through the fit": the seed test varies the fit
+  only by chance, and the equal-fit comparison conditions on a mediator.
+- "A poorly fitting model acts as a mass tagger": ⟨mass check⟩
+- Any significance for BB1 beyond what section 4.5 gives after calibration and look-elsewhere correction; nothing
+  discovery-level.
 
 ## 8. Framing options
 
 | | framing | headline |
 |---|---|---|
-| **A (recommended)** | "Fit quality, not architecture" | Lead with the curve; the controlled encoder study is the evidence. Needs a causal test (vary fit at fixed architecture, e.g. learning rate or data size) and a mass-decorrelated check of the BB1 trend. |
+| **A (recommended, narrowed)** | "Fit quality, not architecture, on the signal where encoders differ" | Lead with the curve on 3-prong (95 % of the variance, seed test at fixed architecture, no detectable interaction gain at equal fit), then show that on the black boxes all encoders sit within 0.03 AUC of a jet-mass tagger. Strongest additional evidence: vary the fit at fixed architecture by design (learning rate, training data size), and the black-box checks of `docs/F2_SESSION.md`. |
 | B | "A controlled graph-vs-set study" | Report the pre-registered verdicts as they are. Mostly inconclusive. |
 | C | "Black-box stress test of unsupervised autoencoders" | BB1–BB3 results; narrower, partly known. |
 
@@ -288,13 +318,20 @@ The author has not yet chosen a framing.
 
 ## 9. Limitations to state
 
-- The recipe was tuned for EdgeConv on 2-prong (the training-length curves partly address this).
-- There are few signal events in the windows: 512 for BB1, 137 for the BB3 trijet mode.
+- The recipe was tuned for EdgeConv on 2-prong. Under the fit-quality reading this matters through which encoders
+  the recipe lets fit well; the training-length curves show every encoder moving along the same curve, which limits
+  but does not remove the concern.
+- Fit quality is a post-hoc summary, not an intervention; the encoders compared at equal fit never overlap in loss.
+- The curve explains the 3-prong signal, not the black boxes.
+- The IRC-safety contrasts test a design (inputs + pooling + energy weighting), not IRC safety alone.
+- There are few signal events in the windows: 512 for BB1, 137 for the BB3 trijet mode. The BB1 bump hunt's quoted
+  local Z is not calibrated and ignores the look-elsewhere effect (section 4.5).
 - All signals are Pythia; BB2 (Herwig) is the only generator change on the background side.
-- The equal-fit analysis is post hoc and conditions on a mediator.
-- H4 rests on 3 seeds per training length.
+- H4 rests on 3 seeds per training length; E2–E5 have 3 seeds per configuration.
 - The analysis is jet-level with a two-jet event score; there is no event-level embedding.
 - There is no comparison with weakly supervised methods, which reach max SIC 15–50 on LHCO.
+- Black-box checks not yet run: E5 on BB1/BB3, blind BB1 scan, BB2-trained null, BB1 at fixed jet masses
+  (`docs/F2_SESSION.md`).
 
 ## 10. Key references
 
@@ -342,6 +379,9 @@ Verify each before citing.
 | `study/fix_table.md` | F1 baselines with computed τ. These replace the `obs_tau*` and `hldensity` rows of `study_table.md`, which used τ = 0 on the black boxes (D3). |
 | `study/bb1_diagnostics.md`, `bb3_diagnostics.md` | F1 black-box diagnostics |
 | `runs/<run>/metrics.json`, `bb*_metrics.json`, `history.json`, `config.yaml` | per-run results; `study_*` = E1, `stct_*` = E2, `stat_*` = E4, `fix_*` = F1 |
-| `../docs/STUDY_PROTOCOL.md` | the frozen protocol and deviations D1–D8 |
+| `study/audit_followup.md` / `.json` | **bias-audit follow-up (D9)**: what the curve explains, equal-fit robustness, inputs × pooling, IRC contrasts, mass check, BB1 look-elsewhere null |
+| `runs/e5_*`, `runs/*/mass_corr.json`, `runs/study_efn_s*/rnd_scan.json` | E5 runs and the D9 scoring outputs |
+| `../docs/F2_SESSION.md` | the black-box checks still to run (needs zenodo access) |
+| `../docs/STUDY_PROTOCOL.md` | the frozen protocol and deviations D1–D9 |
 | `../paper/results_draft.md` | the results section, already drafted |
 | `../RESULTS.md` | development history before the protocol |

@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import numpy as np
 
+from gaehep import cli
+from gaehep.config import results_dir
 from gaehep.eval import followup as FU
 from gaehep.eval.bumphunt import DEFAULT_EDGES, _bin_expectation, fit_sidebands, poisson_z, search
 
@@ -85,3 +87,29 @@ def test_global_significance_counts_toys():
     zmax = np.arange(1000) / 250.0  # 0 ... 4
     g = FU._global(zmax, 3.0)
     assert abs(g["p_global"] - 251 / 1001) < 1e-12 and 0.6 < g["z_global"] < 0.7
+
+
+# ------------------------------------------------------------------ black-box commands (session F2), synthetic data
+from tests.test_blackbox import env, runs  # noqa: E402, F401  (synthetic black boxes, two trained runs)
+
+
+def test_black_box_followup_commands(env, runs):  # noqa: F811
+    """prepare-run -> score-sample (all events) -> bb-scan, and bb1-mass-check, on the synthetic black boxes."""
+    rdir = results_dir() / "runs" / "rnd"
+    # a fresh session has only the committed files: weights under results/models, no model.pt or scores.npz
+    (results_dir() / "models" / "rnd").mkdir(parents=True, exist_ok=True)
+    (rdir / "model.pt").replace(results_dir() / "models" / "rnd" / "model.pt")
+    ref = np.load(rdir / "scores.npz")["bkg_val"]
+    (rdir / "scores.npz").unlink()
+    FU.prepare_run("rnd", log=lambda *a: None)
+    assert (rdir / "model.pt").exists()
+    np.testing.assert_allclose(np.load(rdir / "scores.npz")["bkg_val"], ref, rtol=1e-6)  # the same F_B scores
+    assert cli.main(["score-sample", "rnd", "--sample", "bb1", "--n-boot", "0"]) == 0
+    out = FU.bb_scan("rnd", "bb1", n_toys=2, log=lambda *a: None)
+    assert out["true_window"] == [3600.0, 4000.0] and len(out["rows"]) == len(FU.SCAN_WINDOWS) * len(
+        FU.SCAN_EFFS
+    )
+    assert out["toys"]["n_toys"] == 2 and (rdir / "bb1_scan.json").exists()
+    m = FU.bb1_mass_check("rnd", n_ref_events=50, log=lambda *a: None)
+    assert m["n_sig_window"] + m["n_bkg_window"] > 0 and "m_J sum" in m["ref_auc_window"]
+    assert (rdir / "bb1_mass.json").exists()

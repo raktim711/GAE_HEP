@@ -250,6 +250,21 @@ def main(argv: list[str] | None = None) -> int:
     )
     rs.add_argument("runs", nargs="+", metavar="RUN")
     rs.add_argument("--toys", type=int, default=1000)
+    pp = sub.add_parser(
+        "prepare-run",
+        help="copy committed weights into a run dir and write its bkg_val scores (for score-sample)",
+    )
+    pp.add_argument("runs", nargs="+", metavar="RUN")
+    bs = sub.add_parser(
+        "bb-scan", help="window scan + toys of a black box from <run>/<sample>_scores.npz (all events)"
+    )
+    bs.add_argument("runs", nargs="+", metavar="RUN")
+    bs.add_argument("--sample", required=True, choices=["bb1", "bb2", "bb3"])
+    bs.add_argument("--toys", type=int, default=1000)
+    bm = sub.add_parser(
+        "bb1-mass-check", help="BB1 AUC in the window at fixed jet masses -> <run>/bb1_mass.json"
+    )
+    bm.add_argument("runs", nargs="+", metavar="RUN")
     ss = sub.add_parser(
         "score-sample", help="score a trained run on a black box -> bb<i>_scores.npz, bb<i>_metrics.json"
     )
@@ -303,10 +318,19 @@ def main(argv: list[str] | None = None) -> int:
         except FileNotFoundError as err:
             raise SystemExit(f"study-table: {err}") from None
         return 0
-    if a.cmd in ("audit-followup", "mass-corr", "rnd-scan"):
+    if a.cmd in ("audit-followup", "mass-corr", "rnd-scan", "prepare-run", "bb-scan", "bb1-mass-check"):
         from gaehep.eval import followup as FU
 
-        if a.cmd == "audit-followup":
+        if a.cmd == "prepare-run":
+            for r in a.runs:
+                FU.prepare_run(r, log=_log)
+        elif a.cmd == "bb-scan":
+            for r in a.runs:
+                FU.bb_scan(r, a.sample, n_toys=a.toys, log=_log)
+        elif a.cmd == "bb1-mass-check":
+            for r in a.runs:
+                FU.bb1_mass_check(r, log=_log)
+        elif a.cmd == "audit-followup":
             for path in FU.followup(log=_log).values():
                 print(path)
         elif a.cmd == "mass-corr":

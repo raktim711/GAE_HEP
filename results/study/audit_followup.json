@@ -1,0 +1,1859 @@
+{
+  "curve": {
+    "rd3": {
+      "n_runs": 98,
+      "r2_curve_loo": 0.9529318781245403,
+      "r2_configuration_loo": 0.825717417877766,
+      "n_configs": 28,
+      "auc_sd": 0.05197550977363572,
+      "resid_sd": 0.011000224926786662,
+      "r2_curve": 0.9561310250387338,
+      "r2_configuration": 0.9139736904866432,
+      "r2_configuration_on_residual": 0.6362725355827286,
+      "within_configuration": {
+        "n": 98,
+        "groups": 28,
+        "spearman": -0.7113912106548336,
+        "p": 2.2333929124203914e-16,
+        "slope": -0.5417817396760031
+      },
+      "within_configuration_no_deepsets": {
+        "n": 84,
+        "groups": 24,
+        "spearman": -0.5899362154500354,
+        "p": 3.5250983216773235e-09,
+        "slope": -0.5411423998449667
+      },
+      "curve_slope_at_mean_loss": -0.3207548006817218,
+      "out_of_sample": {
+        "n_runs": 42,
+        "r2": 0.8562435781744001,
+        "rmse": 0.021276078796589413,
+        "mean_residual": -0.011324987794838233,
+        "auc_sd": 0.056795075303933885
+      }
+    },
+    "bb1": {
+      "n_runs": 98,
+      "r2_curve_loo": 0.8101703726506113,
+      "r2_configuration_loo": 0.8897197310731001,
+      "n_configs": 28,
+      "auc_sd": 0.01044998465110362,
+      "resid_sd": 0.0044914900545847064,
+      "r2_curve": 0.8190738046399227,
+      "r2_configuration": 0.9448914293477494,
+      "r2_configuration_on_residual": 0.7905661500866973,
+      "within_configuration": {
+        "n": 98,
+        "groups": 28,
+        "spearman": 0.2926827713278376,
+        "p": 0.003449386724857531,
+        "slope": 0.03464797463109738
+      },
+      "within_configuration_no_deepsets": {
+        "n": 84,
+        "groups": 24,
+        "spearman": 0.1953832135263744,
+        "p": 0.07489719535788357,
+        "slope": 0.002307412064561361
+      },
+      "curve_slope_at_mean_loss": 0.09220557976363786,
+      "out_of_sample": {
+        "n_runs": 42,
+        "r2": 0.2251206779150523,
+        "rmse": 0.006307674857280246,
+        "mean_residual": -0.004921920326159098,
+        "auc_sd": 0.007252453944177292
+      }
+    },
+    "bb3": {
+      "n_runs": 98,
+      "r2_curve_loo": 0.6093296910090864,
+      "r2_configuration_loo": 0.8318991658852228,
+      "n_configs": 28,
+      "auc_sd": 0.005670407071271405,
+      "resid_sd": 0.0034125677341620957,
+      "r2_curve": 0.6452797706941491,
+      "r2_configuration": 0.9132830981464825,
+      "r2_configuration_on_residual": 0.5734737472009246,
+      "within_configuration": {
+        "n": 98,
+        "groups": 28,
+        "spearman": 0.24364197412798294,
+        "p": 0.015625979147939173,
+        "slope": 0.013393070815249982
+      },
+      "within_configuration_no_deepsets": {
+        "n": 84,
+        "groups": 24,
+        "spearman": 0.10570011136984915,
+        "p": 0.3386046589479092,
+        "slope": 0.0032259979755370136
+      },
+      "curve_slope_at_mean_loss": 0.01917316332561425,
+      "out_of_sample": {
+        "n_runs": 42,
+        "r2": -0.8473236364806767,
+        "rmse": 0.0045282869607729745,
+        "mean_residual": 0.001860361832418545,
+        "auc_sd": 0.0033720589934753127
+      }
+    }
+  },
+  "equal_fit": {
+    "rd3": [
+      {
+        "hypothesis": "H1",
+        "role": "primary",
+        "a": "edgeconv",
+        "b": "deepsets",
+        "forms": {
+          "quadratic": {
+            "delta": 0.007716119266847365,
+            "se": 0.007291770628106074,
+            "sig2se": false
+          },
+          "linear": {
+            "delta": 0.006668734760381479,
+            "se": 0.007267121243455102,
+            "sig2se": false
+          },
+          "cubic": {
+            "delta": 0.0016132455145569046,
+            "se": 0.004839056299934953,
+            "sig2se": false
+          },
+          "quadratic in log(loss)": {
+            "delta": 0.004727607820534252,
+            "se": 0.006402284979100879,
+            "sig2se": false
+          },
+          "quadratic without GCN": {
+            "delta": 0.0015087212239619286,
+            "se": 0.003941254259427462,
+            "sig2se": false
+          }
+        },
+        "delta": 0.007716119266847365,
+        "se_welch": 0.007291770628106074,
+        "se_boot": 0.006158723384308379,
+        "ci95": [
+          -0.006575751164240538,
+          0.022007989697935267
+        ],
+        "sig_all_forms": false,
+        "sig_any_form": false,
+        "sig_boot": false
+      },
+      {
+        "hypothesis": "H1",
+        "role": "primary",
+        "a": "ewmp",
+        "b": "efn",
+        "forms": {
+          "quadratic": {
+            "delta": 0.0023688465678502347,
+            "se": 0.002298146105056974,
+            "sig2se": false
+          },
+          "linear": {
+            "delta": 0.001958855556604666,
+            "se": 0.0025087450220180676,
+            "sig2se": false
+          },
+          "cubic": {
+            "delta": 0.002481426964066214,
+            "se": 0.0022006880137838193,
+            "sig2se": false
+          },
+          "quadratic in log(loss)": {
+            "delta": 0.002202060494106671,
+            "se": 0.0023591477875104174,
+            "sig2se": false
+          },
+          "quadratic without GCN": {
+            "delta": 0.0028806960182451878,
+            "se": 0.002044985065716603,
+            "sig2se": false
+          }
+        },
+        "delta": 0.0023688465678502347,
+        "se_welch": 0.002298146105056974,
+        "se_boot": 0.0020280498134913117,
+        "ci95": [
+          -0.0021355197980614344,
+          0.006873212933761904
+        ],
+        "sig_all_forms": false,
+        "sig_any_form": false,
+        "sig_boot": false
+      },
+      {
+        "hypothesis": "H1",
+        "role": "secondary",
+        "a": "transformer",
+        "b": "deepsets",
+        "forms": {
+          "quadratic": {
+            "delta": 0.0004174696993556326,
+            "se": 0.007259273217429251,
+            "sig2se": false
+          },
+          "linear": {
+            "delta": -0.002889905153761773,
+            "se": 0.007221654177509971,
+            "sig2se": false
+          },
+          "cubic": {
+            "delta": -0.001444129039312481,
+            "se": 0.004746780797623101,
+            "sig2se": false
+          },
+          "quadratic in log(loss)": {
+            "delta": -0.0008092776792699048,
+            "se": 0.006326478296002114,
+            "sig2se": false
+          },
+          "quadratic without GCN": {
+            "delta": -0.000896792665032997,
+            "se": 0.003880280548182263,
+            "sig2se": false
+          }
+        },
+        "delta": 0.0004174696993556326,
+        "se_welch": 0.007259273217429251,
+        "se_boot": 0.005607101793581739,
+        "ci95": [
+          -0.013810705806805698,
+          0.014645645205516963
+        ],
+        "sig_all_forms": false,
+        "sig_any_form": false,
+        "sig_boot": false
+      },
+      {
+        "hypothesis": "H1",
+        "role": "secondary",
+        "a": "ew_attention",
+        "b": "efn",
+        "forms": {
+          "quadratic": {
+            "delta": -0.012363791108174338,
+            "se": 0.00250996020562227,
+            "sig2se": true
+          },
+          "linear": {
+            "delta": -0.0151232052337106,
+            "se": 0.002727892633652356,
+            "sig2se": true
+          },
+          "cubic": {
+            "delta": -0.005467461850364641,
+            "se": 0.0022736844201876436,
+            "sig2se": true
+          },
+          "quadratic in log(loss)": {
+            "delta": -0.008238889134124072,
+            "se": 0.002424425563366558,
+            "sig2se": true
+          },
+          "quadratic without GCN": {
+            "delta": -0.005635606586699549,
+            "se": 0.002157119033739358,
+            "sig2se": true
+          }
+        },
+        "delta": -0.012363791108174338,
+        "se_welch": 0.00250996020562227,
+        "se_boot": 0.0024977427877119016,
+        "ci95": [
+          -0.017283313111193986,
+          -0.0074442691051546895
+        ],
+        "sig_all_forms": true,
+        "sig_any_form": true,
+        "sig_boot": true
+      },
+      {
+        "hypothesis": "H2a",
+        "role": "primary",
+        "a": "ewmp",
+        "b": "edgeconv",
+        "forms": {
+          "quadratic": {
+            "delta": 0.011118105456999917,
+            "se": 0.002241058838857075,
+            "sig2se": true
+          },
+          "linear": {
+            "delta": 0.010426741760511149,
+            "se": 0.002339500343524261,
+            "sig2se": true
+          },
+          "cubic": {
+            "delta": 0.01160319269867578,
+            "se": 0.0022376872840034014,
+            "sig2se": true
+          },
+          "quadratic in log(loss)": {
+            "delta": 0.010987441533325825,
+            "se": 0.002288963501142839,
+            "sig2se": true
+          },
+          "quadratic without GCN": {
+            "delta": 0.01218768908070258,
+            "se": 0.002155339247632316,
+            "sig2se": true
+          }
+        },
+        "delta": 0.011118105456999917,
+        "se_welch": 0.002241058838857075,
+        "se_boot": 0.0020128506023785815,
+        "ci95": [
+          0.0067256301328400495,
+          0.015510580781159784
+        ],
+        "sig_all_forms": true,
+        "sig_any_form": true,
+        "sig_boot": true
+      },
+      {
+        "hypothesis": "H2a",
+        "role": "primary",
+        "a": "efn",
+        "b": "deepsets",
+        "forms": {
+          "quadratic": {
+            "delta": 0.016465378155997044,
+            "se": 0.007309517747011739,
+            "sig2se": true
+          },
+          "linear": {
+            "delta": 0.015136620964287962,
+            "se": 0.007323359263017672,
+            "sig2se": true
+          },
+          "cubic": {
+            "delta": 0.010735011249166471,
+            "se": 0.004822058608826878,
+            "sig2se": true
+          },
+          "quadratic in log(loss)": {
+            "delta": 0.013512988859753406,
+            "se": 0.006427711671144868,
+            "sig2se": true
+          },
+          "quadratic without GCN": {
+            "delta": 0.01081571428641932,
+            "se": 0.0038820048665702124,
+            "sig2se": true
+          }
+        },
+        "delta": 0.016465378155997044,
+        "se_welch": 0.007309517747011739,
+        "se_boot": 0.006145621448725285,
+        "ci95": [
+          0.0021387233718540375,
+          0.030792032940140053
+        ],
+        "sig_all_forms": true,
+        "sig_any_form": true,
+        "sig_boot": true
+      },
+      {
+        "hypothesis": "H2a",
+        "role": "primary",
+        "a": "ew_attention",
+        "b": "transformer",
+        "forms": {
+          "quadratic": {
+            "delta": 0.003684117348467075,
+            "se": 0.002359639418473395,
+            "sig2se": false
+          },
+          "linear": {
+            "delta": 0.002903320884339133,
+            "se": 0.002441740441786407,
+            "sig2se": false
+          },
+          "cubic": {
+            "delta": 0.006711678438114311,
+            "se": 0.0021093410241888383,
+            "sig2se": true
+          },
+          "quadratic in log(loss)": {
+            "delta": 0.0060833774048992375,
+            "se": 0.0021416558114503628,
+            "sig2se": true
+          },
+          "quadratic without GCN": {
+            "delta": 0.0060769003647527685,
+            "se": 0.0021540143625908004,
+            "sig2se": true
+          }
+        },
+        "delta": 0.003684117348467075,
+        "se_welch": 0.002359639418473395,
+        "se_boot": 0.0021783699892222765,
+        "ci95": [
+          -0.0009407759117407793,
+          0.008309010608674929
+        ],
+        "sig_all_forms": false,
+        "sig_any_form": true,
+        "sig_boot": false
+      },
+      {
+        "hypothesis": "H3",
+        "role": "primary",
+        "a": "gcn_complete",
+        "b": "deepsets",
+        "forms": {
+          "quadratic": {
+            "delta": 0.014314422698119977,
+            "se": 0.007246904841550287,
+            "sig2se": false
+          },
+          "linear": {
+            "delta": 0.00957768907937242,
+            "se": 0.007399419125145726,
+            "sig2se": false
+          },
+          "cubic": {
+            "delta": 0.011411378248106318,
+            "se": 0.007040173070530934,
+            "sig2se": false
+          },
+          "quadratic in log(loss)": {
+            "delta": 0.014500567928490148,
+            "se": 0.006549528293837174,
+            "sig2se": true
+          },
+          "quadratic without GCN": {
+            "delta": 0.0743217680524261,
+            "se": 0.0056997232039147335,
+            "sig2se": true
+          }
+        },
+        "delta": 0.014314422698119977,
+        "se_welch": 0.007246904841550287,
+        "se_boot": 0.0056506414002040085,
+        "ci95": [
+          0.00011048920868141424,
+          0.02851835618755854
+        ],
+        "sig_all_forms": false,
+        "sig_any_form": true,
+        "sig_boot": false
+      }
+    ],
+    "bb1": [
+      {
+        "hypothesis": "H1",
+        "role": "primary",
+        "a": "edgeconv",
+        "b": "deepsets",
+        "forms": {
+          "quadratic": {
+            "delta": 0.002094440097475703,
+            "se": 0.0015049683098222039,
+            "sig2se": false
+          },
+          "linear": {
+            "delta": -2.646850824634603e-05,
+            "se": 0.0016298063436358647,
+            "sig2se": false
+          },
+          "cubic": {
+            "delta": 0.0011245137265631254,
+            "se": 0.0014226404554214256,
+            "sig2se": false
+          },
+          "quadratic in log(loss)": {
+            "delta": 0.0002686696624428775,
+            "se": 0.0014712699216838307,
+            "sig2se": false
+          },
+          "quadratic without GCN": {
+            "delta": 0.0015646994084540953,
+            "se": 0.0013983367698469135,
+            "sig2se": false
+          }
+        },
+        "delta": 0.002094440097475703,
+        "se_welch": 0.0015049683098222039,
+        "se_boot": 0.001356928513490197,
+        "ci95": [
+          -0.0008552977897758169,
+          0.005044177984727222
+        ],
+        "sig_all_forms": false,
+        "sig_any_form": false,
+        "sig_boot": false
+      },
+      {
+        "hypothesis": "H1",
+        "role": "primary",
+        "a": "ewmp",
+        "b": "efn",
+        "forms": {
+          "quadratic": {
+            "delta": -0.002090216701150438,
+            "se": 0.0013358928884842853,
+            "sig2se": false
+          },
+          "linear": {
+            "delta": -0.0029204308762230237,
+            "se": 0.0014595443645402236,
+            "sig2se": true
+          },
+          "cubic": {
+            "delta": -0.0020723243606613814,
+            "se": 0.0013404732905289102,
+            "sig2se": false
+          },
+          "quadratic in log(loss)": {
+            "delta": -0.0023044227752416547,
+            "se": 0.0013433079176134234,
+            "sig2se": false
+          },
+          "quadratic without GCN": {
+            "delta": -0.001966954484133065,
+            "se": 0.0013472378559083145,
+            "sig2se": false
+          }
+        },
+        "delta": -0.002090216701150438,
+        "se_welch": 0.0013358928884842853,
+        "se_boot": 0.0011995584311191086,
+        "ci95": [
+          -0.004708566762579637,
+          0.0005281333602787613
+        ],
+        "sig_all_forms": false,
+        "sig_any_form": true,
+        "sig_boot": false
+      },
+      {
+        "hypothesis": "H1",
+        "role": "secondary",
+        "a": "transformer",
+        "b": "deepsets",
+        "forms": {
+          "quadratic": {
+            "delta": -0.0010406329381405176,
+            "se": 0.0011460250333869095,
+            "sig2se": false
+          },
+          "linear": {
+            "delta": -0.007737924854357891,
+            "se": 0.001026582933723354,
+            "sig2se": true
+          },
+          "cubic": {
+            "delta": -0.0013364958024205675,
+            "se": 0.001064475677140212,
+            "sig2se": false
+          },
+          "quadratic in log(loss)": {
+            "delta": -0.0028590303705335663,
+            "se": 0.0010737852124683392,
+            "sig2se": true
+          },
+          "quadratic without GCN": {
+            "delta": -0.0006580748520289338,
+            "se": 0.0010579432407520463,
+            "sig2se": false
+          }
+        },
+        "delta": -0.0010406329381405176,
+        "se_welch": 0.0011460250333869095,
+        "se_boot": 0.0010599893961153125,
+        "ci95": [
+          -0.00328684200357886,
+          0.001205576127297825
+        ],
+        "sig_all_forms": false,
+        "sig_any_form": true,
+        "sig_boot": false
+      },
+      {
+        "hypothesis": "H1",
+        "role": "secondary",
+        "a": "ew_attention",
+        "b": "efn",
+        "forms": {
+          "quadratic": {
+            "delta": -0.0008802839367722855,
+            "se": 0.0018462663174723878,
+            "sig2se": false
+          },
+          "linear": {
+            "delta": -0.006467978932708763,
+            "se": 0.0017758713319948381,
+            "sig2se": true
+          },
+          "cubic": {
+            "delta": 0.00021574588149722053,
+            "se": 0.001903788180086519,
+            "sig2se": false
+          },
+          "quadratic in log(loss)": {
+            "delta": -6.85341904195667e-05,
+            "se": 0.001954795266907526,
+            "sig2se": false
+          },
+          "quadratic without GCN": {
+            "delta": 0.00031833416107422945,
+            "se": 0.0018921567193831961,
+            "sig2se": false
+          }
+        },
+        "delta": -0.0008802839367722855,
+        "se_welch": 0.0018462663174723878,
+        "se_boot": 0.0015562447101618677,
+        "ci95": [
+          -0.004498965919018166,
+          0.0027383980454735945
+        ],
+        "sig_all_forms": false,
+        "sig_any_form": true,
+        "sig_boot": false
+      },
+      {
+        "hypothesis": "H2a",
+        "role": "primary",
+        "a": "ewmp",
+        "b": "edgeconv",
+        "forms": {
+          "quadratic": {
+            "delta": 0.0012657340168467312,
+            "se": 0.0015894916037166966,
+            "sig2se": false
+          },
+          "linear": {
+            "delta": -0.000134247751562744,
+            "se": 0.0017357185501049336,
+            "sig2se": false
+          },
+          "cubic": {
+            "delta": 0.0013428286655305934,
+            "se": 0.0015949371171297552,
+            "sig2se": false
+          },
+          "quadratic in log(loss)": {
+            "delta": 0.0009771920395214686,
+            "se": 0.0016311628703379035,
+            "sig2se": false
+          },
+          "quadratic without GCN": {
+            "delta": 0.0014967941743876168,
+            "se": 0.0015789763314928028,
+            "sig2se": false
+          }
+        },
+        "delta": 0.0012657340168467312,
+        "se_welch": 0.0015894916037166966,
+        "se_boot": 0.0014235182063108292,
+        "ci95": [
+          -0.0018496695264379943,
+          0.004381137560131457
+        ],
+        "sig_all_forms": false,
+        "sig_any_form": false,
+        "sig_boot": false
+      },
+      {
+        "hypothesis": "H2a",
+        "role": "primary",
+        "a": "efn",
+        "b": "deepsets",
+        "forms": {
+          "quadratic": {
+            "delta": 0.005450390815472872,
+            "se": 0.00123412149514791,
+            "sig2se": true
+          },
+          "linear": {
+            "delta": 0.0027597146164139337,
+            "se": 0.0013318481837801403,
+            "sig2se": true
+          },
+          "cubic": {
+            "delta": 0.0045396667527551,
+            "se": 0.0011300221681121618,
+            "sig2se": true
+          },
+          "quadratic in log(loss)": {
+            "delta": 0.0035502844772060007,
+            "se": 0.0011438614576973335,
+            "sig2se": true
+          },
+          "quadratic without GCN": {
+            "delta": 0.005028448066974778,
+            "se": 0.0011301457016172133,
+            "sig2se": true
+          }
+        },
+        "delta": 0.005450390815472872,
+        "se_welch": 0.00123412149514791,
+        "se_boot": 0.0011240005367183974,
+        "ci95": [
+          0.0030315126849829684,
+          0.007869268945962776
+        ],
+        "sig_all_forms": true,
+        "sig_any_form": true,
+        "sig_boot": true
+      },
+      {
+        "hypothesis": "H2a",
+        "role": "primary",
+        "a": "ew_attention",
+        "b": "transformer",
+        "forms": {
+          "quadratic": {
+            "delta": 0.0056107398168411034,
+            "se": 0.0017885795557918038,
+            "sig2se": true
+          },
+          "linear": {
+            "delta": 0.004029660538063062,
+            "se": 0.0015600551025443654,
+            "sig2se": true
+          },
+          "cubic": {
+            "delta": 0.006091908436672889,
+            "se": 0.001865627991169553,
+            "sig2se": true
+          },
+          "quadratic in log(loss)": {
+            "delta": 0.00634078065732,
+            "se": 0.001914633172081345,
+            "sig2se": true
+          },
+          "quadratic without GCN": {
+            "delta": 0.0060048570800779405,
+            "se": 0.0018499382812613122,
+            "sig2se": true
+          }
+        },
+        "delta": 0.0056107398168411034,
+        "se_welch": 0.0017885795557918038,
+        "se_boot": 0.0015973842279516013,
+        "ci95": [
+          0.002105123887489168,
+          0.00911635574619304
+        ],
+        "sig_all_forms": true,
+        "sig_any_form": true,
+        "sig_boot": true
+      },
+      {
+        "hypothesis": "H3",
+        "role": "primary",
+        "a": "gcn_complete",
+        "b": "deepsets",
+        "forms": {
+          "quadratic": {
+            "delta": 0.0009859291475963871,
+            "se": 0.0008325303273387699,
+            "sig2se": false
+          },
+          "linear": {
+            "delta": -0.00860575283069882,
+            "se": 0.0011427955093155522,
+            "sig2se": true
+          },
+          "cubic": {
+            "delta": 0.0005245498888595046,
+            "se": 0.00048366291908409056,
+            "sig2se": false
+          },
+          "quadratic in log(loss)": {
+            "delta": -0.001101461761136502,
+            "se": 0.0005301741488280113,
+            "sig2se": true
+          },
+          "quadratic without GCN": {
+            "delta": 0.008489775361789275,
+            "se": 0.0013681135958226467,
+            "sig2se": true
+          }
+        },
+        "delta": 0.0009859291475963871,
+        "se_welch": 0.0008325303273387699,
+        "se_boot": 0.0007397606854712562,
+        "ci95": [
+          -0.0006458302939876019,
+          0.0026176885891803763
+        ],
+        "sig_all_forms": false,
+        "sig_any_form": true,
+        "sig_boot": false
+      }
+    ],
+    "bb3": [
+      {
+        "hypothesis": "H1",
+        "role": "primary",
+        "a": "edgeconv",
+        "b": "deepsets",
+        "forms": {
+          "quadratic": {
+            "delta": -0.0021065611425749474,
+            "se": 0.001887529407737898,
+            "sig2se": false
+          },
+          "linear": {
+            "delta": -0.004270799628350463,
+            "se": 0.0019479853270394172,
+            "sig2se": true
+          },
+          "cubic": {
+            "delta": -0.003183696095530464,
+            "se": 0.002201628836774513,
+            "sig2se": false
+          },
+          "quadratic in log(loss)": {
+            "delta": -0.004380024594472287,
+            "se": 0.0023053102162627,
+            "sig2se": false
+          },
+          "quadratic without GCN": {
+            "delta": -0.0009398102759600623,
+            "se": 0.0016463644882268038,
+            "sig2se": false
+          }
+        },
+        "delta": -0.0021065611425749474,
+        "se_welch": 0.001887529407737898,
+        "se_boot": 0.0016235367579479725,
+        "ci95": [
+          -0.005806118781741227,
+          0.0015929964965913325
+        ],
+        "sig_all_forms": false,
+        "sig_any_form": true,
+        "sig_boot": false
+      },
+      {
+        "hypothesis": "H1",
+        "role": "primary",
+        "a": "ewmp",
+        "b": "efn",
+        "forms": {
+          "quadratic": {
+            "delta": -0.0005782313418440598,
+            "se": 0.001207870782184116,
+            "sig2se": false
+          },
+          "linear": {
+            "delta": -0.0014254066818285786,
+            "se": 0.0006874191697217535,
+            "sig2se": true
+          },
+          "cubic": {
+            "delta": -0.0005583613126244446,
+            "se": 0.0012296034950046314,
+            "sig2se": false
+          },
+          "quadratic in log(loss)": {
+            "delta": -0.0008613539806910486,
+            "se": 0.0010265324447909095,
+            "sig2se": false
+          },
+          "quadratic without GCN": {
+            "delta": -0.0004962076385208402,
+            "se": 0.0012630317729282795,
+            "sig2se": false
+          }
+        },
+        "delta": -0.0005782313418440598,
+        "se_welch": 0.001207870782184116,
+        "se_boot": 0.0010633096510989138,
+        "ci95": [
+          -0.0029456580749249272,
+          0.0017891953912368076
+        ],
+        "sig_all_forms": false,
+        "sig_any_form": true,
+        "sig_boot": false
+      },
+      {
+        "hypothesis": "H1",
+        "role": "secondary",
+        "a": "transformer",
+        "b": "deepsets",
+        "forms": {
+          "quadratic": {
+            "delta": -0.0004441974993792063,
+            "se": 0.0014698735667733843,
+            "sig2se": false
+          },
+          "linear": {
+            "delta": -0.007278314196556235,
+            "se": 0.0015887054495861963,
+            "sig2se": true
+          },
+          "cubic": {
+            "delta": -0.0007727628853246404,
+            "se": 0.0018575513635017327,
+            "sig2se": false
+          },
+          "quadratic in log(loss)": {
+            "delta": -0.0027757931365277044,
+            "se": 0.0019885928257129554,
+            "sig2se": false
+          },
+          "quadratic without GCN": {
+            "delta": 0.0009108165907916633,
+            "se": 0.0011372007284930958,
+            "sig2se": false
+          }
+        },
+        "delta": -0.0004441974993792063,
+        "se_welch": 0.0014698735667733843,
+        "se_boot": 0.001100827945931649,
+        "ci95": [
+          -0.0033251496902550397,
+          0.002436754691496627
+        ],
+        "sig_all_forms": false,
+        "sig_any_form": true,
+        "sig_boot": false
+      },
+      {
+        "hypothesis": "H1",
+        "role": "secondary",
+        "a": "ew_attention",
+        "b": "efn",
+        "forms": {
+          "quadratic": {
+            "delta": -0.0015165012024391576,
+            "se": 0.000922540963703826,
+            "sig2se": false
+          },
+          "linear": {
+            "delta": -0.007218352062186451,
+            "se": 0.0004129010685491339,
+            "sig2se": true
+          },
+          "cubic": {
+            "delta": -0.00029932424742048493,
+            "se": 0.0009494977352485805,
+            "sig2se": false
+          },
+          "quadratic in log(loss)": {
+            "delta": -0.0005408085105996884,
+            "se": 0.0008005206053413114,
+            "sig2se": false
+          },
+          "quadratic without GCN": {
+            "delta": -0.0013826408587357952,
+            "se": 0.0009761947996925564,
+            "sig2se": false
+          }
+        },
+        "delta": -0.0015165012024391576,
+        "se_welch": 0.000922540963703826,
+        "se_boot": 0.0008758708190245559,
+        "ci95": [
+          -0.0033246814912986566,
+          0.00029167908642034114
+        ],
+        "sig_all_forms": false,
+        "sig_any_form": true,
+        "sig_boot": false
+      },
+      {
+        "hypothesis": "H2a",
+        "role": "primary",
+        "a": "ewmp",
+        "b": "edgeconv",
+        "forms": {
+          "quadratic": {
+            "delta": 0.0018627783232370355,
+            "se": 0.0014667284172893893,
+            "sig2se": false
+          },
+          "linear": {
+            "delta": 0.0004341951139456455,
+            "se": 0.001321146425984231,
+            "sig2se": false
+          },
+          "cubic": {
+            "delta": 0.0019483944517118545,
+            "se": 0.0014784352971427622,
+            "sig2se": false
+          },
+          "quadratic in log(loss)": {
+            "delta": 0.0014746234366720735,
+            "se": 0.0014175932885327877,
+            "sig2se": false
+          },
+          "quadratic without GCN": {
+            "delta": 0.001974796972397186,
+            "se": 0.0014828587448741713,
+            "sig2se": false
+          }
+        },
+        "delta": 0.0018627783232370355,
+        "se_welch": 0.0014667284172893893,
+        "se_boot": 0.001295623951544445,
+        "ci95": [
+          -0.0010120093746501676,
+          0.004737566021124238
+        ],
+        "sig_all_forms": false,
+        "sig_any_form": false,
+        "sig_boot": false
+      },
+      {
+        "hypothesis": "H2a",
+        "role": "primary",
+        "a": "efn",
+        "b": "deepsets",
+        "forms": {
+          "quadratic": {
+            "delta": 0.0003344485225061477,
+            "se": 0.0016942334081953441,
+            "sig2se": false
+          },
+          "linear": {
+            "delta": -0.002411197832576239,
+            "se": 0.0015880063193737305,
+            "sig2se": false
+          },
+          "cubic": {
+            "delta": -0.0006769403311941647,
+            "se": 0.00204287135228998,
+            "sig2se": false
+          },
+          "quadratic in log(loss)": {
+            "delta": -0.0020440471771091652,
+            "se": 0.002087738805914278,
+            "sig2se": false
+          },
+          "quadratic without GCN": {
+            "delta": 0.0015311943349579638,
+            "se": 0.0014515148053915454,
+            "sig2se": false
+          }
+        },
+        "delta": 0.0003344485225061477,
+        "se_welch": 0.0016942334081953441,
+        "se_boot": 0.0014538381720146589,
+        "ci95": [
+          -0.002986248957556727,
+          0.003655146002569022
+        ],
+        "sig_all_forms": false,
+        "sig_any_form": false,
+        "sig_boot": false
+      },
+      {
+        "hypothesis": "H2a",
+        "role": "primary",
+        "a": "ew_attention",
+        "b": "transformer",
+        "forms": {
+          "quadratic": {
+            "delta": -0.0007378551805538036,
+            "se": 0.00037574365006674853,
+            "sig2se": false
+          },
+          "linear": {
+            "delta": -0.0023512356982064555,
+            "se": 0.00041558179409472725,
+            "sig2se": true
+          },
+          "cubic": {
+            "delta": -0.0002035016932900092,
+            "se": 0.0004227524751935092,
+            "sig2se": false
+          },
+          "quadratic in log(loss)": {
+            "delta": 0.00019093744881885086,
+            "se": 0.0004864990692002192,
+            "sig2se": false
+          },
+          "quadratic without GCN": {
+            "delta": -0.0007622631145694947,
+            "se": 0.00037321113804542603,
+            "sig2se": true
+          }
+        },
+        "delta": -0.0007378551805538036,
+        "se_welch": 0.00037574365006674853,
+        "se_boot": 0.00034909822422623957,
+        "ci95": [
+          -0.0014743127346846306,
+          -1.39762642297652e-06
+        ],
+        "sig_all_forms": false,
+        "sig_any_form": true,
+        "sig_boot": false
+      },
+      {
+        "hypothesis": "H3",
+        "role": "primary",
+        "a": "gcn_complete",
+        "b": "deepsets",
+        "forms": {
+          "quadratic": {
+            "delta": -0.0019597052448988906,
+            "se": 0.003514079772075712,
+            "sig2se": false
+          },
+          "linear": {
+            "delta": -0.011747344007240045,
+            "se": 0.0023708982649971256,
+            "sig2se": true
+          },
+          "cubic": {
+            "delta": -0.002472081999525555,
+            "se": 0.003151540976954361,
+            "sig2se": false
+          },
+          "quadratic in log(loss)": {
+            "delta": -0.004558934146761052,
+            "se": 0.003080879610935975,
+            "sig2se": false
+          },
+          "quadratic without GCN": {
+            "delta": -0.00790216471449816,
+            "se": 0.0028934045697980807,
+            "sig2se": true
+          }
+        },
+        "delta": -0.0019597052448988906,
+        "se_welch": 0.003514079772075712,
+        "se_boot": 0.0022381704147979805,
+        "ci95": [
+          -0.008847301598167287,
+          0.0049278911083695046
+        ],
+        "sig_all_forms": false,
+        "sig_any_form": true,
+        "sig_boot": false
+      }
+    ]
+  },
+  "decomposition": {
+    "rd3": {
+      "set": {
+        "cells": {
+          "unsafe/meanmax": {
+            "run_prefix": "study",
+            "config": "deepsets",
+            "n": 5,
+            "loss": 0.34199122314453123,
+            "auc": 0.7603762259009158,
+            "auc_sd": 0.03842786115321917,
+            "resid": -0.005490396932117369,
+            "resid_se": 0.006980389723501315,
+            "irc_rho": {
+              "split top-1": 0.9878041589025104,
+              "10 soft (1% pT each)": 0.7295650641120549
+            }
+          },
+          "unsafe/weighted": {
+            "run_prefix": "stat",
+            "config": "deepsets_weighted",
+            "n": 3,
+            "loss": 0.37943919296264655,
+            "auc": 0.7363420773053706,
+            "auc_sd": 0.07427907486075273,
+            "resid": -0.016070204527718457,
+            "resid_se": 0.018044196801608067,
+            "irc_rho": {
+              "split top-1": 0.9993541148059114,
+              "10 soft (1% pT each)": 0.8805509725089964
+            }
+          },
+          "safe/meanmax": {
+            "run_prefix": "e5",
+            "config": "efn_meanmax",
+            "n": 3,
+            "loss": 0.40959392344156903,
+            "auc": 0.7552192196185072,
+            "auc_sd": 0.007569911357177595,
+            "resid": 0.012006868259572126,
+            "resid_se": 0.0020332322950573703,
+            "irc_rho": {
+              "split top-1": 0.9960683746757542,
+              "10 soft (1% pT each)": 0.9465340297137876
+            }
+          },
+          "safe/weighted": {
+            "run_prefix": "study",
+            "config": "efn",
+            "n": 5,
+            "loss": 0.23491934417724608,
+            "auc": 0.8116835702510174,
+            "auc_sd": 0.005992313066343946,
+            "resid": 0.010974981223879677,
+            "resid_se": 0.0021686883136856666,
+            "irc_rho": {
+              "split top-1": 0.9999999986798829,
+              "10 soft (1% pT each)": 0.745255045119253
+            }
+          }
+        },
+        "effects_at_equal_fit": {
+          "pooling | unsafe inputs": {
+            "delta": -0.010579807595601088,
+            "se": 0.019347322267102635,
+            "sig2se": false
+          },
+          "pooling | safe inputs": {
+            "delta": -0.0010318870356924494,
+            "se": 0.002972750000854603,
+            "sig2se": false
+          },
+          "inputs | mean+max pooling": {
+            "delta": 0.017497265191689496,
+            "se": 0.0072704796442619275,
+            "sig2se": true
+          },
+          "inputs | weighted pooling": {
+            "delta": 0.027045185751598134,
+            "se": 0.018174054231708443,
+            "sig2se": false
+          },
+          "IRC-safe design (both)": {
+            "delta": 0.016465378155997044,
+            "se": 0.007309517747011739,
+            "sig2se": true
+          },
+          "interaction": {
+            "delta": 0.009547920559908638,
+            "se": 0.019574374101735837,
+            "sig2se": false
+          }
+        },
+        "effects_by_form": {
+          "quadratic": {
+            "pooling | safe inputs": {
+              "delta": -0.0010318870356924494,
+              "se": 0.002972750000854603,
+              "sig2se": false
+            },
+            "inputs | mean+max pooling": {
+              "delta": 0.017497265191689496,
+              "se": 0.0072704796442619275,
+              "sig2se": true
+            },
+            "pooling | unsafe inputs": {
+              "delta": -0.010579807595601088,
+              "se": 0.019347322267102635,
+              "sig2se": false
+            },
+            "IRC-safe design (both)": {
+              "delta": 0.016465378155997044,
+              "se": 0.007309517747011739,
+              "sig2se": true
+            }
+          },
+          "linear": {
+            "pooling | safe inputs": {
+              "delta": -0.002543728333150367,
+              "se": 0.003157493328221687,
+              "sig2se": false
+            },
+            "inputs | mean+max pooling": {
+              "delta": 0.01768034929743833,
+              "se": 0.007240576429055571,
+              "sig2se": true
+            },
+            "pooling | unsafe inputs": {
+              "delta": -0.01138357992414641,
+              "se": 0.019425749258084078,
+              "sig2se": false
+            },
+            "IRC-safe design (both)": {
+              "delta": 0.015136620964287962,
+              "se": 0.007323359263017672,
+              "sig2se": true
+            }
+          },
+          "cubic": {
+            "pooling | safe inputs": {
+              "delta": -0.012684150661538014,
+              "se": 0.0025983811597580825,
+              "sig2se": true
+            },
+            "inputs | mean+max pooling": {
+              "delta": 0.023419161910704485,
+              "se": 0.0046069141271087655,
+              "sig2se": true
+            },
+            "pooling | unsafe inputs": {
+              "delta": -0.009005849372749317,
+              "se": 0.014721164799041928,
+              "sig2se": false
+            },
+            "IRC-safe design (both)": {
+              "delta": 0.010735011249166471,
+              "se": 0.004822058608826878,
+              "sig2se": true
+            }
+          },
+          "quadratic in log(loss)": {
+            "pooling | safe inputs": {
+              "delta": -0.006190275852907759,
+              "se": 0.0029411245861932726,
+              "sig2se": true
+            },
+            "inputs | mean+max pooling": {
+              "delta": 0.019703264712661164,
+              "se": 0.006317272295517624,
+              "sig2se": true
+            },
+            "pooling | unsafe inputs": {
+              "delta": -0.010283051689497525,
+              "se": 0.017516209921669846,
+              "sig2se": false
+            },
+            "IRC-safe design (both)": {
+              "delta": 0.013512988859753406,
+              "se": 0.006427711671144868,
+              "sig2se": true
+            }
+          },
+          "quadratic without GCN": {
+            "pooling | safe inputs": {
+              "delta": -0.014285604812608217,
+              "se": 0.0021917554616835127,
+              "sig2se": true
+            },
+            "inputs | mean+max pooling": {
+              "delta": 0.025101319099027537,
+              "se": 0.0035286304331440593,
+              "sig2se": true
+            },
+            "pooling | unsafe inputs": {
+              "delta": -0.0007959440163928981,
+              "se": 0.012289448663578737,
+              "sig2se": false
+            },
+            "IRC-safe design (both)": {
+              "delta": 0.01081571428641932,
+              "se": 0.0038820048665702124,
+              "sig2se": true
+            }
+          }
+        }
+      },
+      "graph": {
+        "cells": {
+          "unsafe/meanmax": {
+            "run_prefix": "study",
+            "config": "edgeconv",
+            "n": 5,
+            "loss": 0.2440108557128906,
+            "auc": 0.800144414988545,
+            "auc_sd": 0.003001611944001735,
+            "resid": 0.0022257223347299957,
+            "resid_se": 0.002108098242717275,
+            "irc_rho": {
+              "split top-1": 0.9922953230764302,
+              "10 soft (1% pT each)": 0.5284223545536934
+            }
+          },
+          "unsafe/weighted": {
+            "run_prefix": "stat",
+            "config": "edgeconv_weighted",
+            "n": 3,
+            "loss": 0.20577619870503747,
+            "auc": 0.8190934015762724,
+            "auc_sd": 0.004538572593520241,
+            "resid": 0.009364448547412474,
+            "resid_se": 0.0021265776956307667,
+            "irc_rho": {
+              "split top-1": 0.9971015631792443,
+              "10 soft (1% pT each)": 0.6272123136960173
+            }
+          },
+          "safe/weighted": {
+            "run_prefix": "study",
+            "config": "ewmp",
+            "n": 5,
+            "loss": 0.21934272172451022,
+            "auc": 0.8189044769405374,
+            "auc_sd": 0.004013929686255883,
+            "resid": 0.013343827791729912,
+            "resid_se": 0.0007604383724351097,
+            "irc_rho": {
+              "split top-1": 0.9999999984157715,
+              "10 soft (1% pT each)": 0.7881733491129514
+            }
+          }
+        },
+        "effects_at_equal_fit": {},
+        "effects_by_form": {}
+      }
+    },
+    "bb1": {
+      "set": {
+        "cells": {
+          "unsafe/meanmax": {
+            "run_prefix": "study",
+            "config": "deepsets",
+            "n": 5,
+            "loss": 0.34199122314453123,
+            "auc": 0.9159994948460778,
+            "auc_sd": 0.003165945800453892,
+            "resid": -0.000491005661655386,
+            "resid_se": 0.0006323657271691202,
+            "irc_rho": {
+              "split top-1": 0.9878041589025104,
+              "10 soft (1% pT each)": 0.7295650641120549
+            }
+          },
+          "unsafe/weighted": {
+            "run_prefix": "stat",
+            "config": "deepsets_weighted",
+            "n": 3,
+            "loss": 0.37943919296264655,
+            "auc": 0.9088626985844099,
+            "auc_sd": 0.009079662442089874,
+            "resid": -0.008159257771585918,
+            "resid_se": 0.006620387495155823,
+            "irc_rho": {
+              "split top-1": 0.9993541148059114,
+              "10 soft (1% pT each)": 0.8805509725089964
+            }
+          },
+          "safe/weighted": {
+            "run_prefix": "study",
+            "config": "efn",
+            "n": 5,
+            "loss": 0.23491934417724608,
+            "auc": 0.9125859872426902,
+            "auc_sd": 0.0035664437597050093,
+            "resid": 0.004959385153817486,
+            "resid_se": 0.0010597968918089834,
+            "irc_rho": {
+              "split top-1": 0.9999999986798829,
+              "10 soft (1% pT each)": 0.745255045119253
+            }
+          }
+        },
+        "effects_at_equal_fit": {},
+        "effects_by_form": {}
+      },
+      "graph": {
+        "cells": {
+          "unsafe/meanmax": {
+            "run_prefix": "study",
+            "config": "edgeconv",
+            "n": 5,
+            "loss": 0.2440108557128906,
+            "auc": 0.9103239746244668,
+            "auc_sd": 0.003821265235117661,
+            "resid": 0.0016034344358203168,
+            "resid_se": 0.0013656658451725923,
+            "irc_rho": {
+              "split top-1": 0.9922953230764302,
+              "10 soft (1% pT each)": 0.5284223545536934
+            }
+          },
+          "unsafe/weighted": {
+            "run_prefix": "stat",
+            "config": "edgeconv_weighted",
+            "n": 3,
+            "loss": 0.20577619870503747,
+            "auc": 0.8971490194411819,
+            "auc_sd": 0.0032254384048811054,
+            "resid": -0.007127370471388968,
+            "resid_se": 0.0020038091950037957,
+            "irc_rho": {
+              "split top-1": 0.9971015631792443,
+              "10 soft (1% pT each)": 0.6272123136960173
+            }
+          },
+          "safe/weighted": {
+            "run_prefix": "study",
+            "config": "ewmp",
+            "n": 5,
+            "loss": 0.21934272172451022,
+            "auc": 0.9087674872117821,
+            "auc_sd": 0.0022196255133063087,
+            "resid": 0.002869168452667048,
+            "resid_se": 0.0008132898361684503,
+            "irc_rho": {
+              "split top-1": 0.9999999984157715,
+              "10 soft (1% pT each)": 0.7881733491129514
+            }
+          }
+        },
+        "effects_at_equal_fit": {},
+        "effects_by_form": {}
+      }
+    },
+    "bb3": {
+      "set": {
+        "cells": {
+          "unsafe/meanmax": {
+            "run_prefix": "study",
+            "config": "deepsets",
+            "n": 5,
+            "loss": 0.34199122314453123,
+            "auc": 0.4758138476418046,
+            "auc_sd": 0.002629520076379348,
+            "resid": 0.0012532396534037482,
+            "resid_se": 0.0014433385598476988,
+            "irc_rho": {
+              "split top-1": 0.9878041589025104,
+              "10 soft (1% pT each)": 0.7295650641120549
+            }
+          },
+          "unsafe/weighted": {
+            "run_prefix": "stat",
+            "config": "deepsets_weighted",
+            "n": 3,
+            "loss": 0.37943919296264655,
+            "auc": 0.4748517777191612,
+            "auc_sd": 0.007087462789961628,
+            "resid": 0.002554314563954977,
+            "resid_se": 0.004356181695054461,
+            "irc_rho": {
+              "split top-1": 0.9993541148059114,
+              "10 soft (1% pT each)": 0.8805509725089964
+            }
+          },
+          "safe/weighted": {
+            "run_prefix": "study",
+            "config": "efn",
+            "n": 5,
+            "loss": 0.23491934417724608,
+            "auc": 0.4751247239419283,
+            "auc_sd": 0.001157833174333925,
+            "resid": 0.0015876881759098959,
+            "resid_se": 0.000887243282928635,
+            "irc_rho": {
+              "split top-1": 0.9999999986798829,
+              "10 soft (1% pT each)": 0.745255045119253
+            }
+          }
+        },
+        "effects_at_equal_fit": {},
+        "effects_by_form": {}
+      },
+      "graph": {
+        "cells": {
+          "unsafe/meanmax": {
+            "run_prefix": "study",
+            "config": "edgeconv",
+            "n": 5,
+            "loss": 0.2440108557128906,
+            "auc": 0.4731189002156745,
+            "auc_sd": 0.0026782816196485944,
+            "resid": -0.0008533214891711993,
+            "resid_se": 0.0012163638710238603,
+            "irc_rho": {
+              "split top-1": 0.9922953230764302,
+              "10 soft (1% pT each)": 0.5284223545536934
+            }
+          },
+          "unsafe/weighted": {
+            "run_prefix": "stat",
+            "config": "edgeconv_weighted",
+            "n": 3,
+            "loss": 0.20577619870503747,
+            "auc": 0.47708032708032705,
+            "auc_sd": 0.0030727927958432957,
+            "resid": 0.004778655208983444,
+            "resid_se": 0.001849423120166409,
+            "irc_rho": {
+              "split top-1": 0.9971015631792443,
+              "10 soft (1% pT each)": 0.6272123136960173
+            }
+          },
+          "safe/weighted": {
+            "run_prefix": "study",
+            "config": "ewmp",
+            "n": 5,
+            "loss": 0.21934272172451022,
+            "auc": 0.47394984147672314,
+            "auc_sd": 0.001396854597669378,
+            "resid": 0.001009456834065836,
+            "resid_se": 0.0008196042846106203,
+            "irc_rho": {
+              "split top-1": 0.9999999984157715,
+              "10 soft (1% pT each)": 0.7881733491129514
+            }
+          }
+        },
+        "effects_at_equal_fit": {},
+        "effects_by_form": {}
+      }
+    }
+  },
+  "irc": {
+    "encoders": {
+      "deepsets": {
+        "split top-1": {
+          "mean": 0.9878041589025104,
+          "sd": 0.005442270959908362,
+          "n": 5
+        },
+        "split all": {
+          "mean": 0.961117262893089,
+          "sd": 0.0194238020423628,
+          "n": 5
+        },
+        "10 soft (0.2% pT each)": {
+          "mean": 0.9822646127666788,
+          "sd": 0.010113467935405168,
+          "n": 5
+        },
+        "10 soft (1% pT each)": {
+          "mean": 0.7295650641120549,
+          "sd": 0.07710092780972257,
+          "n": 5
+        }
+      },
+      "efn": {
+        "split top-1": {
+          "mean": 0.9999999986798829,
+          "sd": 2.906888096592867e-10,
+          "n": 5
+        },
+        "split all": {
+          "mean": 0.999999998286133,
+          "sd": 2.3199399138521563e-10,
+          "n": 5
+        },
+        "10 soft (0.2% pT each)": {
+          "mean": 0.9877174948528177,
+          "sd": 0.011680666570290585,
+          "n": 5
+        },
+        "10 soft (1% pT each)": {
+          "mean": 0.745255045119253,
+          "sd": 0.160207473286623,
+          "n": 5
+        }
+      },
+      "edgeconv": {
+        "split top-1": {
+          "mean": 0.9922953230764302,
+          "sd": 0.001277493273609484,
+          "n": 5
+        },
+        "split all": {
+          "mean": 0.9158570797453386,
+          "sd": 0.012037618225838279,
+          "n": 5
+        },
+        "10 soft (0.2% pT each)": {
+          "mean": 0.9680031798325756,
+          "sd": 0.004465096503323646,
+          "n": 5
+        },
+        "10 soft (1% pT each)": {
+          "mean": 0.5284223545536934,
+          "sd": 0.026583314695929727,
+          "n": 5
+        }
+      },
+      "ewmp": {
+        "split top-1": {
+          "mean": 0.9999999984157715,
+          "sd": 1.1357868982052983e-10,
+          "n": 5
+        },
+        "split all": {
+          "mean": 0.9999999978775879,
+          "sd": 1.7322234853628777e-10,
+          "n": 5
+        },
+        "10 soft (0.2% pT each)": {
+          "mean": 0.9930535850150664,
+          "sd": 0.0033971977207131335,
+          "n": 5
+        },
+        "10 soft (1% pT each)": {
+          "mean": 0.7881733491129514,
+          "sd": 0.07433288982968773,
+          "n": 5
+        }
+      },
+      "transformer": {
+        "split top-1": {
+          "mean": 0.994139851495438,
+          "sd": 0.0018431889359507652,
+          "n": 5
+        },
+        "split all": {
+          "mean": 0.9541300373067578,
+          "sd": 0.01262242071545495,
+          "n": 5
+        },
+        "10 soft (0.2% pT each)": {
+          "mean": 0.9779099583244382,
+          "sd": 0.00817290931596021,
+          "n": 5
+        },
+        "10 soft (1% pT each)": {
+          "mean": 0.7403054637578083,
+          "sd": 0.07916372098722653,
+          "n": 5
+        }
+      },
+      "ew_attention": {
+        "split top-1": {
+          "mean": 0.9999999975459473,
+          "sd": 1.9023356780891207e-10,
+          "n": 5
+        },
+        "split all": {
+          "mean": 0.999999996774414,
+          "sd": 2.1962657901285084e-10,
+          "n": 5
+        },
+        "10 soft (0.2% pT each)": {
+          "mean": 0.9991096949567215,
+          "sd": 6.373472930220635e-05,
+          "n": 5
+        },
+        "10 soft (1% pT each)": {
+          "mean": 0.9779578092676253,
+          "sd": 0.0017064686712537696,
+          "n": 5
+        }
+      },
+      "gcn_complete": {
+        "split top-1": {
+          "mean": 0.9935295886925678,
+          "sd": 0.0006328900926835644,
+          "n": 5
+        },
+        "split all": {
+          "mean": 0.8262064767504513,
+          "sd": 0.02750188779115528,
+          "n": 5
+        },
+        "10 soft (0.2% pT each)": {
+          "mean": 0.8674730281482098,
+          "sd": 0.015128999795151938,
+          "n": 5
+        },
+        "10 soft (1% pT each)": {
+          "mean": 0.47037982262912836,
+          "sd": 0.02546740934298537,
+          "n": 5
+        }
+      }
+    },
+    "contrasts": [
+      {
+        "a": "efn",
+        "b": "deepsets",
+        "probe": "split top-1",
+        "delta": 0.012195839777372486,
+        "se": 0.0024338575636656296,
+        "sig2se": true
+      },
+      {
+        "a": "efn",
+        "b": "deepsets",
+        "probe": "split all",
+        "delta": 0.03888273539304399,
+        "se": 0.008686588349644496,
+        "sig2se": true
+      },
+      {
+        "a": "efn",
+        "b": "deepsets",
+        "probe": "10 soft (0.2% pT each)",
+        "delta": 0.0054528820861389216,
+        "se": 0.006909706291974681,
+        "sig2se": false
+      },
+      {
+        "a": "efn",
+        "b": "deepsets",
+        "probe": "10 soft (1% pT each)",
+        "delta": 0.015689981007198095,
+        "se": 0.07951224756728245,
+        "sig2se": false
+      },
+      {
+        "a": "ewmp",
+        "b": "edgeconv",
+        "probe": "split top-1",
+        "delta": 0.0077046753393412715,
+        "se": 0.0005713123601179111,
+        "sig2se": true
+      },
+      {
+        "a": "ewmp",
+        "b": "edgeconv",
+        "probe": "split all",
+        "delta": 0.08414291813224928,
+        "se": 0.0053833865280329615,
+        "sig2se": true
+      },
+      {
+        "a": "ewmp",
+        "b": "edgeconv",
+        "probe": "10 soft (0.2% pT each)",
+        "delta": 0.025050405182490798,
+        "se": 0.0025091049853528074,
+        "sig2se": true
+      },
+      {
+        "a": "ewmp",
+        "b": "edgeconv",
+        "probe": "10 soft (1% pT each)",
+        "delta": 0.2597509945592581,
+        "se": 0.035304535489524086,
+        "sig2se": true
+      },
+      {
+        "a": "ew_attention",
+        "b": "transformer",
+        "probe": "split top-1",
+        "delta": 0.0058601460505092184,
+        "se": 0.0008242991512322878,
+        "sig2se": true
+      },
+      {
+        "a": "ew_attention",
+        "b": "transformer",
+        "probe": "split all",
+        "delta": 0.04586995946765615,
+        "se": 0.005644918152071759,
+        "sig2se": true
+      },
+      {
+        "a": "ew_attention",
+        "b": "transformer",
+        "probe": "10 soft (0.2% pT each)",
+        "delta": 0.02119973663228336,
+        "se": 0.0036551472966934837,
+        "sig2se": true
+      },
+      {
+        "a": "ew_attention",
+        "b": "transformer",
+        "probe": "10 soft (1% pT each)",
+        "delta": 0.23765234550981706,
+        "se": 0.03541131671053597,
+        "sig2se": true
+      }
+    ]
+  },
+  "mass": {
+    "n_runs": 0
+  },
+  "lee": {},
+  "bb_scans": {},
+  "bb1_mass": {
+    "n_runs": 0
+  }
+}
